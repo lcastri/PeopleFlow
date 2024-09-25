@@ -1,0 +1,19 @@
+<launch>
+  <arg name="scenario" default = "warehouse"/>
+  <arg name="allow_task" default = "true"/>
+  <arg name="max_tasktime" default = "15"/>
+  <arg name="scaling_factor" default = "12"/>
+  <arg name="record" default = "false"/>
+  <arg name="starting_elapsed" default = "8"/>
+
+  <node name="peopleflow_manager" pkg="peopleflow_manager" type="ScenarioManager.py" output="screen">
+    <param name="scenario"   value="$(find pedsim_simulator)/scenarios/$(arg scenario)"/> 
+    <param name="g_path"   value="$(find peopleflow_manager)/res/$(arg scenario)/graph.pkl"/> 
+    <param name="allow_task"   type="bool" value="$(arg allow_task)"/> 
+    <param name="max_tasktime"   value="$(arg max_tasktime)"/> 
+    <param name="scaling_factor"   value="$(arg scaling_factor)"/> 
+    <param name="record"   value="$(arg record)"/> 
+    <param name="starting_elapsed"   value="$(arg starting_elapsed)"/> 
+  </node>
+ 
+</launch>

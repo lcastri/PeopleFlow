@@ -1,0 +1,14 @@
+<launch>
+  <arg name="init_battery" default="100"/>
+  <arg name="static_duration" default="5"/>
+  <arg name="dynamic_duration" default="4"/>
+  <arg name="charging_time" default="2"/>
+
+  <node name="tiago_battery" pkg="tiago_battery" type="sim_battery.py" output="screen">
+    <param name="init_battery"        value="$(arg init_battery)"/> 
+    <param name="static_duration"  value="$(arg static_duration)"/> 
+    <param name="dynamic_duration"          value="$(arg dynamic_duration)"/> 
+    <param name="charging_time"          value="$(arg charging_time)"/> 
+  </node>
+ 
+</launch>

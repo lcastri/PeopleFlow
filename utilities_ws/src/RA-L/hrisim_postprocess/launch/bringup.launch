@@ -1,0 +1,17 @@
+<launch>
+
+  <arg name="bagname"/>
+  <arg name="playback_speed" default="10" />
+  <arg name="time_of_the_day" default="starting" /> <!-- Change this value as needed -->
+  <arg name="start_time" default="0" /> <!-- New argument for start time in seconds -->
+
+  <!-- rosbags play -->
+  <param name="use_sim_time" value="true" />
+  <node name="rosbag_play_data" pkg="rosbag" type="play" 
+        args="--clock -r $(arg playback_speed) --start $(arg start_time) $(find hrisim_postprocess)/bags/$(arg bagname).bag"/>
+
+  <!-- Extracting data -->
+  <node pkg="hrisim_postprocess" type="postprocess.py" name="hrisim_postprocess"
+        args="$(arg bagname) $(find hrisim_postprocess)/csv $(arg time_of_the_day)" output="screen" required="true" />
+
+</launch> 
