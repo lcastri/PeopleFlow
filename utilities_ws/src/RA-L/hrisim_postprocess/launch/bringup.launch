@@ -1,8 +1,10 @@
 <launch>
 
   <arg name="bagname"/>
+  <arg name="scenario" default="warehouse"/>
   <arg name="playback_speed" default="10" />
   <arg name="time_of_the_day" default="starting" /> <!-- Change this value as needed -->
+  <arg name="load_goal" default="false" /> 
   <arg name="start_time" default="0" /> <!-- New argument for start time in seconds -->
 
   <!-- rosbags play -->
@@ -12,6 +14,6 @@
 
   <!-- Extracting data -->
   <node pkg="hrisim_postprocess" type="postprocess.py" name="hrisim_postprocess"
-        args="$(arg bagname) $(find hrisim_postprocess)/csv $(arg time_of_the_day)" output="screen" required="true" />
+        args="$(arg bagname) $(find hrisim_postprocess) $(arg scenario) $(arg time_of_the_day) $(arg load_goal)" output="screen" required="true" />
 
 </launch> 

@@ -38,10 +38,10 @@ RUN DEBIAN_FRONTEND=noninteractive rosdep install -y --from-paths src --ignore-s
     "urdf_test omni_drive_controller orocos_kdl pal_filters libgazebo9-dev pal_usb_utils speed_limit_node camera_calibration_files pal_moveit_plugins pal_startup_msgs pal_local_joint_control pal_pcl_points_throttle_and_filter current_limit_controller hokuyo_node dynamixel_cpp pal_moveit_capabilities pal_pcl dynamic_footprint gravity_compensation_controller pal-orbbec-openni2 pal_loc_measure pal_map_manager ydlidar_ros_driver"
 
 # Fix tiago_controller_configuration package.xml
-COPY HRISim_docker/HRISim/tiago_controller_conf_package.xml /root/tiago_ws/src/tiago_robot/tiago_controller_configuration/package.xml
+COPY HRISim_docker/HRISim/robot/tiago_controller_conf_package.xml /root/tiago_ws/src/tiago_robot/tiago_controller_configuration/package.xml
 
 # Copy files into the image
-COPY HRISim_docker/HRISim/hrisim_twist_mux/modified_scripts/twist_mux.launch /opt/ros/noetic/share/twist_mux/launch
+COPY HRISim_docker/HRISim/robot/robot_twist_mux/modified_scripts/twist_mux.launch /opt/ros/noetic/share/twist_mux/launch
 COPY HRISim_docker/HRISim/hrisim_gazebo/modified_scripts/local_planner.yaml /root/tiago_ws/src/pal_navigation_cfg_public/pal_navigation_cfg_tiago/config/base/teb
 RUN mkdir -p ~/.pal/tiago_maps/configurations/
 COPY HRISim_docker/HRISim/hrisim_gazebo/tiago_maps/ /root/.pal/tiago_maps/configurations/

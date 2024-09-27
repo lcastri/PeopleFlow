@@ -15,14 +15,14 @@
   <build_depend>geometry_msgs</build_depend>
   <build_depend>pedsim_msgs</build_depend>
   <build_depend>peopleflow_msgs</build_depend>
-  <build_depend>message_generation</build_depend>
+  <!-- <build_depend>message_generation</build_depend> -->
   <build_depend>std_msgs</build_depend>
 
   <build_export_depend>rospy</build_export_depend>
   <build_export_depend>geometry_msgs</build_export_depend>
   <build_export_depend>pedsim_msgs</build_export_depend>
   <build_export_depend>peopleflow_msgs</build_export_depend>
-  <build_export_depend>message_generation</build_export_depend>
+  <!-- <build_export_depend>message_generation</build_export_depend> -->
   <build_export_depend>std_msgs</build_export_depend>
 
   <exec_depend>rospy</exec_depend>

@@ -103,7 +103,9 @@ class ScenarioManager():
             y = float(waypoint.get('y'))
             r = float(waypoint.get('r'))
             self.wps[waypoint_id] = {'x': x, 'y': y, 'r': r}
-
+            
+        rospy.set_param("/peopleflow/schedule", self.schedule)
+        rospy.set_param("/peopleflow/wps", self.wps)
 
     def handle_get_next_destination(self, req):
         try:
@@ -258,7 +260,7 @@ def isFinished():
         except Exception as e:
             rospy.logerr(f"Failed to execute tstop: {str(e)}")
 
-TOPICS = "/map /tf /tf_static /robot_pose /mobile_base_controller/odom /move_base/goal /pedsim_simulator/simulated_agents /peopleflow/counter /peopleflow/time /hrisim/tiago_battery /hrisim/robot_task"
+TOPICS = "/map /tf /tf_static /robot_pose /mobile_base_controller/odom /move_base/goal /pedsim_simulator/simulated_agents /peopleflow/counter /peopleflow/time /hrisim/robot_battery /hrisim/robot_task /hrisim/robot_closest_wp /hrisim/robot_bac"
    
 if __name__ == '__main__':
     rospy.init_node('peopleflow_manager')

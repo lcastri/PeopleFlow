@@ -11,7 +11,7 @@ except:
 
 import pnp_cmd_ros
 from pnp_cmd_ros import *
-from tiago_battery.msg import BatteryStatus
+from robot_msgs.msg import BatteryStatus
 from move_base_msgs.msg import MoveBaseAction
 import actionlib
 
@@ -20,7 +20,7 @@ SHELFS_NAME = ["shelf1", "shelf2", "shelf3", "shelf4", "shelf5", "shelf6"]
 KITCHEN_NAME = ["table2", "table3", "table4", "table5", "table6", "kitchen1", "kitchen2", "kitchen3"]
 SHELFS = {}
 KITCHEN = {}
-CHARGING_STATION = [-9,9,0]
+CHARGING_STATION = None
 CLEANING_PATH = [
     (-18.22, 7.76), (-8.33, 7.90), (-8.03, -8.26), (-17.90, -8.16), (-17.89, -4.56), (-9.41, -4.44), (-9.36, -1.69), (-17.9, -1.5), (-17.9, 1.6), (-9.21, 1.6), (-9.21, 4.5), (-17.9, 4.5), (-18.22, 7.76),
     (-6.33, 8.73), (-6.33, -8.73), (-2.5, -8.73), (-2.5, 7.84), (9, 7.84), (9, 9), (-6.33, 8.73),
@@ -44,8 +44,9 @@ def readScenario():
             KITCHEN[wp.get('id')] = [wp.get('x'), wp.get('y'), 0]
         elif wp.get('id') == 'delivery_point':
             DP = [wp.get('x'), wp.get('y'), 0]
-            
-    return SHELFS, DP, KITCHEN
+        elif wp.get('id') == 'charging_station':
+            CHARGING_STATION = [wp.get('x'), wp.get('y'), 0]
+    return SHELFS, DP, KITCHEN, CHARGING_STATION
 
 
 def Plan(p):
@@ -54,7 +55,7 @@ def Plan(p):
     destination = None
     while True:
         
-        if not rospy.get_param('/tiago_battery/is_charging') and BATTERY_LEVEL <= 20:
+        if not rospy.get_param('/robot_battery/is_charging') and BATTERY_LEVEL <= 20:
             rospy.logwarn("Cancelling all goals..")
             client = actionlib.SimpleActionClient('/move_base', MoveBaseAction)
             client.wait_for_server()
@@ -69,15 +70,15 @@ def Plan(p):
             while not rospy.get_param('/hri/robot_goalreached'): 
                 rospy.sleep(0.1)
                 
-            rospy.set_param('/tiago_battery/is_charging', True)
+            rospy.set_param('/robot_battery/is_charging', True)
             TASK = "charging"
             rospy.logwarn("Battery charging..")
             
-        elif BATTERY_LEVEL == 100 and rospy.get_param('/tiago_battery/is_charging'):
+        elif BATTERY_LEVEL == 100 and rospy.get_param('/robot_battery/is_charging'):
             rospy.logwarn("Battery fully charged..")
-            rospy.set_param('/tiago_battery/is_charging', False)
+            rospy.set_param('/robot_battery/is_charging', False)
             
-        elif not rospy.get_param('/tiago_battery/is_charging'):
+        elif not rospy.get_param('/robot_battery/is_charging'):
                         
             if rospy.get_param('/hri/robot_goalreached'):
                 rospy.set_param('/hri/robot_goalreached', False)
@@ -131,11 +132,11 @@ if __name__ == "__main__":
         
     wp = -1
     SCENARIO = '/root/ros_ws/src/pedsim_ros/pedsim_simulator/scenarios/warehouse'
-    SHELFS, DP, KITCHEN = readScenario()
+    SHELFS, DP, KITCHEN, CHARGING_STATION = readScenario()
     BATTERY_LEVEL = None
     BATTERY_ISCHARGING = None
     
-    rospy.Subscriber("/hrisim/tiago_battery", BatteryStatus, cb_battery)
+    rospy.Subscriber("/hrisim/robot_battery", BatteryStatus, cb_battery)
 
     p = PNPCmd()
 

@@ -4,6 +4,7 @@ Panels:
     Name: Displays
     Property Tree Widget:
       Expanded:
+        - /Robot1/Info1
         - /Planning1/Base1/Global1
         - /Planning1/Base1/Global1/Plan1
         - /Mapping1/Map1
@@ -311,7 +312,7 @@ Visualization Manager:
           Marker Topic: twist_marker
           Name: Twist
           Namespaces:
-            {}
+            "": true
           Queue Size: 100
           Value: true
         - Class: rviz/Marker
@@ -516,7 +517,7 @@ Visualization Manager:
           Overtake BG Color Properties: false
           Overtake FG Color Properties: false
           Overtake Position Properties: false
-          Topic: /hrisim/otext_tiago_info
+          Topic: /hrisim/otext_robot_info
           Value: true
           font: DejaVu Sans Mono
           height: 50
@@ -985,6 +986,7 @@ Visualization Manager:
           Dynamic Footprint: true
           Dynamics: true
           Footprint: true
+          Info: true
           Mode: true
           Odometry: true
           RobotModel: true
@@ -997,7 +999,6 @@ Visualization Manager:
             Value: true
             Velodyne Cloud: true
             Virtual Obstacles: true
-          Sim Battery Level: true
           TF: true
           Twist: true
           Value: true
@@ -1122,6 +1123,8 @@ Visualization Manager:
           Marker Topic: /pedsim_visualizer/waypoints
           Name: Waypoints
           Namespaces:
+            charging_station: true
+            corr_canteen_1: true
             corr_canteen_2: true
             corr_canteen_3: true
             corr_canteen_4: true
