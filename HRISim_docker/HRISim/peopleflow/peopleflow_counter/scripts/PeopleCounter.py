@@ -71,6 +71,7 @@ if __name__ == '__main__':
     rate = rospy.Rate(10)  # 10 Hz
     SCENARIO = str(rospy.get_param("/peopleflow_manager/scenario"))
     WPS = ros_utils.wait_for_param("/peopleflow/wps")
+    ros_utils.wait_for_param("/peopleflow/timeday")
 
     PC = PeopleCounter()
     

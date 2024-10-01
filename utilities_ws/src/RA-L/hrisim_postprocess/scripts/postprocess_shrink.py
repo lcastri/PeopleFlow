@@ -75,7 +75,7 @@ class TOD(Enum):
     MORNING = "morning"
     LUNCH = "lunch"
     AFTERNOON = "afternoon"
-    QUIT = "quit"
+    QUITTING = "quitting"
     OFF = "off"
 
 TODS = {
@@ -83,7 +83,7 @@ TODS = {
     TOD.MORNING.value: 1,
     TOD.LUNCH.value: 2,
     TOD.AFTERNOON.value: 3,
-    TOD.QUIT.value: 4,
+    TOD.QUITTING.value: 4,
     TOD.OFF.value: 5
 }
 
@@ -324,13 +324,15 @@ class DataManager():
         self.robot.closest_wp = WPS[wp.data]
         
 
-def save_data_to_csv(data_rows, filename, csv_path, wps, general_columns_name):
+def save_data_to_csv(data_rows, filename, csv_path, wps):
+    general_columns_name = ['ros_time', 'pf_elapsed_time', 'time_of_day', 'r_v', 'g_x', 'g_y', 'r_T', 'r_battery', 'is_charging']
     df = pd.DataFrame(data_rows)
     df.to_csv(f"{csv_path}/{filename}.csv", index=False)
+    del df
     rospy.logwarn(f"Saved {filename}.csv")
 
     # Save WP-specific DataFrames
-    for wp_id, np in wps.items():
+    for wp_id in wps.keys():
         wp_df = pd.DataFrame(
             [{key: row[key] for key in row if key in (general_columns_name + [f"{wp_id}_np", f"{wp_id}_pd", f"{wp_id}_bac"])} for row in data_rows]
         )
@@ -339,9 +341,9 @@ def save_data_to_csv(data_rows, filename, csv_path, wps, general_columns_name):
         rospy.logwarn(f"Saved {wp_filename}")
 
 
-def shutdown_callback(data_rows, bagname, current_time_of_day, csv_path, data, general_columns_name):
+def shutdown_callback(data_rows, bagname, csv_path, data):
     rospy.logwarn("Shutting down and saving data.")
-    filename = f"{bagname}_{current_time_of_day}"
+    filename = f"{bagname}_{TIMEOFTHEDAY}"
     
     if data.robot.taskOn and not data.robot.goalReached:
         goal_data = {'x': data.robot.gx, 'y': data.robot.gy}
@@ -352,7 +354,7 @@ def shutdown_callback(data_rows, bagname, current_time_of_day, csv_path, data, g
             json.dump(goal_data, json_file)
         rospy.loginfo(f"Saved goal coordinates to {json_filename}")
     
-    save_data_to_csv(data_rows, filename, csv_path, data.WPs, general_columns_name)
+    save_data_to_csv(data_rows, filename, csv_path, data.WPs)
     
     
 def check_rosbag_status():
@@ -383,10 +385,15 @@ def readScenario():
         wps[waypoint_id] = {'x': x, 'y': y, 'r': r}
     
     return wps
-        
+
+
+def value2key(my_dict, val):
+    key = next(k for k, v in my_dict.items() if v == val)
+    return key
 
 
 if __name__ == '__main__':
+    
     # Init node
     rospy.init_node(NODE_NAME)
 
@@ -401,6 +408,7 @@ if __name__ == '__main__':
     TIMEOFTHEDAY = rospy.get_param('~time_of_the_day')
     LOADGOAL = rospy.get_param('~load_goal')
     WPS = readScenario()
+    rospy.logwarn(f"Running postprocess_shrink.py on TimeOfTheDay: {TIMEOFTHEDAY}")
     if LOADGOAL:
         goal_file = os.path.join(CSV_PATH, "goal.json")
         if os.path.exists(goal_file):
@@ -423,13 +431,12 @@ if __name__ == '__main__':
     data_handler = DataManager(gx = G['x'], gy = G['y'])
 
     # Initialize variables to track timeOfDay
-    current_time_of_day = None
     recording = False
     data_rows = []  # List to store collected data for each segment
 
     # Register shutdown callback
     rospy.on_shutdown(lambda: shutdown_callback(
-        data_rows, BAGNAME, current_time_of_day, CSV_PATH, data_handler, GENERAL_COLUMNS_NAME))
+        data_rows, BAGNAME, CSV_PATH, data_handler))
     
     # Start the status checker in a separate thread
     status_thread = threading.Thread(target=check_rosbag_status)
@@ -442,14 +449,13 @@ if __name__ == '__main__':
             continue
 
         # Start recording when timeOfDay matches the specified time
-        if not recording and data_handler.timeOfDay == TIMEOFTHEDAY:
-            current_time_of_day = data_handler.timeOfDay
+        if not recording and value2key(TODS, data_handler.timeOfDay) == TIMEOFTHEDAY:
             rospy.logwarn(f"Started recording at {TIMEOFTHEDAY}")
             recording = True
 
         # Stop recording and trigger shutdown when timeOfDay changes
-        if recording and data_handler.timeOfDay != TIMEOFTHEDAY:
-            rospy.logwarn(f"Time of day changed from {TIMEOFTHEDAY} to {data_handler.timeOfDay}, triggering shutdown")
+        if recording and value2key(TODS, data_handler.timeOfDay) != TIMEOFTHEDAY:
+            rospy.logwarn(f"Time of day changed from {TIMEOFTHEDAY} to {value2key(TODS, data_handler.timeOfDay)}, triggering shutdown")
             rospy.signal_shutdown("Time of day changed")
 
         if recording:
@@ -458,31 +464,15 @@ if __name__ == '__main__':
                 'ros_time': data_handler.rostime,
                 'pf_elapsed_time': data_handler.elapsed,
                 'time_of_day': data_handler.timeOfDay,
-                'hhmmss': data_handler.hhmmss,
-                'r_wp': data_handler.robot.closest_wp,
-                'r_x': data_handler.robot.x,
-                'r_y': data_handler.robot.y,
-                'r_yaw': data_handler.robot.yaw,
                 'r_v': data_handler.robot.v,
                 'g_x': data_handler.robot.gx,
                 'g_y': data_handler.robot.gy,
-                'r_task': data_handler.robot.task,
                 'r_T': data_handler.robot.task_result,
                 'r_battery': data_handler.robot.battery_level,
                 'is_charging': 1 if data_handler.robot.is_charging else 0,
-                'people_at_work': data_handler.peopleAtWork,
             }
             
             data_handler.robot.task_result = TaskResult.WIP.value
-
-            # Collect agents' data
-            for agent_id, agent in data_handler.agents.items():
-                data_row[f'a{agent_id}_x'] = agent.x
-                data_row[f'a{agent_id}_y'] = agent.y
-                data_row[f'a{agent_id}_yaw'] = agent.yaw
-                data_row[f'a{agent_id}_v'] = agent.v
-
-            GENERAL_COLUMNS_NAME = list(data_row.keys())
 
             # Collect WP' data
             for wp_id in data_handler.WPs.keys():

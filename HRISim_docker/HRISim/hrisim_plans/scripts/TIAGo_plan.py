@@ -14,6 +14,7 @@ from pnp_cmd_ros import *
 from robot_msgs.msg import BatteryStatus
 from move_base_msgs.msg import MoveBaseAction
 import actionlib
+import hrisim_util.ros_utils as ros_utils
 
 DP = None
 SHELFS_NAME = ["shelf1", "shelf2", "shelf3", "shelf4", "shelf5", "shelf6"]
@@ -49,10 +50,17 @@ def readScenario():
     return SHELFS, DP, KITCHEN, CHARGING_STATION
 
 
+def ac_goto(p, dest):
+    p.action_cmd('goto', "_".join([str(coord) for coord in dest]), 'start')
+    while not rospy.get_param('/hri/robot_busy'): 
+        rospy.sleep(0.1)
+
+
 def Plan(p):
     global wp
-    rospy.set_param('/hri/robot_goalreached', True)
-    destination = None
+    ros_utils.wait_for_param("/peopleflow/timeday")
+    rospy.set_param('/hri/robot_busy', False)
+    gotoDP = False
     while True:
         
         if not rospy.get_param('/robot_battery/is_charging') and BATTERY_LEVEL <= 20:
@@ -60,14 +68,14 @@ def Plan(p):
             client = actionlib.SimpleActionClient('/move_base', MoveBaseAction)
             client.wait_for_server()
             client.cancel_all_goals()
+            p.action_cmd('goto', "", 'interrupt')
                 
-            while not rospy.get_param('/hri/robot_goalreached'): 
+            while rospy.get_param('/hri/robot_busy'): 
                 rospy.sleep(0.1)
                                 
-            rospy.set_param('/hri/robot_goalreached', False)
             p.exec_action('goto', '_'.join([str(coord) for coord in CHARGING_STATION]))
                 
-            while not rospy.get_param('/hri/robot_goalreached'): 
+            while rospy.get_param('/hri/robot_busy'): 
                 rospy.sleep(0.1)
                 
             rospy.set_param('/robot_battery/is_charging', True)
@@ -77,46 +85,32 @@ def Plan(p):
         elif BATTERY_LEVEL == 100 and rospy.get_param('/robot_battery/is_charging'):
             rospy.logwarn("Battery fully charged..")
             rospy.set_param('/robot_battery/is_charging', False)
-            
-        elif not rospy.get_param('/robot_battery/is_charging'):
-                        
-            if rospy.get_param('/hri/robot_goalreached'):
-                rospy.set_param('/hri/robot_goalreached', False)
+        
+        elif not rospy.get_param('/robot_battery/is_charging') and not rospy.get_param('/hri/robot_busy'):                        
+            p.action_cmd('goto', "", 'interrupt')               
                 
-                
-                if rospy.get_param('/peopleflow/timeday') in ['starting', 'morning', 'lunch']:
-                    TASK = "delivery"
-                    # Pick and Place
-                    if destination in SHELFS_NAME:
-                        p.action_cmd('goto', "_".join([str(coord) for coord in DP]), 'start')
-                        destination = 'dp'
+            if rospy.get_param('/peopleflow/timeday') in ['starting', 'morning', 'lunch']:
+                # Pick and Place
+                TASK = "delivery"
+                if gotoDP:
+                    DEST = DP
+                    gotoDP = False
                         
-                    else:
-                        destination = random.choice(SHELFS_NAME)
-                        p.action_cmd('goto', "_".join([str(coord) for coord in SHELFS[destination]]), 'start')
+                else:
+                    gotoDP = True
+                    DEST = SHELFS[random.choice(SHELFS_NAME)]
                     
+            elif rospy.get_param('/peopleflow/timeday') in ['afternoon']:
+                # Inventory
+                TASK = "inventory"
+                DEST = SHELFS[random.choice(SHELFS_NAME)]
                     
-                # elif rospy.get_param('/peopleflow/timeday') in ['lunch']:
-                #     rospy.set_param('/hrisim/robot_task', "waiter")
-                #     # Waiter
-                #     destination = random.choice(KITCHEN_NAME)
-                #     p.action_cmd('goto', "_".join([str(coord) for coord in KITCHEN[destination]]), 'start')
-                    
-                    
-                elif rospy.get_param('/peopleflow/timeday') in ['afternoon']:
-                    TASK = "inventory"
-                    # Inventory
-                    destination = random.choice(SHELFS_NAME)
-                    p.action_cmd('goto', "_".join([str(coord) for coord in SHELFS[destination]]), 'start')
-                    
-                    
-                elif rospy.get_param('/peopleflow/timeday') in ['quitting', 'off']:
-                    TASK = "cleaning"
-                    # Cleaner
-                    wp = wp + 1 if wp + 1 < len(CLEANING_PATH) else 0
-                    rospy.logerr(f"WP index {wp}")
-                    path = (CLEANING_PATH[wp][0], CLEANING_PATH[wp][1], 0)
-                    p.action_cmd('goto', "_".join([str(coord) for coord in path]), 'start')
+            elif rospy.get_param('/peopleflow/timeday') in ['quitting', 'off']:
+                # Cleaner
+                TASK = "cleaning"
+                wp = wp + 1 if wp + 1 < len(CLEANING_PATH) else 0
+                DEST = (CLEANING_PATH[wp][0], CLEANING_PATH[wp][1], 0)
+            ac_goto(p, DEST)
         rospy.set_param('/hrisim/robot_task', TASK)
 
                         

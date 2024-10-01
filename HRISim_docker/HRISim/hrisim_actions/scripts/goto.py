@@ -17,6 +17,7 @@ import math
 class goto(AbstractAction):
 
     def _start_action(self):
+        rospy.set_param('/hri/robot_busy', True)
         rospy.logwarn(f"STARTED goto " + " ".join(self.params))
 
         if len(self.params) < 1:
@@ -39,8 +40,14 @@ class goto(AbstractAction):
             rospy.loginfo("Waiting for goTo result...")
             self.client.wait_for_result()
             
-            rospy.loginfo("Result obtained")
-            if self.client.get_result(): self._on_goTo_done()
+            # Check result state
+            result_state = self.client.get_state()
+            if result_state == actionlib.GoalStatus.SUCCEEDED:
+                rospy.loginfo("Goal reached successfully!")
+                self._on_goTo_done()  # You can keep this if needed
+            else:
+                rospy.logwarn(f"Goal failed with state: {result_state}")
+                self._stop_action()  # You can keep this if needed
 
     def _on_goTo_done(self):
         self.params.append("done")
@@ -54,7 +61,8 @@ class goto(AbstractAction):
     @classmethod
     def is_goal_reached(cls, params):
         reached = False
-        if len(params) > 0 and params[-1] == "done":
-            rospy.set_param('/hri/robot_goalreached', True)
-            reached = True
+        if len(params) > 0:
+            if params[-1] == "done" or params[-1] == "interrupted":
+                rospy.set_param('/hri/robot_busy', False)
+                reached = True
         return reached
