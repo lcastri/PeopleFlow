@@ -193,9 +193,9 @@ WPS = {
 }
 
 class Robot():
-    def __init__(self, gx, gy) -> None:
-        self.x = 0
-        self.y = 0
+    def __init__(self, x, y, gx, gy) -> None:
+        self.x = x
+        self.y = y
         self.yaw = 0
         self.v = 0
         self.gx = gx
@@ -229,12 +229,12 @@ class DataManager():
     Class handling data
     """
     
-    def __init__(self, gx = NOGOAL, gy = NOGOAL):
+    def __init__(self, x = 0, y = 0, gx = NOGOAL, gy = NOGOAL):
         """
         Class constructor. Init publishers and subscribers
         """
         self.rostime = 0
-        self.robot = Robot(gx, gy)
+        self.robot = Robot(x, y, gx, gy)
         self.agents = {}
         
         self.WPs = {}
@@ -297,7 +297,7 @@ class DataManager():
             
             
     def cb_time(self, t: pT):
-        self.timeOfDay = TODS[t.time_of_the_day.data]
+        self.timeOfDay = TODS[t.time_of_the_day.data] if t.time_of_the_day.data is not None else 'none'
         self.hhmmss = t.hhmmss.data
         self.elapsed = t.elapsed
         
@@ -325,7 +325,7 @@ class DataManager():
         
 
 def save_data_to_csv(data_rows, filename, csv_path, wps):
-    general_columns_name = ['ros_time', 'pf_elapsed_time', 'time_of_day', 'r_v', 'g_x', 'g_y', 'r_T', 'r_battery', 'is_charging']
+    general_columns_name = ['time_of_day', 'r_v', 'r_T', 'r_battery']
     df = pd.DataFrame(data_rows)
     df.to_csv(f"{csv_path}/{filename}.csv", index=False)
     del df
@@ -336,6 +336,14 @@ def save_data_to_csv(data_rows, filename, csv_path, wps):
         wp_df = pd.DataFrame(
             [{key: row[key] for key in row if key in (general_columns_name + [f"{wp_id}_np", f"{wp_id}_pd", f"{wp_id}_bac"])} for row in data_rows]
         )
+        
+        # Rename the WP-specific columns
+        wp_df = wp_df.rename(columns={f"{wp_id}_np": "np", f"{wp_id}_pd": "pd", f"{wp_id}_bac": "bac"})
+        
+        # Add the constant column "wp" with the value wp_id
+        rospy.logwarn(f"Assigning wp value: {WPS[wp_id]} to wp_id: {wp_id}")
+        wp_df["wp"] = WPS[wp_id]
+        
         wp_filename = f"{filename}_{wp_id}.csv"
         wp_df.to_csv(f"{csv_path}/{wp_filename}", index=False)
         rospy.logwarn(f"Saved {wp_filename}")
@@ -346,7 +354,8 @@ def shutdown_callback(data_rows, bagname, csv_path, data):
     filename = f"{bagname}_{TIMEOFTHEDAY}"
     
     if data.robot.taskOn and not data.robot.goalReached:
-        goal_data = {'x': data.robot.gx, 'y': data.robot.gy}
+        goal_data = {'x': data.robot.x, 'y': data.robot.y,
+                     'gx': data.robot.gx, 'gy': data.robot.gy}
         json_filename = os.path.join(csv_path, "goal.json")
 
         # Save the goal data into a JSON file
@@ -416,7 +425,7 @@ if __name__ == '__main__':
                 G = json.load(json_file)
             rospy.logwarn(f"Loaded goal coordinates from {goal_file}")
     else:
-        G = {'x': NOGOAL, 'y': NOGOAL}
+        G = {'x': 0, 'y': 0, 'gx': NOGOAL, 'gy': NOGOAL}
     
     # Map waypoints to clusters
     WP_AREA = {}
@@ -428,7 +437,7 @@ if __name__ == '__main__':
                 break
 
 
-    data_handler = DataManager(gx = G['x'], gy = G['y'])
+    data_handler = DataManager(x = G['x'], y = G['y'], gx = G['gx'], gy = G['gy'])
 
     # Initialize variables to track timeOfDay
     recording = False
@@ -454,9 +463,12 @@ if __name__ == '__main__':
             recording = True
 
         # Stop recording and trigger shutdown when timeOfDay changes
-        if recording and value2key(TODS, data_handler.timeOfDay) != TIMEOFTHEDAY:
-            rospy.logwarn(f"Time of day changed from {TIMEOFTHEDAY} to {value2key(TODS, data_handler.timeOfDay)}, triggering shutdown")
-            rospy.signal_shutdown("Time of day changed")
+        if recording and (data_handler.timeOfDay == 'none' or value2key(TODS, data_handler.timeOfDay) != TIMEOFTHEDAY):
+            if data_handler.timeOfDay == 'none':
+                rospy.logwarn("Rosbag ended!, triggering shutdown")
+            else:
+                rospy.logwarn(f"Time of day changed from {TIMEOFTHEDAY} to {value2key(TODS, data_handler.timeOfDay)}, triggering shutdown")
+                rospy.signal_shutdown("Time of day changed")
 
         if recording:
             # Collect data for the current time step
@@ -464,6 +476,8 @@ if __name__ == '__main__':
                 'ros_time': data_handler.rostime,
                 'pf_elapsed_time': data_handler.elapsed,
                 'time_of_day': data_handler.timeOfDay,
+                'r_x': data_handler.robot.x,
+                'r_y': data_handler.robot.y,
                 'r_v': data_handler.robot.v,
                 'g_x': data_handler.robot.gx,
                 'g_y': data_handler.robot.gy,

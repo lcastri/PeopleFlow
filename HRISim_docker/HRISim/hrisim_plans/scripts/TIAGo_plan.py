@@ -121,7 +121,7 @@ def cb_battery(msg):
     BATTERY_ISCHARGING = bool(msg.is_charging.data)
     
 if __name__ == "__main__":
-    while not rospy.get_param("/pnp_ros/ready", False):
+    while not ros_utils.wait_for_param("/pnp_ros/ready"):
         rospy.sleep(0.1)
         
     wp = -1
