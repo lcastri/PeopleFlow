@@ -57,6 +57,9 @@ def ac_goto(p, dest):
 
 
 def Plan(p):
+    while not ros_utils.wait_for_param("/pnp_ros/ready"):
+        rospy.sleep(0.1)
+        
     global wp
     ros_utils.wait_for_param("/peopleflow/timeday")
     rospy.set_param('/hri/robot_busy', False)
@@ -120,10 +123,7 @@ def cb_battery(msg):
     BATTERY_LEVEL = float(msg.level.data)
     BATTERY_ISCHARGING = bool(msg.is_charging.data)
     
-if __name__ == "__main__":
-    while not ros_utils.wait_for_param("/pnp_ros/ready"):
-        rospy.sleep(0.1)
-        
+if __name__ == "__main__":  
     wp = -1
     SCENARIO = '/root/ros_ws/src/pedsim_ros/pedsim_simulator/scenarios/warehouse'
     SHELFS, DP, KITCHEN, CHARGING_STATION = readScenario()
