@@ -58,7 +58,7 @@ init_cmd: |
   # robot_mode == 2: SOCIAL mode means the robot's velocity is set by the social force just like the other agents -->
   export_default SCENARIO "warehouse"
   export_default ALLOW_TASK "true"
-  export_default RECORD "true"
+  export_default RECORD "false"
   export_default STARTING_ELAPSED "8"
   export_default MAX_TASKTIME "15"
   export_default SCALING_FACTOR "1"
@@ -72,7 +72,7 @@ init_cmd: |
   export_default SPAWN_AGENT "true"
   export_default SPAWN_TELEOP_AGENT "false"
   export_default SPAWN_TIMEOUT "10.0"
-  export_default FORCE_OBSTACLE "30.0"
+  export_default FORCE_OBSTACLE "25.0"
   export_default SIGMA_OBSTACLE "0.25"
   export_default FORCE_SOCIAL "10.0"
 
@@ -92,8 +92,9 @@ windows:
     panes:
       - 'roslaunch hrisim_gazebo simulation.launch gui:=$GUI robot:=$TIAGO_TYPE public_sim:=true world:=$WORLD TIAGO_x:=$TIAGO_x TIAGO_y:=$TIAGO_y TIAGO_z:=$TIAGO_z TIAGO_R:=$TIAGO_R TIAGO_P:=$TIAGO_P TIAGO_Y:=$TIAGO_Y spawn_agent:=$SPAWN_AGENT spawn_teleop_agent:=$SPAWN_TELEOP_AGENT spawn_timeout:=$SPAWN_TIMEOUT'
       - 'rviz -d "$(rospack find hrisim_rviz)/config/rviz/hrisim_rviz.rviz" --fixed-frame map'
-      # - 'rqt --standalone Peopleflow'
+      - 'rqt --standalone Peopleflow'
       - 'rosrun robot_info robot_taskinfo.py'
+      - 'rosrun peopleflow_info peopleflow_info.py'
       - 'roscd hrisim_gazebo && ./physics_params.sh $MAX_STEP_SIZE $REAL_TIME_UPDATE_RATE'
   - name: robot
     tags: ['robot']
@@ -113,9 +114,13 @@ windows:
   - name: scenario
     tags: ['exp']
     panes:
-      - 'roslaunch peopleflow_manager peopleflow_bringup.launch scenario:=$SCENARIO allow_task:=$ALLOW_TASK max_tasktime:=$MAX_TASKTIME scaling_factor:=$SCALING_FACTOR record:=$RECORD starting_elapsed:=$STARTING_ELAPSED'
+      - 'roslaunch peopleflow_manager peopleflow_manager.launch scenario:=$SCENARIO scaling_factor:=$SCALING_FACTOR starting_elapsed:=$STARTING_ELAPSED'
+      - 'roslaunch peopleflow_pedsim_bridge peopleflow_pedsim.launch scenario:=$SCENARIO allow_task:=$ALLOW_TASK max_tasktime:=$MAX_TASKTIME'
+      # - 'roslaunch peopleflow_manager peopleflow_bringup.launch scenario:=$SCENARIO allow_task:=$ALLOW_TASK max_tasktime:=$MAX_TASKTIME scaling_factor:=$SCALING_FACTOR record:=$RECORD starting_elapsed:=$STARTING_ELAPSED'
       - 'roslaunch pedsim_simulator mysimulator.launch scenario:=$SCENARIO robot_mode:=$HUMAN_MODE max_robot_speed:=$MAX_HUMAN_SPEED robot_radius:=$ROBOT_RADIUS scaling_factor:=$SCALING_FACTOR is_stuck_threshold:=$IS_STUCK_THRESHOLD force_obstacle:=$FORCE_OBSTACLE sigma_obstacle:=$SIGMA_OBSTACLE force_social:=$FORCE_SOCIAL with_teleop_ped:=$WITH_TELEOP_PED ped_x:=$HUMAN_x ped_y:=$HUMAN_y ped_theta:=0'
   - name: data
     tags: ['exp']
     panes:
       - 'rosrun peopleflow_counter PeopleCounter.py'
+      # - 'rosrun hrisim_recording record.py'
+      - if [[ "$RECORD" == "true" ]]; then rosrun hrisim_recording record.py; fi

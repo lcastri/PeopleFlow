@@ -3,13 +3,19 @@
 import rospy
 from geometry_msgs.msg import Pose
 import tf
+import time
+
+
+class ParameterTimeoutError(Exception):
+    pass
 
 
 def wait_for_param(param_name, timeout=30):
-    rospy.logwarn(f"Waiting for parameter: {param_name}")
+    start_time = time.time()
     while not rospy.has_param(param_name):
-        rospy.sleep(0.1)
-    rospy.loginfo(f"Parameter {param_name} found!")
+        if time.time() - start_time > timeout:
+            raise ParameterTimeoutError(f"Timeout exceeded while waiting for parameter: {param_name}")
+    # rospy.loginfo(f"Parameter {param_name} found!")
     return rospy.get_param(param_name)
 
 

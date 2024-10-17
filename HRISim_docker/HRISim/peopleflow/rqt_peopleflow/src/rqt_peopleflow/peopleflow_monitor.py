@@ -66,8 +66,8 @@ class PeopleflowPlugin(Plugin):
 
             # Update or create child items
             self.update_or_create_child(agent_item, 0, f"ID: {agent.id}")
-            self.update_or_create_child(agent_item, 1, f"Starting Time: {agent.starting_time}")
-            self.update_or_create_child(agent_item, 2, f"Exit Time: {agent.exit_time}")
+            self.update_or_create_child(agent_item, 1, f"Starting Time: {agent.starting_time.data}")
+            self.update_or_create_child(agent_item, 2, f"Exit Time: {agent.exit_time.data}")
             self.update_or_create_child(agent_item, 3, f"Position: x={round(agent.position.x, 2)}, y={round(agent.position.y, 2)}")
             self.update_or_create_child(agent_item, 4, f"Is Stuck: {agent.is_stuck.data}")
             self.update_or_create_child(agent_item, 5, f"At Work: {agent.at_work.data}")

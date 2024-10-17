@@ -27,6 +27,7 @@ NODE_NAME = 'hrisim_postprocess'
 NODE_RATE = 10 #Hz
 GOAL_REACHED_THRES = 0.2
 NOGOAL = -1000
+STOP = False
 
 AREAS = {
     'shelves_12': Polygon([(-18.839, 9), (-10.5, 9), (-10.5, 3), (-18.839, 3)]),
@@ -233,6 +234,8 @@ class DataManager():
         """
         Class constructor. Init publishers and subscribers
         """
+    
+        self.last_clock_time = time.time()
         self.rostime = 0
         self.robot = Robot(x, y, gx, gy)
         self.agents = {}
@@ -258,10 +261,11 @@ class DataManager():
         rospy.Subscriber("/hrisim/robot_battery", BatteryStatus, self.cb_robot_battery)
         rospy.Subscriber("/hrisim/robot_bac", BatteryAtChargers, self.cb_robot_bac)
         rospy.Subscriber("/hrisim/robot_closest_wp", String, self.cb_robot_closest_wp)
-           
+                   
             
     def cb_clock(self, clock: Clock):
         self.rostime = clock.clock.to_sec()
+        self.last_clock_time = time.time()
         
         
     def cb_robot_pose(self, pose: PoseWithCovarianceStamped):
@@ -323,44 +327,18 @@ class DataManager():
     def cb_robot_closest_wp(self, wp: String):
         self.robot.closest_wp = WPS[wp.data]
         
+        
+def isFinished(data_handler):
+    while not rospy.is_shutdown():
 
-def save_data_to_csv(data_rows, filename, csv_path, wps):
-    # # Initialize R_T list to store values
-    # r_t_values = []
-    
-    # # Initialize previous goal coordinates
-    # previous_gx = None
-    # previous_gy = None
-    
-    # # Loop through data_rows to compute R_T
-    # for index, row in enumerate(data_rows):
-    #     current_gx = row['G_X']
-    #     current_gy = row['G_Y']
+        # rospy.logerr(f"now: {time.time()} - last: {data_handler.last_clock_time} = {time.time() - data_handler.last_clock_time}")
+        if time.time() - data_handler.last_clock_time > 5:
+            rospy.logerr("Threshooooold")
+            rospy.signal_shutdown("Time of day changed or rosbag finished.")
+            
 
-    #     # Initialize R_T with default value
-    #     r_t = 0
-
-    #     # Check if it's not the first iteration to avoid accessing previous indices
-    #     if previous_gx is not None and previous_gy is not None:
-    #         # Check if the goal has changed
-    #         if (current_gx != previous_gx or current_gy != previous_gy):
-    #             # Check if the previous goal was reached within the threshold
-    #             if math.sqrt((row['R_X'] - previous_gx) ** 2 + (row['R_Y'] - previous_gy) ** 2) <= GOAL_REACHED_THRES:
-    #                 r_t = 1  # Previous goal was reached
-    #             else:
-    #                 r_t = -1  # Previous goal was not reached
-
-    #     # Append the computed R_T to the list
-    #     r_t_values.append(r_t)
-
-    #     # Update previous coordinates for the next iteration
-    #     previous_gx = current_gx
-    #     previous_gy = current_gy
-    
-    # # Add R_T values to data_rows
-    # for i in range(len(data_rows)):
-    #     data_rows[i]['R_T'] = r_t_values[i]
-    
+def save_data_to_csv(data_rows, filename, csv_path, wps):   
+    rospy.logwarn("Saving data into CSV files..")
     
     # Generating Task Result Column
     df = pd.DataFrame(data_rows)
@@ -370,8 +348,7 @@ def save_data_to_csv(data_rows, filename, csv_path, wps):
     rospy.logwarn(f"Saved {filename}.csv")
 
     # Save WP-specific DataFrames
-    general_columns_name = ['TOD', 'R_V', 'R_T', 'R_B']
-    # general_columns_name = ['TOD', 'R_V', 'R_B']
+    general_columns_name = ['pf_elapsed_time', 'TOD', 'R_V', 'R_T', 'R_B']
     for wp_id in wps.keys():
         wp_df = pd.DataFrame(
             [{key: row[key] for key in row if key in (general_columns_name + [f"{wp_id}_NP", f"{wp_id}_PD", f"{wp_id}_BAC"])} for row in data_rows]
@@ -388,11 +365,11 @@ def save_data_to_csv(data_rows, filename, csv_path, wps):
         rospy.logwarn(f"Saved {wp_filename}")
 
 
-def shutdown_callback(data_rows, bagname, csv_path, data):
+def shutdown_callback(data_rows, bagname, csv_path, data, savegoal = True):
     rospy.logwarn("Shutting down and saving data.")
     filename = f"{bagname}_{TIMEOFTHEDAY}"
     
-    if data.robot.taskOn and not data.robot.goalReached:
+    if savegoal and data.robot.taskOn and not data.robot.goalReached:
         goal_data = {'x': data.robot.x, 'y': data.robot.y,
                      'gx': data.robot.gx, 'gy': data.robot.gy}
         json_filename = os.path.join(csv_path, "goal.json")
@@ -404,20 +381,6 @@ def shutdown_callback(data_rows, bagname, csv_path, data):
     
     save_data_to_csv(data_rows, filename, csv_path, data.WPs)
     
-    
-def check_rosbag_status():
-    while not rospy.is_shutdown():
-        try:
-            rosnode_list = subprocess.check_output(['rosnode', 'list']).decode('utf-8').splitlines()
-            if '/rosbag_play_data' not in rosnode_list:
-                rospy.logwarn("Rosbag player node is not running!")
-                rospy.signal_shutdown("Rosbag player died")
-                break
-        except subprocess.CalledProcessError as e:
-            rospy.logerr(f"Failed to check rosnode status: {e}")
-        
-        time.sleep(1)  # Check every second
-
 
 def readScenario():
     # Load and parse the XML file
@@ -456,7 +419,7 @@ if __name__ == '__main__':
     TIMEOFTHEDAY = rospy.get_param('~time_of_the_day')
     LOADGOAL = rospy.get_param('~load_goal')
     WPS_COORD = readScenario()
-    rospy.logwarn(f"Running postprocess_shrink.py on TimeOfTheDay: {TIMEOFTHEDAY}")
+    rospy.logwarn(f"Running data_extractor_shrink.py on TimeOfTheDay: {TIMEOFTHEDAY}")
     if LOADGOAL:
         goal_file = os.path.join(CSV_PATH, "goal.json")
         if os.path.exists(goal_file):
@@ -477,20 +440,19 @@ if __name__ == '__main__':
 
 
     data_handler = DataManager(x = G['x'], y = G['y'], gx = G['gx'], gy = G['gy'])
+    
+    # Start the clock monitor in a separate thread
+    thread = threading.Thread(target=isFinished, args=(data_handler,))
+    thread.daemon = True  # Daemonize the thread to shut down with the program
+    thread.start()
 
     # Initialize variables to track timeOfDay
     recording = False
     data_rows = []  # List to store collected data for each segment
-
-    # Register shutdown callback
-    rospy.on_shutdown(lambda: shutdown_callback(
-        data_rows, BAGNAME, CSV_PATH, data_handler))
     
-    # Start the status checker in a separate thread
-    status_thread = threading.Thread(target=check_rosbag_status)
-    status_thread.daemon = True  # Allows the thread to exit when the main program exits
-    status_thread.start()
-
+    # Register the shutdown callback
+    rospy.on_shutdown(lambda: shutdown_callback(data_rows, BAGNAME, CSV_PATH, data_handler))
+    
     while not rospy.is_shutdown():
 
         if data_handler.timeOfDay == '':
@@ -502,12 +464,13 @@ if __name__ == '__main__':
             recording = True
 
         # Stop recording and trigger shutdown when timeOfDay changes
-        if recording and (data_handler.timeOfDay == 'none' or value2key(TODS, data_handler.timeOfDay) != TIMEOFTHEDAY):
+        if recording and (value2key(TODS, data_handler.timeOfDay) != TIMEOFTHEDAY):
             if data_handler.timeOfDay == 'none':
                 rospy.logwarn("Rosbag ended!, triggering shutdown")
             else:
                 rospy.logwarn(f"Time of day changed from {TIMEOFTHEDAY} to {value2key(TODS, data_handler.timeOfDay)}, triggering shutdown")
-            rospy.signal_shutdown("Time of day changed")
+            rospy.signal_shutdown("Time of day changed or rosbag finished.")
+
 
         if recording:
             # Collect data for the current time step
@@ -521,11 +484,11 @@ if __name__ == '__main__':
                 'R_V': data_handler.robot.v,
                 'G_X': data_handler.robot.gx,
                 'G_Y': data_handler.robot.gy,
-                'R_T': data_handler.robot.task_result,
+                'R_T': data_handler.robot.task_result if len(data_rows) > 0 else 0,
                 'R_B': data_handler.robot.battery_level,
                 'is_charging': 1 if data_handler.robot.is_charging else 0,
             }
-            
+                        
             data_handler.robot.task_result = TaskResult.WIP.value
             
             # Collect agents' data

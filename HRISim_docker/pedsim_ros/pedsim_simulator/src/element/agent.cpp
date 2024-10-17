@@ -172,6 +172,7 @@ Ped::Twaypoint* Agent::updateDestination() {
         srv.request.is_stuck = is_stuck;
         if (destination_client.call(srv)) {
           task_duration = srv.response.task_duration;
+          ROS_ERROR("Agent %d task duration %d", getId(), task_duration);
           std::string dest_name = srv.response.destination_id;
           initialTime_dest = currentTimeSec;
           if (doesDestinationExist(dest_name)) {

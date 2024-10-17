@@ -1,17 +1,18 @@
 import copy
+import random
 import networkx as nx
 from scipy import stats
 from geometry_msgs.msg import Point
 import numpy as np
-
 import rospy
 
-
 class Agent:
-    def __init__(self, id, schedule, graph) -> None:
+    def __init__(self, id, schedule, graph, allowTask, maxTaskTime) -> None:
         self.id = id
         self.schedule = schedule
         self.G = graph
+        self.allowTask = allowTask
+        self.maxTaskTime = maxTaskTime
         self.x = None
         self.y = None
         self.path = []
@@ -28,7 +29,7 @@ class Agent:
         self.isQuitting = False
         self.isStuck = False
         self.taskDuration = None
-    
+        
     @property
     def closestWP(self):
         tmp_dist = []
@@ -38,7 +39,11 @@ class Agent:
                 d = ((self.x - pos[wp][0]) ** 2 + (self.y - pos[wp][1]) ** 2) ** 0.5
                 tmp_dist.append(d)            
             return list(self.G.nodes)[np.argmin(tmp_dist)]
-        return None    
+        return None
+    
+    @property
+    def isFree(self):
+        return len(self.path) == 0
         
     @property
     def nextWP(self):
@@ -60,9 +65,14 @@ class Agent:
     def finalDest(self):
         return self.original_path[-1] if self.original_path else None
     
+    def heuristic(self, a, b):
+        pos = nx.get_node_attributes(self.G, 'pos')
+        (x1, y1) = pos[a]
+        (x2, y2) = pos[b]
+        return ((x1 - x2) ** 2 + (y1 - y2) ** 2) ** 0.5
+    
     def selectDestination(self, selected_time, potential_dests):
-        # rospy.logerr(f"Agent {self.id} in {self.closestWP}, with pastFinalDest: {self.pastFinalDest}")
-        destinations = self.schedule[selected_time].dests
+        destinations = self.schedule[selected_time]['dests']
         if self.pastFinalDest is not None and self.pastFinalDest != 'delivery_point': potential_dests.remove(self.pastFinalDest)
         
         # Generate probabilities
@@ -87,7 +97,22 @@ class Agent:
         
         return selected_destination
     
-    def setPath(self, path):
+    
+    def setTask(self, destination, duration = None):
         self.pastFinalDest = self.finalDest if self.finalDest else None
-        self.path = path
-        self.original_path = copy.deepcopy(path)
+        self.path = nx.astar_path(self.G, self.closestWP, destination, heuristic=self.heuristic, weight='weight')
+        self.original_path = copy.deepcopy(self.path)
+        
+        self.taskDuration = {wp: 0 for wp in self.path}
+        if duration is not None:
+            self.taskDuration[self.path[-1]] = duration 
+        
+    
+    def getTaskDuration(self):
+        if self.allowTask:
+            if self.finalDest.startswith("toilet"):
+                return random.randint(2, 4)
+            else:
+                return random.randint(2, self.maxTaskTime)
+        else:
+            return 0
