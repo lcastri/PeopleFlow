@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 
 from math import sqrt
+import random
 import rospy
 from nav_msgs.msg import Odometry
 from geometry_msgs.msg import Vector3Stamped
@@ -41,12 +42,12 @@ class SimBatteryManager():
         self.vel = sqrt(r_v.vector.x**2 + r_v.vector.y**2 + r_v.vector.z**2)
     
     def discharge_battery(self):
-        self.battery_level -= (self.static_consumption + self.K * self.vel**2) * SCALING_FACTOR
+        self.battery_level -= (self.static_consumption + self.K * self.vel**2) * SCALING_FACTOR + random.gauss(0, 0.001)
         if self.battery_level < 0:
             self.battery_level = 0
         
     def charge_battery(self):
-        self.battery_level += (self.charge_rate) * SCALING_FACTOR
+        self.battery_level += (self.charge_rate) * SCALING_FACTOR + random.gauss(0, 0.001)
         if self.battery_level > 100:
             self.battery_level = 100  # Cap at 100%
 
@@ -80,7 +81,7 @@ if __name__ == '__main__':
             
         # Battery
         msg_Battery = BatteryStatus()
-        msg_Battery.level.data = SBM.battery_level        
+        msg_Battery.level.data = SBM.battery_level   
         msg_Battery.is_charging.data = SBM.is_charging        
         battey_pub.publish(msg_Battery)
         

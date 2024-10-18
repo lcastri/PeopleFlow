@@ -2,8 +2,8 @@
 
 Header header
 uint64 id
-int32 starting_time
-int32 exit_time
+std_msgs/String starting_time
+std_msgs/String exit_time
 geometry_msgs/Point position
 std_msgs/Bool is_stuck
 std_msgs/Bool at_work

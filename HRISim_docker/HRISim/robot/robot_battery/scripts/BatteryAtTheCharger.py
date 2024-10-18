@@ -2,9 +2,10 @@
 
 import math
 import pickle
+import random
 import rospy
 from robot_msgs.msg import BatteryStatus, BatteryAtCharger as msgBAC, BatteryAtChargers as msgBACs
-from std_msgs.msg import Float32, String, Header
+from std_msgs.msg import Header
 import networkx as nx
 import hrisim_util.ros_utils as ros_utils
 import json
@@ -22,11 +23,16 @@ class BatteryAtCharger():
         self.BACs = {wp : 0 for wp in WPS}
         rospy.Subscriber("/hrisim/robot_battery", BatteryStatus, self.cb_robot_battery)
         self.bac_pub = rospy.Publisher('/hrisim/robot_bac', msgBACs, queue_size=10)
+        self.past_bac_pub = rospy.Publisher('/hrisim/robot_past_bac', msgBACs, queue_size=10)
+        self.past_battery_level = None
            
     def cb_robot_battery(self, b: BatteryStatus):
+        # ! this uses the current and past battery level
+        
         msg = msgBACs()
         msg.header = Header()
         
+        # ! this handles the current battery level
         battery_level = b.level.data
         for wp in WPS:
             path = nx.astar_path(G, wp, "charging_station", heuristic=heuristic, weight='weight')
@@ -37,7 +43,7 @@ class BatteryAtCharger():
                 distanceToCharger += math.sqrt((WPS[wp_next]['x'] - WPS[wp_current]['x'])**2 + (WPS[wp_next]['y'] - WPS[wp_current]['y'])**2)
             
             timeToCharger = math.ceil(distanceToCharger/ROBOT_MAX_VEL)
-            self.BACs[wp] = battery_level - timeToCharger * (STATIC_CONSUMPTION + DYNAMIC_CONSUMPTION * ROBOT_MAX_VEL**2)
+            self.BACs[wp] = battery_level - timeToCharger * (STATIC_CONSUMPTION + DYNAMIC_CONSUMPTION * ROBOT_MAX_VEL**2) + random.gauss(0, 0.03)
             
             bac = msgBAC()
             bac.BAC.data = self.BACs[wp]
@@ -45,6 +51,56 @@ class BatteryAtCharger():
             msg.BACs.append(bac)
         
         self.bac_pub.publish(msg)      
+        
+        # ! this handles the past battery level
+        if self.past_battery_level is not None:
+            msg = msgBACs()
+            msg.header = Header()
+            
+            for wp in WPS:
+                path = nx.astar_path(G, wp, "charging_station", heuristic=heuristic, weight='weight')
+                distanceToCharger = 0
+                for wp_idx in range(1, len(path)):
+                    wp_current = path[wp_idx-1]
+                    wp_next = path[wp_idx]
+                    distanceToCharger += math.sqrt((WPS[wp_next]['x'] - WPS[wp_current]['x'])**2 + (WPS[wp_next]['y'] - WPS[wp_current]['y'])**2)
+                
+                timeToCharger = math.ceil(distanceToCharger/ROBOT_MAX_VEL)
+                self.BACs[wp] = self.past_battery_level - timeToCharger * (STATIC_CONSUMPTION + DYNAMIC_CONSUMPTION * ROBOT_MAX_VEL**2) + random.gauss(0, 0.03)
+                
+                bac = msgBAC()
+                bac.BAC.data = self.BACs[wp]
+                bac.WP_id.data = wp
+                msg.BACs.append(bac)
+            
+            self.past_bac_pub.publish(msg)
+        
+        self.past_battery_level = b.level.data
+        
+           
+    # def cb_robot_battery(self, b: BatteryStatus):
+    #     # ! this uses the currect battery level
+    #     msg = msgBACs()
+    #     msg.header = Header()
+        
+    #     battery_level = b.level.data
+    #     for wp in WPS:
+    #         path = nx.astar_path(G, wp, "charging_station", heuristic=heuristic, weight='weight')
+    #         distanceToCharger = 0
+    #         for wp_idx in range(1, len(path)):
+    #             wp_current = path[wp_idx-1]
+    #             wp_next = path[wp_idx]
+    #             distanceToCharger += math.sqrt((WPS[wp_next]['x'] - WPS[wp_current]['x'])**2 + (WPS[wp_next]['y'] - WPS[wp_current]['y'])**2)
+            
+    #         timeToCharger = math.ceil(distanceToCharger/ROBOT_MAX_VEL)
+    #         self.BACs[wp] = battery_level - timeToCharger * (STATIC_CONSUMPTION + DYNAMIC_CONSUMPTION * ROBOT_MAX_VEL**2) + random.gauss(0, 0.25)
+            
+    #         bac = msgBAC()
+    #         bac.BAC.data = self.BACs[wp]
+    #         bac.WP_id.data = wp
+    #         msg.BACs.append(bac)
+        
+    #     self.bac_pub.publish(msg)      
         
        
 if __name__ == '__main__':

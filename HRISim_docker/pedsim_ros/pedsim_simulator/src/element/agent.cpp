@@ -147,6 +147,10 @@ Ped::Twaypoint* Agent::updateDestination() {
   ros::Time now = ros::Time::now();
   double currentTimeSec = now.toSec();
 
+  const int MAX_RETRIES = 3;  // Maximum number of retries
+  int retry_count = 0;        // Keep track of retries
+  bool request_successful = false;  // Track success of the request
+
   if (!is_stuck){
     if (task_duration != 0 && initialTime_task == 0) {
       initialTime_task = currentTimeSec;
@@ -170,23 +174,62 @@ Ped::Twaypoint* Agent::updateDestination() {
         srv.request.origin.z = 0.0;
         srv.request.destinations = waypoint_names;
         srv.request.is_stuck = is_stuck;
-        if (destination_client.call(srv)) {
-          task_duration = srv.response.task_duration;
-          std::string dest_name = srv.response.destination_id;
-          initialTime_dest = currentTimeSec;
-          if (doesDestinationExist(dest_name)) {
-            currentDestination = getDestinationByName(dest_name);
+
+        // if (destination_client.call(srv)) {
+        //   task_duration = srv.response.task_duration;
+        //   std::string dest_name = srv.response.destination_id;
+        //   initialTime_dest = currentTimeSec;
+        //   if (doesDestinationExist(dest_name)) {
+        //     currentDestination = getDestinationByName(dest_name);
+        //   } else {
+        //     QString id = QString::fromStdString(dest_name);
+        //     AreaWaypoint* w = new AreaWaypoint(id, srv.response.destination.x, srv.response.destination.y, srv.response.destination_radius);
+        //     w->setBehavior(static_cast<Ped::Twaypoint::Behavior>(0));
+        //     Waypoint* waypointPtr = dynamic_cast<Waypoint*>(w);
+        //     currentDestination = waypointPtr;
+        //   }
+        // } else {
+        //   currentDestination = nullptr;
+        //   ROS_ERROR("Failed to call service GetNextDestination");
+        // }
+        // Retry mechanism for the service call
+        while (retry_count < MAX_RETRIES && !request_successful) {
+          if (destination_client.call(srv)) {
+            request_successful = true;  // Service call was successful
+
+            task_duration = srv.response.task_duration;
+            std::string dest_name = srv.response.destination_id;
+            initialTime_dest = currentTimeSec;
+
+            if (doesDestinationExist(dest_name)) {
+              currentDestination = getDestinationByName(dest_name);
+            } else {
+              // Create new destination
+              QString id = QString::fromStdString(dest_name);
+              AreaWaypoint* w = new AreaWaypoint(id, srv.response.destination.x, srv.response.destination.y, srv.response.destination_radius);
+              w->setBehavior(static_cast<Ped::Twaypoint::Behavior>(0));
+              Waypoint* waypointPtr = dynamic_cast<Waypoint*>(w);
+              currentDestination = waypointPtr;
+            }
+
           } else {
-            QString id = QString::fromStdString(dest_name);
-            AreaWaypoint* w = new AreaWaypoint(id, srv.response.destination.x, srv.response.destination.y, srv.response.destination_radius);
-            w->setBehavior(static_cast<Ped::Twaypoint::Behavior>(0));
-            Waypoint* waypointPtr = dynamic_cast<Waypoint*>(w);
-            currentDestination = waypointPtr;
+            retry_count++;  // Increment retry count if service call failed
+            ROS_WARN("Failed to call service GetNextDestination. Retrying %d/%d", retry_count, MAX_RETRIES);
+
+            ros::Duration(1.0).sleep();  // Optional: add delay between retries
           }
-        } else {
-          currentDestination = nullptr;
-          ROS_ERROR("Failed to call service GetNextDestination");
         }
+
+        // If all retries failed
+        if (!request_successful) {
+          ROS_ERROR("Failed to get a new destination after %d retries. Setting current position as destination.", MAX_RETRIES);
+          QString id = QString::fromStdString("DEFAULT_" + std::to_string(getId()));
+          AreaWaypoint* w = new AreaWaypoint(id, getx(), gety(), 0.0);  // Set radius to 0.0 to indicate it's the current position
+          w->setBehavior(static_cast<Ped::Twaypoint::Behavior>(0));  // Set the behavior (you can adjust this based on your needs)
+          Waypoint* waypointPtr = dynamic_cast<Waypoint*>(w);
+          currentDestination = waypointPtr;
+        }
+
         if (isInGroup()) {
           AgentGroup* group = getGroup();
           QList<Agent*> group_members = group->getMembers();
@@ -219,21 +262,60 @@ Ped::Twaypoint* Agent::updateDestination() {
     srv.request.origin.z = 0.0;
     srv.request.destinations = waypoint_names;
     srv.request.is_stuck = is_stuck;
-    if (destination_client.call(srv)) {
-      task_duration = srv.response.task_duration;
-      std::string dest_name = srv.response.destination_id;
-      initialTime_dest = currentTimeSec;
-      if (doesDestinationExist(dest_name)) {
-        currentDestination = getDestinationByName(dest_name);
+
+    // if (destination_client.call(srv)) {
+    //   task_duration = srv.response.task_duration;
+    //   std::string dest_name = srv.response.destination_id;
+    //   initialTime_dest = currentTimeSec;
+    //   if (doesDestinationExist(dest_name)) {
+    //     currentDestination = getDestinationByName(dest_name);
+    //   } else {
+    //     QString id = QString::fromStdString(dest_name);
+    //     AreaWaypoint* w = new AreaWaypoint(id, srv.response.destination.x, srv.response.destination.y, srv.response.destination_radius);
+    //     w->setBehavior(static_cast<Ped::Twaypoint::Behavior>(0));
+    //     Waypoint* waypointPtr = dynamic_cast<Waypoint*>(w);
+    //     currentDestination = waypointPtr;
+    //   }
+    // }
+    // Retry mechanism for the service call
+    while (retry_count < MAX_RETRIES && !request_successful) {
+      if (destination_client.call(srv)) {
+        request_successful = true;  // Service call was successful
+
+        task_duration = srv.response.task_duration;
+        std::string dest_name = srv.response.destination_id;
+        initialTime_dest = currentTimeSec;
+
+        if (doesDestinationExist(dest_name)) {
+          currentDestination = getDestinationByName(dest_name);
+        } else {
+          // Create new destination
+          QString id = QString::fromStdString(dest_name);
+          AreaWaypoint* w = new AreaWaypoint(id, srv.response.destination.x, srv.response.destination.y, srv.response.destination_radius);
+          w->setBehavior(static_cast<Ped::Twaypoint::Behavior>(0));
+          Waypoint* waypointPtr = dynamic_cast<Waypoint*>(w);
+          currentDestination = waypointPtr;
+        }
+
       } else {
-        QString id = QString::fromStdString(dest_name);
-        AreaWaypoint* w = new AreaWaypoint(id, srv.response.destination.x, srv.response.destination.y, srv.response.destination_radius);
-        w->setBehavior(static_cast<Ped::Twaypoint::Behavior>(0));
-        Waypoint* waypointPtr = dynamic_cast<Waypoint*>(w);
-        currentDestination = waypointPtr;
+        retry_count++;  // Increment retry count if service call failed
+        ROS_WARN("Failed to call service GetNextDestination. Retrying %d/%d", retry_count, MAX_RETRIES);
+        ros::Duration(1.0).sleep();  // Optional: add delay between retries
       }
     }
-    is_stuck = false;
+
+    // If all retries failed
+    if (!request_successful) {
+      ROS_ERROR("Failed to get a new destination after %d retries. Setting current position as destination.", MAX_RETRIES);
+      QString id = QString::fromStdString("DEFAULT_" + std::to_string(getId()));
+      AreaWaypoint* w = new AreaWaypoint(id, getx(), gety(), 0.0);  // Set radius to 0.0 to indicate it's the current position
+      w->setBehavior(static_cast<Ped::Twaypoint::Behavior>(0));  // Set the behavior (you can adjust this based on your needs)
+      Waypoint* waypointPtr = dynamic_cast<Waypoint*>(w);
+      currentDestination = waypointPtr;
+      is_stuck = true;
+    } else {
+      is_stuck = false;
+    }
   }
 
 

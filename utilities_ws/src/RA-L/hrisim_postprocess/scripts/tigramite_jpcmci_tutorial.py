@@ -85,7 +85,7 @@ var_names = sys_var_names + context_var_names
 
 dataframe = pp.DataFrame(
     data=data_dict,
-    vector_vars = vector_vars,
+    # vector_vars = vector_vars,
     analysis_mode = 'multiple',
     var_names = var_names
     )

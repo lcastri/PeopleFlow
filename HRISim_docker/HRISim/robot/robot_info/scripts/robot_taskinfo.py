@@ -21,7 +21,11 @@ def create_overlay_text():
     text.top = 35  # Y position (top offset)
     text.text_size = 13  # Font size
     text.line_width = 2
-    text.text = f"Robot\n- Task: {TASK}\n- Battery: {BATTERY_LEVEL:.2f}%"
+    if BATTERY_LEVEL is not None:
+        battery_info = f"{BATTERY_LEVEL:.2f}%" 
+    else:
+        battery_info = 'none'
+    text.text = f"Robot\n- Task: {TASK}\n- Battery: {battery_info}"
     text.font = "DejaVu Sans Mono"
        
     # Text color
@@ -34,7 +38,7 @@ if __name__ == '__main__':
     rospy.init_node('robot_taskinfo')
     rate = rospy.Rate(1)  # 1 Hz
     
-    BATTERY_LEVEL = 100
+    BATTERY_LEVEL = None
     BATTERY_ISCHARGING = False
     TASK = 'none'
     starting = rospy.get_time()

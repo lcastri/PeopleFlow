@@ -64,6 +64,7 @@ def Plan(p):
     ros_utils.wait_for_param("/peopleflow/timeday")
     rospy.set_param('/hri/robot_busy', False)
     gotoDP = False
+    rospy.set_param("/peopleflow/robot_plan_on", True)
     while True:
         
         if not rospy.get_param('/robot_battery/is_charging') and BATTERY_LEVEL <= 20:
@@ -103,18 +104,24 @@ def Plan(p):
                     gotoDP = True
                     DEST = SHELFS[random.choice(SHELFS_NAME)]
                     
-            elif rospy.get_param('/peopleflow/timeday') in ['afternoon']:
+            elif rospy.get_param('/peopleflow/timeday') in ['afternoon', 'quitting']:
                 # Inventory
                 TASK = "inventory"
                 DEST = SHELFS[random.choice(SHELFS_NAME)]
                     
-            elif rospy.get_param('/peopleflow/timeday') in ['quitting', 'off']:
+            elif rospy.get_param('/peopleflow/timeday') in ['off']:
                 # Cleaner
                 TASK = "cleaning"
-                wp = wp + 1 if wp + 1 < len(CLEANING_PATH) else 0
+                if wp + 1 < len(CLEANING_PATH):
+                    wp = wp + 1
+                else:
+                    wp = 0
+                    break
                 DEST = (CLEANING_PATH[wp][0], CLEANING_PATH[wp][1], 0)
             ac_goto(p, DEST)
         rospy.set_param('/hrisim/robot_task', TASK)
+        
+    rospy.set_param("/peopleflow/robot_plan_on", False) # triggers the ROS shutdown in ScenarioManager.py
 
                         
                         
