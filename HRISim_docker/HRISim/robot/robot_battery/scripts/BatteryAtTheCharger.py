@@ -8,7 +8,6 @@ from robot_msgs.msg import BatteryStatus, BatteryAtCharger as msgBAC, BatteryAtC
 from std_msgs.msg import Header
 import networkx as nx
 import hrisim_util.ros_utils as ros_utils
-import json
 
 
 def heuristic(a, b):

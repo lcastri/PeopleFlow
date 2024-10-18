@@ -34,7 +34,7 @@ if __name__ == '__main__':
     rate = rospy.Rate(10)  # 10 Hz
     
     schedule = ros_utils.wait_for_param("/peopleflow/schedule")
-    T = sum([schedule[time].duration for time in schedule])          
+    T = sum([schedule[time]['duration'] for time in schedule])          
     
     try:
         bag_process = subprocess.Popen(['rosbag', 'record', '-O', '/root/shared/experiment.bag'] + TOPICS.split(), shell=False)

@@ -58,7 +58,7 @@ init_cmd: |
   # robot_mode == 2: SOCIAL mode means the robot's velocity is set by the social force just like the other agents -->
   export_default SCENARIO "warehouse"
   export_default ALLOW_TASK "true"
-  export_default RECORD "false"
+  export_default RECORD "true"
   export_default STARTING_ELAPSED "8"
   export_default MAX_TASKTIME "15"
   export_default SCALING_FACTOR "1"
@@ -122,5 +122,4 @@ windows:
     tags: ['exp']
     panes:
       - 'rosrun peopleflow_counter PeopleCounter.py'
-      # - 'rosrun hrisim_recording record.py'
       - if [[ "$RECORD" == "true" ]]; then rosrun hrisim_recording record.py; fi
