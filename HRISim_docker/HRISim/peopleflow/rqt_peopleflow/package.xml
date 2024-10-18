@@ -1,17 +1,15 @@
 <package>
   <name>rqt_peopleflow</name>
   <version>0.0.0</version>
-  <description>rqt_bag provides a GUI plugin for displaying and replaying ROS bag files.</description>
+  <description>rqt_peopleflow.</description>
   <maintainer email="lcastri@todo.todo">LC</maintainer>
 
   <license>BSD</license>
 
-  <url type="website">http://ros.org/wiki/rqt_bag</url>
   <url type="repository">https://github.com/ros-visualization/rqt_common_plugins</url>
   <url type="bugtracker">https://github.com/ros-visualization/rqt_common_plugins/issues</url>
 
-  <author>Aaron Blasdel</author>
-  <author>Tim Field</author>
+  <author>Luca Castri</author>
 
   <buildtool_depend>catkin</buildtool_depend>
 

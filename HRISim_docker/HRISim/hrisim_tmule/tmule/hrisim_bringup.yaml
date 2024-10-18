@@ -116,8 +116,8 @@ windows:
     panes:
       - 'roslaunch peopleflow_manager peopleflow_manager.launch scenario:=$SCENARIO scaling_factor:=$SCALING_FACTOR starting_elapsed:=$STARTING_ELAPSED'
       - 'roslaunch peopleflow_pedsim_bridge peopleflow_pedsim.launch scenario:=$SCENARIO allow_task:=$ALLOW_TASK max_tasktime:=$MAX_TASKTIME'
-      # - 'roslaunch peopleflow_manager peopleflow_bringup.launch scenario:=$SCENARIO allow_task:=$ALLOW_TASK max_tasktime:=$MAX_TASKTIME scaling_factor:=$SCALING_FACTOR record:=$RECORD starting_elapsed:=$STARTING_ELAPSED'
       - 'roslaunch pedsim_simulator mysimulator.launch scenario:=$SCENARIO robot_mode:=$HUMAN_MODE max_robot_speed:=$MAX_HUMAN_SPEED robot_radius:=$ROBOT_RADIUS scaling_factor:=$SCALING_FACTOR is_stuck_threshold:=$IS_STUCK_THRESHOLD force_obstacle:=$FORCE_OBSTACLE sigma_obstacle:=$SIGMA_OBSTACLE force_social:=$FORCE_SOCIAL with_teleop_ped:=$WITH_TELEOP_PED ped_x:=$HUMAN_x ped_y:=$HUMAN_y ped_theta:=0'
+      - 'rosrun rqt_peopleflow agents_info.py'
   - name: data
     tags: ['exp']
     panes:
