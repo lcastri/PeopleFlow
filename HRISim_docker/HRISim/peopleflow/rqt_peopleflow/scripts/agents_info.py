@@ -22,7 +22,7 @@ class PFAgentsInfo():
     def load_agents(self):
         """Load agents from the ROS parameter server."""
         self.agents = {}
-        agents_param = rospy.get_param('/peopleflow/server/agents', None)
+        agents_param = rospy.get_param('/peopleflow/agents', None)
         if agents_param is not None:
             self.agents = {agent_id: Agent.from_dict(agent_data, SCHEDULE, G, ALLOW_TASK, MAX_TASKTIME) for agent_id, agent_data in agents_param.items()} 
        

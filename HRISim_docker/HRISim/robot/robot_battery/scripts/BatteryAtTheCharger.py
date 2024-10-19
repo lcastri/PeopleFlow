@@ -106,7 +106,7 @@ if __name__ == '__main__':
     rospy.init_node('robot_bac')
     rate = rospy.Rate(1)  # 1 Hz
     SCENARIO = str(ros_utils.wait_for_param("/peopleflow_manager/scenario"))
-    G_PATH = str(ros_utils.wait_for_param("/peopleflow_manager/g_path"))
+    G_PATH = str(ros_utils.wait_for_param("/peopleflow_pedsim_bridge/g_path"))
     STATIC_CONSUMPTION = float(ros_utils.wait_for_param("/robot_battery/static_consumption"))
     DYNAMIC_CONSUMPTION = float(ros_utils.wait_for_param("/robot_battery/dynamic_consumption"))
     ROBOT_MAX_VEL = float(ros_utils.wait_for_param("/move_base/TebLocalPlannerROS/max_vel_x"))

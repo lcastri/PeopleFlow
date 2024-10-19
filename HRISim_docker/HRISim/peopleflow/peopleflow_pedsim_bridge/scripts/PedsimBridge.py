@@ -19,10 +19,10 @@ def seconds_to_hhmmss(seconds):
 
 class PedsimBridge():
     def __init__(self):
-        self.load_agents()
-
+        self.timeDefined = False
         rospy.Subscriber("/peopleflow/time", pT, self.cb_time)
-        self.timeOfDay = None
+        
+        while not self.timeDefined: rospy.sleep(0.1)
         
         rospy.Service('get_next_destination', GetNextDestination, self.handle_get_next_destination)
         rospy.loginfo('ROS service /get_next_destination advertised')
@@ -31,38 +31,30 @@ class PedsimBridge():
         self.timeOfDay = t.time_of_the_day.data
         self.elapsedTimeString = t.hhmmss.data
         self.elapsedTime = t.elapsed
+        self.timeDefined = True
         
-    def load_agents(self):
+    def load_agents(self, req):
         """Load agents from the ROS parameter server."""
-        self.agents = {}
-        agents_param = rospy.get_param('/peopleflow/server/agents', None)
-        if agents_param is not None:
-            self.agents = {agent_id: Agent.from_dict(agent_data, SCHEDULE, G, ALLOW_TASK, MAX_TASKTIME) for agent_id, agent_data in agents_param.items()}
-    
-    def save_agents(self):
-        """Save agents to the ROS parameter server."""
-        agents_dict = {str(agent_id): agent.to_dict() for agent_id, agent in self.agents.items()}
-        rospy.set_param('/peopleflow/server/agents', agents_dict)
-        
-    def get_agent(self, req) -> Agent:
         agent_id = str(req.agent_id)
-        
-        # Retrieving agent info
-        if agent_id not in self.agents:
-            self.agents[agent_id] = Agent(agent_id, copy.deepcopy(SCHEDULE), G, ALLOW_TASK, MAX_TASKTIME)
-        self.agents[agent_id].x = req.origin.x
-        self.agents[agent_id].y = req.origin.y
-        self.agents[agent_id].isStuck = req.is_stuck
-        
-        return self.agents[agent_id]
-     
+        agents_param = rospy.get_param(f'/peopleflow/agents/{agent_id}', None)
+        if agents_param is not None:
+            a = Agent.from_dict(agents_param, SCHEDULE, G, ALLOW_TASK, MAX_TASKTIME)
+        else:
+            a = Agent(agent_id, SCHEDULE, G, ALLOW_TASK, MAX_TASKTIME)
+        a.x = req.origin.x
+        a.y = req.origin.y
+        a.isStuck = req.is_stuck
+        return a
+    
+    def save_agents(self, agent):
+        """Save agents to the ROS parameter server."""
+        rospy.set_param(f'/peopleflow/agents/{agent.id}', agent.to_dict())
+             
     def handle_get_next_destination(self, req):
         try:
-            # Load agents from rosparam
-            self.load_agents()
-            
-            agent = self.get_agent(req)
-            
+            # Load agent from rosparam
+            agent = self.load_agents(req)
+                        
             # Entrance logic
             if (self.timeOfDay == 'starting' and not agent.atWork and 
                 agent.isFree and not agent.isQuitting and 
@@ -118,7 +110,7 @@ class PedsimBridge():
                 pass
                 
             else:
-                rospy.logerr(f"THERE IS A CASE I DID NOT COVER:")
+                rospy.logerr("THERE IS A CASE I DID NOT COVER:")
                 rospy.logerr(f"TOD {self.timeOfDay}")
                 rospy.logerr(f"elapsedTime {self.elapsedTime}")
                 rospy.logerr(f"Agent {agent.id}")
@@ -139,7 +131,7 @@ class PedsimBridge():
                                                   destination_radius=WPS[wpname]["r"] if wpname in WPS else 1.0,
                                                   task_duration=agent.taskDuration[wpname])
             # Save agents to rosparam
-            self.save_agents()
+            self.save_agents(agent)
             return response
         
         except Exception as e:
