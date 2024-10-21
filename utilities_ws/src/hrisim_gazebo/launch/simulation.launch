@@ -1,5 +1,5 @@
 <launch>
-  <arg name="world"                     default="maze"/>
+  <arg name="world"                     default="warehouse"/>
   <arg name="scenario"                  default="single_agent_avoidance"/>
   <arg name="robot"                     default="iron"/>
   <arg name="arm"                       default="$(eval {'iron': False}.get(arg('robot'), True))"/>

@@ -13,7 +13,7 @@
         args="--clock -r $(arg playback_speed) --start $(arg start_time) $(find hrisim_postprocess)/bags/$(arg bagname).bag" />
 
   <!-- Extracting data -->
-  <node pkg="hrisim_postprocess" type="data_extractor_shrink.py" name="hrisim_postprocess" output="screen" required="true" >
+  <node pkg="hrisim_postprocess" type="data_extractor_shrink_nothread.py" name="hrisim_postprocess" output="screen" required="true" >
       <param name="bagname" value="$(arg bagname)" />
       <param name="node_path" value="$(find hrisim_postprocess)" />
       <param name="scenario" value="$(arg scenario)" />

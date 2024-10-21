@@ -69,7 +69,7 @@ WORKDIR /root/ros_ws
 RUN DEBIAN_FRONTEND=noninteractive pip install tmule 
 RUN DEBIAN_FRONTEND=noninteractive pip install shapely
 RUN DEBIAN_FRONTEND=noninteractive pip install networkx
-RUN DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends ros-noetic-jsk-rviz-plugins
+RUN DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends ros-noetic-jsk-rviz-plugins psmisc
 
 # Clone and install PetriNetPlans
 RUN cd ~/ros_ws

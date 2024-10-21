@@ -103,7 +103,10 @@ class PedsimBridge():
                 agent.isQuitting = False
                 
             elif agent.isFree and agent.atWork and not agent.isStuck and not agent.isQuitting:
-                next_destination = agent.selectDestination(self.timeOfDay, req.destinations)
+                if agent.closestWP in SHELFS:
+                    next_destination = 'delivery_point'
+                else:
+                    next_destination = agent.selectDestination(self.timeOfDay, req.destinations)
                 agent.setTask(next_destination, agent.getTaskDuration())
                 
             elif not agent.isFree:

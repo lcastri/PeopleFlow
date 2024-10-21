@@ -363,6 +363,7 @@ dist/
 
 /results/*
 /shared/*
+/utilities_ws/src/RA-L/trajectory_plot/frames/*
 
 *.vscode
 *.gif

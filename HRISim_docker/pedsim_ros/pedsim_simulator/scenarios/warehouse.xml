@@ -6296,15 +6296,15 @@
     <!-- Time resolution: seconds -->
     <time name="starting" duration="3600" >    <!-- 01h : 8am - 9am -->
       <adddest name="parking"         p="0.15" std="0.016" />
-      <adddest name="delivery_point"  p="0.3" std="0.016" />
-      <adddest name="office1"         p="0.3" std="0.033" />
-      <adddest name="office2"         p="0.3" std="0.033" />
-      <adddest name="shelf1"          p="0.3" std="0.033" />
-      <adddest name="shelf2"          p="0.3" std="0.033" />
-      <adddest name="shelf3"          p="0.3" std="0.033" />
-      <adddest name="shelf4"          p="0.3" std="0.033" />
-      <adddest name="shelf5"          p="0.3" std="0.033" />
-      <adddest name="shelf6"          p="0.3" std="0.033" />
+      <adddest name="delivery_point"  p="0.5" std="0.016" />
+      <adddest name="office1"         p="0.5" std="0.033" />
+      <adddest name="office2"         p="0.5" std="0.033" />
+      <adddest name="shelf1"          p="0.5" std="0.033" />
+      <adddest name="shelf2"          p="0.5" std="0.033" />
+      <adddest name="shelf3"          p="0.5" std="0.033" />
+      <adddest name="shelf4"          p="0.5" std="0.033" />
+      <adddest name="shelf5"          p="0.5" std="0.033" />
+      <adddest name="shelf6"          p="0.5" std="0.033" />
       <adddest name="toilet1"         p="0.05" std="0.008" />
       <adddest name="toilet2"         p="0.05" std="0.008" />
       <adddest name="table2"          p="0.15" std="0.033" />
@@ -6319,25 +6319,25 @@
     <!-- 04h : 9am - 1pm -->
     <time name="morning" duration="14400" >    
       <adddest name="parking"         p="0" std="0" />
-      <adddest name="delivery_point"  p="0.8" std="0.004" />
-      <adddest name="office1"         p="0.8" std="0.008" />
-      <adddest name="office2"         p="0.8" std="0.008" />
-      <adddest name="shelf1"          p="0.8" std="0.008" />
-      <adddest name="shelf2"          p="0.8" std="0.008" />
-      <adddest name="shelf3"          p="0.8" std="0.008" />
-      <adddest name="shelf4"          p="0.8" std="0.008" />
-      <adddest name="shelf5"          p="0.8" std="0.008" />
-      <adddest name="shelf6"          p="0.8" std="0.008" />
+      <adddest name="delivery_point"  p="0.9" std="0.004" />
+      <adddest name="office1"         p="0.9" std="0.008" />
+      <adddest name="office2"         p="0.9" std="0.008" />
+      <adddest name="shelf1"          p="0.9" std="0.008" />
+      <adddest name="shelf2"          p="0.9" std="0.008" />
+      <adddest name="shelf3"          p="0.9" std="0.008" />
+      <adddest name="shelf4"          p="0.9" std="0.008" />
+      <adddest name="shelf5"          p="0.9" std="0.008" />
+      <adddest name="shelf6"          p="0.9" std="0.008" />
       <adddest name="toilet1"         p="0.05" std="0.002" />
       <adddest name="toilet2"         p="0.05" std="0.002" />
-      <adddest name="table2"          p="0.1" std="0.008" />
-      <adddest name="table3"          p="0.1" std="0.008" />
-      <adddest name="table4"          p="0.1" std="0.008" />
-      <adddest name="table5"          p="0.1" std="0.008" />
-      <adddest name="table6"          p="0.1" std="0.008" />
-      <adddest name="kitchen1"        p="0.05" std="0.008" />
-      <adddest name="kitchen2"        p="0.05" std="0.008" />
-      <adddest name="kitchen3"        p="0.05" std="0.008" />
+      <adddest name="table2"          p="0.025" std="0.008" />
+      <adddest name="table3"          p="0.025" std="0.008" />
+      <adddest name="table4"          p="0.025" std="0.008" />
+      <adddest name="table5"          p="0.025" std="0.008" />
+      <adddest name="table6"          p="0.025" std="0.008" />
+      <adddest name="kitchen1"        p="0.025" std="0.008" />
+      <adddest name="kitchen2"        p="0.025" std="0.008" />
+      <adddest name="kitchen3"        p="0.025" std="0.008" />
     </time>
     <!-- 01h : 1pm - 2pm -->
     <time name="lunch" duration="3600" >       
@@ -6365,38 +6365,38 @@
     <!-- 03h : 2pm - 5pm -->
     <time name="afternoon" duration="10800" >  
       <adddest name="parking"         p="0" std="0" />
-      <adddest name="delivery_point"  p="0.8" std="0.0025" />
-      <adddest name="office1"         p="0.8" std="0.01" />
-      <adddest name="office2"         p="0.8" std="0.01" />
-      <adddest name="shelf1"          p="0.8" std="0.01" />
-      <adddest name="shelf2"          p="0.8" std="0.01" />
-      <adddest name="shelf3"          p="0.8" std="0.01" />
-      <adddest name="shelf4"          p="0.8" std="0.01" />
-      <adddest name="shelf5"          p="0.8" std="0.01" />
-      <adddest name="shelf6"          p="0.8" std="0.01" />
+      <adddest name="delivery_point"  p="0.9" std="0.0025" />
+      <adddest name="office1"         p="0.9" std="0.01" />
+      <adddest name="office2"         p="0.9" std="0.01" />
+      <adddest name="shelf1"          p="0.9" std="0.01" />
+      <adddest name="shelf2"          p="0.9" std="0.01" />
+      <adddest name="shelf3"          p="0.9" std="0.01" />
+      <adddest name="shelf4"          p="0.9" std="0.01" />
+      <adddest name="shelf5"          p="0.9" std="0.01" />
+      <adddest name="shelf6"          p="0.9" std="0.01" />
       <adddest name="toilet1"         p="0.05" std="0.0025" />
       <adddest name="toilet2"         p="0.05" std="0.0025" />
-      <adddest name="table2"          p="0.1" std="0.01" />
-      <adddest name="table3"          p="0.1" std="0.01" />
-      <adddest name="table4"          p="0.1" std="0.01" />
-      <adddest name="table5"          p="0.1" std="0.01" />
-      <adddest name="table6"          p="0.1" std="0.01" />
-      <adddest name="kitchen1"        p="0.05" std="0.01" />
-      <adddest name="kitchen2"        p="0.05" std="0.01" />
-      <adddest name="kitchen3"        p="0.05" std="0.01" />
+      <adddest name="table2"          p="0.025" std="0.01" />
+      <adddest name="table3"          p="0.025" std="0.01" />
+      <adddest name="table4"          p="0.025" std="0.01" />
+      <adddest name="table5"          p="0.025" std="0.01" />
+      <adddest name="table6"          p="0.025" std="0.01" />
+      <adddest name="kitchen1"        p="0.025" std="0.01" />
+      <adddest name="kitchen2"        p="0.025" std="0.01" />
+      <adddest name="kitchen3"        p="0.025" std="0.01" />
     </time>
     <!-- 01h : 5pm - 6pm -->
     <time name="quitting" duration="3600" >    
       <adddest name="parking"         p="0.5" std="0.016" />
-      <adddest name="delivery_point"  p="0.3" std="0.008" />
-      <adddest name="office1"         p="0.3" std="0.033" />
-      <adddest name="office2"         p="0.3" std="0.033" />
-      <adddest name="shelf1"          p="0.3" std="0.033" />
-      <adddest name="shelf2"          p="0.3" std="0.033" />
-      <adddest name="shelf3"          p="0.3" std="0.033" />
-      <adddest name="shelf4"          p="0.3" std="0.033" />
-      <adddest name="shelf5"          p="0.3" std="0.033" />
-      <adddest name="shelf6"          p="0.3" std="0.033" />
+      <adddest name="delivery_point"  p="0.5" std="0.008" />
+      <adddest name="office1"         p="0.5" std="0.033" />
+      <adddest name="office2"         p="0.5" std="0.033" />
+      <adddest name="shelf1"          p="0.5" std="0.033" />
+      <adddest name="shelf2"          p="0.5" std="0.033" />
+      <adddest name="shelf3"          p="0.5" std="0.033" />
+      <adddest name="shelf4"          p="0.5" std="0.033" />
+      <adddest name="shelf5"          p="0.5" std="0.033" />
+      <adddest name="shelf6"          p="0.5" std="0.033" />
       <adddest name="toilet1"         p="0.05" std="0.008" />
       <adddest name="toilet2"         p="0.05" std="0.008" />
       <adddest name="table2"          p="0.15" std="0.016" />

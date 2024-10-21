@@ -3,7 +3,7 @@ import pandas as pd
 from utils import *
 
 INDIR = '/home/lcastri/git/PeopleFlow/utilities_ws/src/RA-L/hrisim_postprocess/csv/original'
-BAGNAME = 'BL50_13102024'
+BAGNAME = 'BL100_19102024'
 
 for tod in TOD:
     print(f"analysing {tod.value}")
