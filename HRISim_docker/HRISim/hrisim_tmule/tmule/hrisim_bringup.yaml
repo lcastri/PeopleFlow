@@ -86,7 +86,7 @@ windows:
   - name: env
     tags: ['core']
     panes:
-      - killall -9 roscore && killall -9 rosmaster && rosmaster --core
+      - rosmaster --core
   - name: visual
     tags: ['core']
     panes:

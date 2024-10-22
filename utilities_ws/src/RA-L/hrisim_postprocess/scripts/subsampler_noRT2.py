@@ -141,7 +141,7 @@ def get_subsampling_step(cutoff = 1, energy_percentage=0.95, plot = False):
 SF = 10 #Hz
 INDIR = '/home/lcastri/git/PeopleFlow/utilities_ws/src/RA-L/hrisim_postprocess/csv/original'
 OUTDIR = '/home/lcastri/git/PeopleFlow/utilities_ws/src/RA-L/hrisim_postprocess/csv/shrunk'
-BAGNAME = 'BL100_19102024'
+BAGNAME = 'BL100_21102024'
 
 
 R, BW, SSF, ST, STEP = get_subsampling_step(cutoff = 1, energy_percentage=0.95, plot = True)
