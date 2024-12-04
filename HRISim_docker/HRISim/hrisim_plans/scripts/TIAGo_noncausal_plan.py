@@ -42,13 +42,9 @@ def heuristic(a, b):
 
 
 def get_next_goal():
-    global BATTERY_LEVEL, ROBOT_CLOSEST_WP, CLEANING_PATH
+    global ROBOT_CLOSEST_WP, CLEANING_PATH
     
-    if BATTERY_LEVEL == 100 and rospy.get_param('/robot_battery/is_charging'):
-        rospy.logwarn("Battery is already full, not planning any tasks.")
-        return None, None
-    
-    elif not rospy.get_param('/robot_battery/is_charging') and not rospy.get_param('/hri/robot_busy'):                                        
+    if not rospy.get_param('/robot_battery/is_charging') and not rospy.get_param('/hri/robot_busy'):                                        
         if rospy.get_param('/peopleflow/timeday') in ['starting', 'morning', 'lunch']:
             rospy.logwarn("ROBOT POSITION: " + str(ROBOT_CLOSEST_WP))
             if ROBOT_CLOSEST_WP != constants.WP.DELIVERY_POINT.value:
@@ -88,20 +84,22 @@ def Plan(p):
             TASK = constants.Task.CHARGING
             PLAN_ON = True
             QUEUE = nx.astar_path(G, ROBOT_CLOSEST_WP, NEXT_GOAL.value, heuristic=heuristic, weight='weight')
-            for wp in QUEUE:
-                send_goal(p, wp, QUEUE[0] if len(QUEUE) > 0 else None)
+            while QUEUE:
+                current_wp = QUEUE.pop(0)
+                next_wp = QUEUE[0] if QUEUE else None
+                send_goal(p, current_wp, next_wp)
             GO_TO_CHARGER = False
             rospy.set_param('/robot_battery/is_charging', True)
             rospy.logwarn("Battery charging..")
             
-        elif not GO_TO_CHARGER and len(QUEUE) == 0:
+        elif not rospy.get_param('/robot_battery/is_charging') and not GO_TO_CHARGER and len(QUEUE) == 0:
             NEXT_GOAL, TASK, PLAN_ON = get_next_goal()
             if NEXT_GOAL is None: continue
             if isinstance(NEXT_GOAL, constants.WP): NEXT_GOAL = NEXT_GOAL.value
             QUEUE = nx.astar_path(G, ROBOT_CLOSEST_WP, NEXT_GOAL, heuristic=heuristic, weight='weight')
             rospy.logwarn(f"{QUEUE}")
             
-        if not rospy.get_param('/hri/robot_busy'):
+        if not rospy.get_param('/hri/robot_busy') and len(QUEUE) > 0:
             next_sub_goal = QUEUE.pop(0)
             rospy.logwarn(f"Planning next goal: {next_sub_goal}")
             nextnext_sub_goal = QUEUE[0] if len(QUEUE) > 0 else None
@@ -125,6 +123,10 @@ def cb_battery(msg):
         NEXT_GOAL = None
         QUEUE = []
         GO_TO_CHARGER = True
+        
+    elif BATTERY_LEVEL == 100 and rospy.get_param('/robot_battery/is_charging'):
+        rospy.set_param('/robot_battery/is_charging', False)
+        rospy.logwarn("Battery is already full, not planning any tasks.")
         
     
 def cb_robot_closest_wp(wp: String):
