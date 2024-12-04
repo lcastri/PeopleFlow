@@ -363,7 +363,7 @@ dist/
 
 /results/*
 /shared/*
-/utilities_ws/src/RA-L/trajectory_plot/frames/*
+/utilities_ws/src/RA-L/hrisim_postprocess/frames/*
 
 *.vscode
 *.gif

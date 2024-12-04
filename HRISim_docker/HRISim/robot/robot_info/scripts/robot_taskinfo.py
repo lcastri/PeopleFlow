@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 
+import math
 import rospy
 from jsk_rviz_plugins.msg import OverlayText
 from std_msgs.msg import ColorRGBA
@@ -7,7 +8,8 @@ from robot_msgs.msg import BatteryStatus
 
 def cb_battery(msg):
     global BATTERY_LEVEL, BATTERY_ISCHARGING, TASK, starting
-    BATTERY_LEVEL = float(msg.level.data)
+    # BATTERY_LEVEL = msg.level.data
+    BATTERY_LEVEL = math.floor(msg.level.data)
         
     BATTERY_ISCHARGING = bool(msg.is_charging.data)
     TASK = str(rospy.get_param('/hrisim/robot_task', "none"))
@@ -22,7 +24,8 @@ def create_overlay_text():
     text.text_size = 13  # Font size
     text.line_width = 2
     if BATTERY_LEVEL is not None:
-        battery_info = f"{BATTERY_LEVEL:.2f}%" 
+        # battery_info = f"{BATTERY_LEVEL:.2f}%" 
+        battery_info = f"{BATTERY_LEVEL}%" 
     else:
         battery_info = 'none'
     text.text = f"Robot\n- Task: {TASK}\n- Battery: {battery_info}"

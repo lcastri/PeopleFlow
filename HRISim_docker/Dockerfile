@@ -20,7 +20,6 @@ RUN DEBIAN_FRONTEND=noninteractive apt-get update && \
 # Source ROS environment in .bashrc
 RUN echo "source /opt/ros/noetic/setup.bash" >> ~/.bashrc
 
-
 ############################################################################## TIAGo
 # Create a new workspace
 RUN mkdir -p ~/tiago_ws/src
@@ -60,6 +59,26 @@ RUN wget https://packages.osrfoundation.org/gazebo.key -O - | apt-key add -
 RUN DEBIAN_FRONTEND=noninteractive apt-get update && DEBIAN_FRONTEND=noninteractive apt-get install -y \
     ros-noetic-gazebo-ros-control ros-noetic-gazebo-ros-pkgs
 
+############################################################################## CausalFlow
+# Clone and install causalflow
+RUN mkdir -p ~/repos
+WORKDIR /root/repos
+RUN DEBIAN_FRONTEND=noninteractive pip install --upgrade pip setuptools wheel importlib_metadata numpy
+RUN DEBIAN_FRONTEND=noninteractive pip install --upgrade --ignore-installed cython
+
+# Clone the causalflow repository
+ARG CACHE=0
+RUN git clone -b dev-reasoning-gmm https://github.com/lcastri/causalflow.git causalflow
+
+# Install Python dependencies
+WORKDIR /root/repos/causalflow
+RUN pip install --no-cache-dir -r requirements.txt
+
+# Install the causalflow package
+RUN /usr/bin/env python setup.py install
+RUN echo 'export PYTHONPATH=/root/repos/causalflow:$PYTHONPATH' >> ~/.bashrc
+RUN echo "source /root/.bashrc" >> ~/.bash_profile
+
 ############################################################################## HRISim
 # Create a new workspace
 RUN mkdir -p ~/ros_ws/src
@@ -94,13 +113,13 @@ RUN mkdir -p /run/user/1000 && chmod 0700 /run/user/1000
 # Set the environment variable
 ENV XDG_RUNTIME_DIR=/run/user/1000
 
-
 # Copy files into the image
 RUN mkdir -p ~/ros_ws/src/HRISim/
 COPY HRISim_docker/HRISim /root/ros_ws/src/HRISim
 RUN mkdir -p ~/ros_ws/src/pedsim_ros/
 COPY HRISim_docker/pedsim_ros /root/ros_ws/src/pedsim_ros
 
+############################################################################## Final
 # Create a shared folder with the host machine
 RUN mkdir -p ~/shared
 

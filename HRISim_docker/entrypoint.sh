@@ -25,9 +25,7 @@ echo " "
   cd ~/ros_ws
   catkin build
   source ~/ros_ws/devel/setup.bash
-  
-  echo "source /opt/ros/noetic/setup.bash" >> ~/.bashrc
-  echo "source ~/tiago_ws/devel/setup.bash" >> ~/.bashrc
+
   echo "source ~/ros_ws/devel/setup.bash" >> ~/.bashrc
   source ~/.bashrc
   exec "/bin/bash"

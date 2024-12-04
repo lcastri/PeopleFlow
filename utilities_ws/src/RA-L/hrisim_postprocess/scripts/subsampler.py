@@ -1,9 +1,6 @@
 import math
 import os
 from fpcmci.preprocessing.data import Data
-from fpcmci.preprocessing.subsampling_methods.WSStatic import WSStatic
-from fpcmci.preprocessing.subsampling_methods.WSDynamic import WSDynamic
-from fpcmci.preprocessing.subsampling_methods.WSFFTStatic import WSFFTStatic
 from fpcmci.preprocessing.subsampling_methods.Static import Static
 import pandas as pd
 import numpy as np
@@ -11,33 +8,45 @@ import matplotlib.pyplot as plt
 from scipy.stats import entropy
 from scipy.fft import fft, fftfreq
 from scipy.signal import butter, filtfilt
-import copy
 from utils import *
-
-GOAL_REACHED_THRES = 0.8
+import copy
   
-def get_pdf(df: Data):
-    """
-    Compute the probability distribution function from an array of data
-    Returns:
-        list: probability distribution function
-    """
-    counts = {}
-    for i in range(0, df.T):
-        t = tuple(df.d.iloc[i])
-        if t in counts:
-            counts[t] += 1
-        else:
-            counts[t] = 1
-    pdf = {k: v / df.T for k, v in counts.items()}
-    return list(pdf.values())
+def fixer(indir, bags):
 
+    for bag in bags:
+        for tod in TOD:
+            print(f"analysing {tod.value}")
+            DF = pd.read_csv(os.path.join(indir, f"{bag}", tod.value, f"{bag}_{tod.value}.csv"))
+            
+            if "is_charging" in DF.columns: DF = DF.rename(columns={f"is_charging": "B_S"})
 
-def get_entropy(df: Data):
-    """
-    Compute the entropy based on probability distribution function
-    """
-    return entropy(get_pdf(df), base = 2)
+            # Drop rows that contain any NaN values
+            # Reset the index so that it is consecutive after dropping rows
+            DF.dropna(inplace=True)
+            DF.reset_index(drop=True, inplace=True)
+            
+            for i in range(1, len(DF)):
+                if (DF.loc[i-1, "G_X"], DF.loc[i-1, "G_Y"]) == (DF.loc[i, "G_X"], DF.loc[i, "G_Y"]) and DF.loc[i-1, "T_R"] != DF.loc[i, "T_R"] and DF.loc[i, "T_R"] == 1:
+                    print(f"{bag}_{tod.value}.csv ERROR row {i}")
+                    DF.loc[i, "T_R"] = 0
+            DF.to_csv(os.path.join(indir, f"{bag}", tod.value, f"{bag}_{tod.value}.csv"), index=False)
+            
+            
+            # Save WP-specific DataFrames
+            general_columns_name = ['pf_elapsed_time', 'TOD', 'T', 'R_V', 'T_R', 'R_B', 'B_S', 'R_X', 'R_Y', 'G_X', 'G_Y']
+            for wp in WP:
+                if wp == WP.PARKING or wp == WP.CHARGING_STATION: continue
+                WPDF = copy.deepcopy(DF[general_columns_name + [f"{wp.value}_NP", f"{wp.value}_PD", f"{wp.value}_BAC"]])
+                
+                # Rename the WP-specific columns
+                WPDF = WPDF.rename(columns={f"{wp.value}_NP": "NP", f"{wp.value}_PD": "PD", f"{wp.value}_BAC": "BAC"})
+                
+                # Add the constant column "wp" with the value wp_id
+                WPDF["WP"] = WPS[wp.value]
+                
+                wp_filename = f"{bag}_{tod.value}_{wp.value}.csv"
+                WPDF.to_csv(f"{indir}/{bag}/{tod.value}/{wp_filename}", index=False)
+                print(f"Saved {wp_filename}")
   
   
 def plot_bandwidth(signal, varname, sampling_rate, bandwidth = None):
@@ -57,7 +66,7 @@ def plot_bandwidth(signal, varname, sampling_rate, bandwidth = None):
     plt.ylabel('Magnitude')
     plt.legend()
     plt.grid()
-    plt.show()
+    # plt.show()
 
 
 def low_pass_filter(data, cutoff_freq, sampling_rate, order=4):
@@ -80,8 +89,8 @@ def get_bandwidth(df, sampling_rate, cutoff, energy_percentage, plot):
         varname = df.columns[i]
         
         # 1. Remove noise
-        filtered_signal = low_pass_filter(df.values[:,i], cutoff, sampling_rate)
-        
+        # filtered_signal = low_pass_filter(df.values[:,i], cutoff, sampling_rate)
+        filtered_signal = df.values[:,i]
         # 2. Compute the FFT
         fft_values = fft(filtered_signal)
         frequencies = fftfreq(N, 1 / sampling_rate)
@@ -121,16 +130,18 @@ def get_initrow(df):
             return r
         
         
-def get_subsampling_step(cutoff = 1, energy_percentage=0.95, plot = False):
+def get_subsampling_step(cutoff = 1, energy_percentage=0.95, plot = True):
     wp = WP.DELIVERY_POINT.value
     rs = {}
     dfs = []
-    for tod in TOD:
-        df = pd.read_csv(os.path.join(INDIR, f"{BAGNAME}", tod.value, f"{BAGNAME}_{tod.value}.csv"), index_col=0)
-        r = get_initrow(df)
-        df = df.loc[r:, ["R_X", "R_Y", "R_V", "R_T", "R_B", f"{wp}_NP", f"{wp}_PD", f"{wp}_BAC"]]
-        rs[tod] = r
-        dfs.append(df.reset_index(drop=True))
+    for bag in BAGNAME:
+        for tod in TOD:
+            df = pd.read_csv(os.path.join(INDIR, f"{bag}", tod.value, f"{bag}_{tod.value}.csv"), index_col=0)
+            r = get_initrow(df)
+            
+            df = df.loc[r:, ["R_X", "R_Y", "R_V", "R_B", 'B_S', f"{wp}_NP", f"{wp}_PD", f"{wp}_BAC"]]
+            rs[tod] = r
+            dfs.append(df.reset_index(drop=True))
         
     df = pd.concat(dfs, axis=0)
 
@@ -143,123 +154,48 @@ def get_subsampling_step(cutoff = 1, energy_percentage=0.95, plot = False):
     return rs, _bw, _ssf, _st, _step
 
 
-def restore_R_T(d : Data):
-    dc = copy.deepcopy(d)
-    for i in range(1, d.T):
-        if dc.d.loc[i-1, "G_X"] != dc.d.loc[i, "G_X"] or dc.d.loc[i-1, "G_Y"] != dc.d.loc[i, "G_Y"]:
-            if dc.d.loc[i-1, "G_X"] != -1000 and dc.d.loc[i-1, "G_Y"] != -1000:
-                if math.sqrt((dc.d.loc[i-1, "R_X"] - dc.d.loc[i-1, "G_X"])**2 + (dc.d.loc[i-1, "R_Y"] - dc.d.loc[i-1, "G_Y"])**2) <= GOAL_REACHED_THRES:
-                    dc.d.loc[i, "R_T"] = 1
-                else:
-                    dc.d.loc[i, "R_T"] = -1
-            else:
-                dc.d.loc[i, "R_T"] = 0
-        else:
-            dc.d.loc[i, "R_T"] = 0
-    return dc
-    
-
-
 SF = 10 #Hz
 INDIR = '/home/lcastri/git/PeopleFlow/utilities_ws/src/RA-L/hrisim_postprocess/csv/original'
 OUTDIR = '/home/lcastri/git/PeopleFlow/utilities_ws/src/RA-L/hrisim_postprocess/csv/shrunk'
-BAGNAME = 'BL50_13102024'
+# BAGNAME= ['BL100_07112024']
+BAGNAME= ['BL100_21102024', 'BL75_29102024', 'BL50_22102024', 'BL25_28102024', 'BL100_07112024', 'BL20_06112024']
+# BAGNAME= ['BL100_21102024', 'BL75_29102024', 'BL50_22102024', 'BL25_28102024']
 
 
-R, BW, SSF, ST, STEP = get_subsampling_step(cutoff = 0.4, energy_percentage=0.95, plot = False)
+fixer(INDIR, BAGNAME)
+
+R, BW, SSF, ST, STEP = get_subsampling_step(cutoff = 1, energy_percentage=0.95, plot = True)
 print(f"Bandwidth fm: {BW:.4f} Hz")
 print(f"Subsampling frequency fs >= 2fm = {2*BW:.4f} Hz")
 print(f"Subsampling time 1 sample every each {ST:.4f} s")
 print(f"Subsampling step {STEP}")
 print("")
-
-# for tod in TOD:
-#     DF = pd.read_csv(os.path.join(INDIR, f"{BAGNAME}", tod.value, f"{BAGNAME}_{tod.value}.csv"))
-#     DF = DF.loc[:, ~DF.columns.str.contains('^Unnamed')]
-#     DF = DF.loc[r:, ["pf_elapsed_time", "R_X", "R_Y", "R_V", "R_B", "R_T", "G_X", "G_Y"]]
-
-#     print(f"Analysing {BAGNAME}_{tod.value}.csv ...")
-    
-#     df_original = Data(DF, vars = DF.columns)
-#     entropy_original = get_entropy(df_original)
-#     print(f"Original Entropy: {entropy_original}")
-#     del df_original
-    
-#     df = Data(DF, vars = DF.columns, subsampling=Static(STEP))
-#     entropy_static = get_entropy(df)
-#     print(f"STATIC - Entropy: {entropy_static}")
-#     print(f"STATIC - Original number of samples: {len(DF.values)}")
-#     print(f"STATIC - Shrunk number of samples: {df.T}")
-#     print(f"STATIC - Shrunk percentage of samples: {round(df.T/len(DF.values)*100, 2)}%")
-#     print("")
-#     output_dir = os.path.join(OUTDIR, f"{BAGNAME}", tod.value, "static")
-#     os.makedirs(output_dir, exist_ok=True)
-#     df.d.to_csv(os.path.join(output_dir, f"{BAGNAME}_{tod.value}.csv"), index=False)
-#     del df
-    
-#     df = Data(DF, vars = DF.columns, subsampling=WSDynamic(STEP, 1 - entropy_static/entropy_original))
-#     print(f"WS DYNAMIC - Entropy: {get_entropy(df)}")
-#     print(f"WS DYNAMIC - Original number of samples: {len(DF.values)}")
-#     print(f"WS DYNAMIC - Shrunk number of samples: {df.T}")
-#     print(f"WS DYNAMIC - Shrunk percentage of samples: {round(df.T/len(DF.values)*100, 2)}%")
-#     print("")
-#     output_dir = os.path.join(OUTDIR, f"{BAGNAME}", tod.value, "ws_dynamic")
-#     os.makedirs(output_dir, exist_ok=True)
-#     df.d.to_csv(os.path.join(output_dir, f"{BAGNAME}_{tod.value}.csv"), index=False)
-#     del df
         
-# for tod in [TOD.AFTERNOON]:
-# for tod in [TOD.STARTING, TOD.MORNING, TOD.LUNCH, TOD.OFF]:
-for tod in TOD:
-    DF = pd.read_csv(os.path.join(INDIR, f"{BAGNAME}", tod.value, f"{BAGNAME}_{tod.value}.csv"), index_col=0)
-    DF.reset_index(drop=True, inplace=True)
-    DF = DF.loc[R[tod]:, ["R_X", "R_Y", "G_X", "G_Y"]]
-    for wp in WP:
-        if wp == WP.PARKING or wp == WP.CHARGING_STATION: continue
-        WPDF = pd.read_csv(os.path.join(INDIR, f"{BAGNAME}", tod.value, f"{BAGNAME}_{tod.value}_{wp.value}.csv"))
-        WPDF.reset_index(drop=True, inplace=True)
-        WPDF = WPDF.loc[R[tod]:, ~WPDF.columns.str.contains('^Unnamed')]
-        WPDF = pd.concat([DF, WPDF], axis=1)
-        print(f"Analysing {BAGNAME}_{tod.value}_{wp.value}.csv ...")
-        n_success_original = (WPDF["R_T"] == 1).sum()
-        n_fail_original = (WPDF["R_T"] == -1).sum()
-
-        
-        df_original = Data(WPDF, vars = WPDF.columns)
-        entropy_original = get_entropy(df_original)
-        print(f"Original Entropy: {entropy_original}")
-        print("")
-        del df_original
-        
-        df = Data(WPDF, vars = WPDF.columns, subsampling=Static(STEP))
-        entropy_static = get_entropy(df)
-        print(f"STATIC - Entropy: {entropy_static}")
-        print(f"STATIC - Original number of samples: {len(WPDF.values)}")
-        print(f"STATIC - Shrunk number of samples: {df.T}")
-        print(f"STATIC - Shrunk percentage of samples: {round(df.T/len(WPDF.values)*100, 2)}%")
-        
-        df_new = restore_R_T(df)
-        n_success = (df_new.d["R_T"] == 1).sum()
-        n_fail = (df_new.d["R_T"] == -1).sum()
-        print(f"n_success: {n_success}/{n_success_original}")
-        print(f"n_fail: {n_fail}/{n_fail_original}")
-        # assert n_success == n_success_original and n_fail == n_fail_original
-            # different_indices = df_new.d.index[df_new.d["R_T"] != df.d["R_T"]]
-            # print(different_indices)
-
-        output_dir = os.path.join(OUTDIR, f"{BAGNAME}", tod.value, "static")
+for bag in BAGNAME:
+    print(f"Subsampling {bag}")
+    for tod in [TOD.STARTING, TOD.MORNING, TOD.LUNCH, TOD.AFTERNOON, TOD.QUITTING, TOD.OFF]:
+        print(f"- {tod.value}.csv")
+        DF = pd.read_csv(os.path.join(INDIR, f"{bag}", tod.value, f"{bag}_{tod.value}.csv"))
+        DF.reset_index(drop=True, inplace=True)
+        df = Data(DF, vars = DF.columns, subsampling=Static(STEP))
+        output_dir = os.path.join(OUTDIR, f"{bag}", "noRT", tod.value, "static")
         os.makedirs(output_dir, exist_ok=True)
-        df_new.d.to_csv(os.path.join(output_dir, f"{BAGNAME}_{tod.value}_{wp.value}.csv"), index=False)
+        df.d.to_csv(os.path.join(output_dir, f"{bag}_{tod.value}.csv"), index=False)
         del df
-        print("")
         
-        # df = Data(WPDF, vars = WPDF.columns, subsampling=WSDynamic(STEP, 1 - entropy_static/entropy_original))
-        # print(f"WS DYNAMIC - Entropy: {get_entropy(df)}")
-        # print(f"WS DYNAMIC - Original number of samples: {len(WPDF.values)}")
-        # print(f"WS DYNAMIC - Shrunk number of samples: {df.T}")
-        # print(f"WS DYNAMIC - Shrunk percentage of samples: {round(df.T/len(WPDF.values)*100, 2)}%")
-        # print("")
-        # output_dir = os.path.join(OUTDIR, f"{BAGNAME}", tod.value, "ws_dynamic")
-        # os.makedirs(output_dir, exist_ok=True)
-        # df.d.to_csv(os.path.join(output_dir, f"{BAGNAME}_{tod.value}_{wp.value}.csv"), index=False)
-        # del df
+        DF = DF.loc[R[tod]:, ["R_X", "R_Y", "G_X", "G_Y"]]
+        for wp in WP:
+            if wp == WP.PARKING or wp == WP.CHARGING_STATION: continue
+            print(f"- {tod.value}_{wp.value}.csv")
+            WPDF = pd.read_csv(os.path.join(INDIR, f"{bag}", tod.value, f"{bag}_{tod.value}_{wp.value}.csv"))
+            WPDF.reset_index(drop=True, inplace=True)
+            WPDF = WPDF.loc[R[tod]:, ~WPDF.columns.str.contains('^Unnamed')]
+            WPDF = WPDF.drop(columns=["T_R"])
+            WPDF = pd.concat([DF, WPDF], axis=1)
+            
+            df = Data(WPDF, vars = WPDF.columns, subsampling=Static(STEP))
+            
+            output_dir = os.path.join(OUTDIR, f"{bag}", "noRT", tod.value, "static")
+            os.makedirs(output_dir, exist_ok=True)
+            df.d.to_csv(os.path.join(output_dir, f"{bag}_{tod.value}_{wp.value}.csv"), index=False)
+            del df

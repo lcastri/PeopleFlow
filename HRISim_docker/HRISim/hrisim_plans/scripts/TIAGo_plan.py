@@ -92,6 +92,7 @@ def Plan(p):
         
         elif not rospy.get_param('/robot_battery/is_charging') and not rospy.get_param('/hri/robot_busy'):                        
             p.action_cmd('goto', "", 'interrupt')               
+            # rospy.sleep(random.randint(10, 30))
                 
             if rospy.get_param('/peopleflow/timeday') in ['starting', 'morning', 'lunch']:
                 # Pick and Place

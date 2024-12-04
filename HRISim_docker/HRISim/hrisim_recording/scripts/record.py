@@ -6,7 +6,7 @@ import rospy
 import signal
 import hrisim_util.ros_utils as ros_utils
 
-TOPICS = "/map /tf /tf_static /robot_pose /mobile_base_controller/odom /move_base/goal /pedsim_simulator/simulated_agents /peopleflow/counter /peopleflow/time /hrisim/robot_battery /hrisim/robot_task /hrisim/robot_closest_wp /hrisim/robot_bac /hrisim/robot_past_bac"
+TOPICS = "/map /tf /tf_static /robot_pose /mobile_base_controller/odom /move_base/goal /pedsim_simulator/simulated_agents /peopleflow/counter /peopleflow/time /hrisim/robot_battery /hrisim/robot_task /hrisim/robot_closest_wp /hrisim/robot_bac"
    
 if __name__ == '__main__':
     rospy.init_node('hrisim_recording')

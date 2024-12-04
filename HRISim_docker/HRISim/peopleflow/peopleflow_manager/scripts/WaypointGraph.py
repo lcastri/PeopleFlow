@@ -10,7 +10,7 @@ from shapely.geometry import Point, LineString
 import pickle
 import rospy   
 from matplotlib.patches import Circle
-
+import math
 
 def line_of_sight(ax, wp1, wp2, obstacles, waypoints, doors):
     """
@@ -143,7 +143,7 @@ for i, wp1 in enumerate(waypoints):
             if line_of_sight_exists:
                 x_values, y_values = line.xy
                 ax.plot(x_values, y_values, 'g-', linewidth=2)
-                G.add_edge(wp1[0], wp2[0])
+                G.add_edge(wp1[0], wp2[0], weight=math.sqrt((wp1[1]-wp2[1])**2 + (wp1[2]-wp2[2])**2))
             # wp1_plot.pop(0).remove()  # Remove wp1 point
             # wp2_plot.pop(0).remove()  # Remove wp2 point
 
@@ -159,10 +159,15 @@ plt.savefig(os.path.join(res_dir, "waypoint_with_map.png"))
 # Visualize the graph
 pos = nx.get_node_attributes(G, 'pos')
 radius = nx.get_node_attributes(G, 'radius')
+edge_weights = nx.get_edge_attributes(G, 'weight')
+edge_weights = {edge: round(weight, 2) for edge, weight in edge_weights.items()}
+
 # Scale radius for better visualization
 node_sizes = [radius[node] * 500 for node in G.nodes()]  # Adjust scaling factor as needed
 plt.figure(figsize=(12, 8))
 nx.draw(G, pos, with_labels=True, node_size=node_sizes, node_color='skyblue', font_size=10, font_weight='bold')
+nx.draw_networkx_edge_labels(G, pos, edge_labels=edge_weights)
+
 plt.title("Waypoints Graph")
 plt.savefig(os.path.join(res_dir, "waypoint_graph.png"))
 # plt.show()
