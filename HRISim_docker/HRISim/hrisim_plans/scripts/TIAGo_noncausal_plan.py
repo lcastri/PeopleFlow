@@ -13,14 +13,16 @@ except:
 import pnp_cmd_ros
 from pnp_cmd_ros import *
 from robot_msgs.msg import BatteryStatus
-from std_msgs.msg import String
+from std_msgs.msg import String, Int32
 from move_base_msgs.msg import MoveBaseAction
 import actionlib
 import hrisim_util.ros_utils as ros_utils
 import hrisim_util.constants as constants
 import networkx as nx
 
+
 SHELFS = [constants.WP.SHELF1, constants.WP.SHELF2, constants.WP.SHELF3, constants.WP.SHELF4, constants.WP.SHELF5, constants.WP.SHELF6]
+
 
 def send_goal(p, next_dest, nextnext_dest=None):
     pos = nx.get_node_attributes(G, 'pos')
@@ -71,7 +73,7 @@ def Plan(p):
     while not ros_utils.wait_for_param("/pnp_ros/ready"):
         rospy.sleep(0.1)
         
-    global wp, NEXT_GOAL, QUEUE, GO_TO_CHARGER
+    global wp, NEXT_GOAL, QUEUE, GO_TO_CHARGER, task_pub
     ros_utils.wait_for_param("/peopleflow/timeday")
     rospy.set_param('/hri/robot_busy', False)
     PLAN_ON = True
@@ -98,7 +100,8 @@ def Plan(p):
             if isinstance(NEXT_GOAL, constants.WP): NEXT_GOAL = NEXT_GOAL.value
             QUEUE = nx.astar_path(G, ROBOT_CLOSEST_WP, NEXT_GOAL, heuristic=heuristic, weight='weight')
             rospy.logwarn(f"{QUEUE}")
-            
+        
+        #! Here the goal is taken from the queue
         if not rospy.get_param('/hri/robot_busy') and len(QUEUE) > 0:
             next_sub_goal = QUEUE.pop(0)
             rospy.logwarn(f"Planning next goal: {next_sub_goal}")
@@ -106,12 +109,15 @@ def Plan(p):
             if nextnext_sub_goal is None and TASK is constants.Task.CLEANING: nextnext_sub_goal = CLEANING_PATH[0] if len(CLEANING_PATH) > 0 else None
             send_goal(p, next_sub_goal, nextnext_sub_goal)
             rospy.set_param('/hrisim/robot_task', TASK.value)
+            
+            # Publish +1 when reaching the final goal
+            if len(QUEUE) == 0: task_pub.publish(constants.TaskResult.SUCCESS.value)
         
     rospy.set_param("/peopleflow/robot_plan_on", PLAN_ON)
 
                                    
 def cb_battery(msg):
-    global BATTERY_LEVEL, QUEUE, NEXT_GOAL, GO_TO_CHARGER
+    global BATTERY_LEVEL, QUEUE, NEXT_GOAL, GO_TO_CHARGER, task_pub
     BATTERY_LEVEL = float(msg.level.data)
     if not GO_TO_CHARGER and not rospy.get_param('/robot_battery/is_charging') and BATTERY_LEVEL <= 20:
         rospy.logwarn("Cancelling all goals..")
@@ -123,6 +129,7 @@ def cb_battery(msg):
         NEXT_GOAL = None
         QUEUE = []
         GO_TO_CHARGER = True
+        task_pub.publish(constants.TaskResult.FAILURE.value)
         
     elif BATTERY_LEVEL == 100 and rospy.get_param('/robot_battery/is_charging'):
         rospy.set_param('/robot_battery/is_charging', False)
@@ -130,8 +137,9 @@ def cb_battery(msg):
         
     
 def cb_robot_closest_wp(wp: String):
-    global ROBOT_CLOSEST_WP
+    global ROBOT_CLOSEST_WP, task_pub
     ROBOT_CLOSEST_WP = wp.data
+    
     
 if __name__ == "__main__":  
     BATTERY_LEVEL = None
@@ -150,6 +158,7 @@ if __name__ == "__main__":
     rospy.logwarn(CLEANING_PATH)
     rospy.Subscriber("/hrisim/robot_battery", BatteryStatus, cb_battery)
     rospy.Subscriber("/hrisim/robot_closest_wp", String, cb_robot_closest_wp)
+    task_pub = rospy.Publisher('/hrisim/robot_task_status', Int32, queue_size=10)
 
     p.begin()
 

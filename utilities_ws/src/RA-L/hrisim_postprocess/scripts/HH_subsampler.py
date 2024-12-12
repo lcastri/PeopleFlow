@@ -5,7 +5,6 @@ from fpcmci.preprocessing.subsampling_methods.Static import Static
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
-from scipy.stats import entropy
 from scipy.fft import fft, fftfreq
 from scipy.signal import butter, filtfilt
 from utils import *
@@ -14,9 +13,11 @@ import copy
 def fixer(indir, bags):
 
     for bag in bags:
-        for tod in TOD:
-            print(f"analysing {tod.value}")
-            DF = pd.read_csv(os.path.join(indir, f"{bag}", tod.value, f"{bag}_{tod.value}.csv"))
+        files = os.listdir(os.path.join(INDIR, bag))
+        files = sorted(files, key=lambda x: int(x.split('_')[-1].replace('h.csv', '')))
+        for tod in files:
+            print(f"analysing {tod}")
+            DF = pd.read_csv(os.path.join(indir, f"{bag}", tod))
             
             if "is_charging" in DF.columns: DF = DF.rename(columns={f"is_charging": "B_S"})
 
@@ -27,9 +28,9 @@ def fixer(indir, bags):
             
             for i in range(1, len(DF)):
                 if (DF.loc[i-1, "G_X"], DF.loc[i-1, "G_Y"]) == (DF.loc[i, "G_X"], DF.loc[i, "G_Y"]) and DF.loc[i-1, "T_R"] != DF.loc[i, "T_R"] and DF.loc[i, "T_R"] == 1:
-                    print(f"{bag}_{tod.value}.csv ERROR row {i}")
+                    print(f"{bag}_{tod}.csv ERROR row {i}")
                     DF.loc[i, "T_R"] = 0
-            DF.to_csv(os.path.join(indir, f"{bag}", tod.value, f"{bag}_{tod.value}.csv"), index=False)
+            DF.to_csv(os.path.join(indir, f"{bag}", tod), index=False)
             
             
             # Save WP-specific DataFrames
@@ -44,8 +45,8 @@ def fixer(indir, bags):
                 # Add the constant column "wp" with the value wp_id
                 WPDF["WP"] = WPS[wp.value]
                 
-                wp_filename = f"{bag}_{tod.value}_{wp.value}.csv"
-                WPDF.to_csv(f"{indir}/{bag}/{tod.value}/{wp_filename}", index=False)
+                wp_filename = f"{tod[:-4]}_{wp.value}.csv"
+                WPDF.to_csv(f"{indir}/{bag}/{wp_filename}", index=False)
                 print(f"Saved {wp_filename}")
   
   
@@ -135,8 +136,12 @@ def get_subsampling_step(cutoff = 1, energy_percentage=0.95, plot = True):
     rs = {}
     dfs = []
     for bag in BAGNAME:
-        for tod in TOD:
-            df = pd.read_csv(os.path.join(INDIR, f"{bag}", tod.value, f"{bag}_{tod.value}.csv"), index_col=0)
+        files = os.listdir(os.path.join(INDIR, bag))
+        files = sorted(set(f.split('_', 3)[0] + '_' + f.split('_', 3)[1] + '_' + f.split('_', 3)[2] for f in files))
+        files = sorted(set(item.replace('.csv', '') for item in files))
+        for tod in files:
+            df = pd.read_csv(os.path.join(INDIR, f"{bag}", f"{tod}.csv"))
+
             r = get_initrow(df)
             
             df = df.loc[r:, ["R_X", "R_Y", "R_V", "R_B", 'B_S', f"{wp}_NP", f"{wp}_PD", f"{wp}_BAC"]]
@@ -155,14 +160,12 @@ def get_subsampling_step(cutoff = 1, energy_percentage=0.95, plot = True):
 
 
 SF = 10 #Hz
-INDIR = '/home/lcastri/git/PeopleFlow/utilities_ws/src/RA-L/hrisim_postprocess/csv/original'
-OUTDIR = '/home/lcastri/git/PeopleFlow/utilities_ws/src/RA-L/hrisim_postprocess/csv/shrunk'
-# BAGNAME= ['BL100_07112024']
-BAGNAME= ['BL100_21102024', 'BL75_29102024', 'BL50_22102024', 'BL25_28102024', 'BL100_07112024', 'BL20_06112024']
-# BAGNAME= ['BL100_21102024', 'BL75_29102024', 'BL50_22102024', 'BL25_28102024']
+INDIR = '/home/lcastri/git/PeopleFlow/utilities_ws/src/RA-L/hrisim_postprocess/csv/HH/original'
+OUTDIR = '/home/lcastri/git/PeopleFlow/utilities_ws/src/RA-L/hrisim_postprocess/csv/HH/shrunk'
+BAGNAME= ['BL100_21102024', 'BL75_29102024', 'BL50_22102024', 'BL25_28102024']
 
 
-fixer(INDIR, BAGNAME)
+# fixer(INDIR, BAGNAME)
 
 R, BW, SSF, ST, STEP = get_subsampling_step(cutoff = 1, energy_percentage=0.95, plot = True)
 print(f"Bandwidth fm: {BW:.4f} Hz")
@@ -170,32 +173,35 @@ print(f"Subsampling frequency fs >= 2fm = {2*BW:.4f} Hz")
 print(f"Subsampling time 1 sample every each {ST:.4f} s")
 print(f"Subsampling step {STEP}")
 print("")
-        
+STEP = 70
 for bag in BAGNAME:
     print(f"Subsampling {bag}")
-    for tod in [TOD.STARTING, TOD.MORNING, TOD.LUNCH, TOD.AFTERNOON, TOD.QUITTING, TOD.OFF]:
-        print(f"- {tod.value}.csv")
-        DF = pd.read_csv(os.path.join(INDIR, f"{bag}", tod.value, f"{bag}_{tod.value}.csv"))
+    files = os.listdir(os.path.join(INDIR, bag))
+    files = sorted(set(f.split('_', 3)[0] + '_' + f.split('_', 3)[1] + '_' + f.split('_', 3)[2] for f in files))
+    files = sorted(set(item.replace('.csv', '') for item in files))
+    files = sorted(files, key=lambda x: int(x.split('_')[-1].replace('h', '')))
+
+    for tod in files:
+        print(f"- {tod}.csv")
+        DF = pd.read_csv(os.path.join(INDIR, f"{bag}", f"{tod}.csv"))        
         DF.reset_index(drop=True, inplace=True)
         df = Data(DF, vars = DF.columns, subsampling=Static(STEP))
-        output_dir = os.path.join(OUTDIR, f"{bag}", "noRT", tod.value, "static")
+        output_dir = os.path.join(OUTDIR, bag)
         os.makedirs(output_dir, exist_ok=True)
-        df.d.to_csv(os.path.join(output_dir, f"{bag}_{tod.value}.csv"), index=False)
+        df.d.to_csv(os.path.join(output_dir, f"{tod}.csv"), index=False)
         del df
         
         DF = DF.loc[R[tod]:, ["R_X", "R_Y", "G_X", "G_Y"]]
         for wp in WP:
             if wp == WP.PARKING or wp == WP.CHARGING_STATION: continue
-            print(f"- {tod.value}_{wp.value}.csv")
-            WPDF = pd.read_csv(os.path.join(INDIR, f"{bag}", tod.value, f"{bag}_{tod.value}_{wp.value}.csv"))
+            wp_filename = f"{tod}_{wp.value}.csv"
+            print(f"- {wp_filename}")
+            WPDF = pd.read_csv(os.path.join(INDIR, f"{bag}", wp_filename))
             WPDF.reset_index(drop=True, inplace=True)
             WPDF = WPDF.loc[R[tod]:, ~WPDF.columns.str.contains('^Unnamed')]
             WPDF = WPDF.drop(columns=["T_R"])
             WPDF = pd.concat([DF, WPDF], axis=1)
             
             df = Data(WPDF, vars = WPDF.columns, subsampling=Static(STEP))
-            
-            output_dir = os.path.join(OUTDIR, f"{bag}", "noRT", tod.value, "static")
-            os.makedirs(output_dir, exist_ok=True)
-            df.d.to_csv(os.path.join(output_dir, f"{bag}_{tod.value}_{wp.value}.csv"), index=False)
+            df.d.to_csv(os.path.join(output_dir, wp_filename), index=False)
             del df

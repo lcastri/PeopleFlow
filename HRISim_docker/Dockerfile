@@ -68,7 +68,7 @@ RUN DEBIAN_FRONTEND=noninteractive pip install --upgrade --ignore-installed cyth
 
 # Clone the causalflow repository
 ARG CACHE=0
-RUN git clone -b dev-reasoning-gmm https://github.com/lcastri/causalflow.git causalflow
+RUN git clone -b dev-reasoning-gmm-robot https://github.com/lcastri/causalflow.git causalflow
 
 # Install Python dependencies
 WORKDIR /root/repos/causalflow

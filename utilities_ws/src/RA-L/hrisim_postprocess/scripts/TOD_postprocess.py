@@ -49,10 +49,11 @@ for waypoint in root.findall('waypoint'):
 
 
 # Load map information
-ADD_NOISE = False
-INCSV_PATH= os.path.expanduser('utilities_ws/src/RA-L/hrisim_postprocess/csv/shrunk')
-OUTCSV_PATH= os.path.expanduser('utilities_ws/src/RA-L/hrisim_postprocess/csv/my')
-BAGNAME= ['BL100_21102024', 'BL75_29102024', 'BL50_22102024', 'BL25_28102024', 'BL100_07112024', 'BL20_06112024']
+ADD_NOISE = True
+INCSV_PATH= os.path.expanduser('utilities_ws/src/RA-L/hrisim_postprocess/csv/TOD/shrunk')
+OUTCSV_PATH= os.path.expanduser(f'utilities_ws/src/RA-L/hrisim_postprocess/csv/TOD/my{"_noised" if ADD_NOISE else "_nonoise"}/')
+BAGNAME= ['BL75_29102024']
+# BAGNAME= ['BL100_21102024', 'BL75_29102024', 'BL50_22102024', 'BL25_28102024', 'BL100_07112024', 'BL20_06112024']
 
 static_duration = 5
 dynamic_duration = 4

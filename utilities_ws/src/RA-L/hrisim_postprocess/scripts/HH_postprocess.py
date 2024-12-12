@@ -36,17 +36,6 @@ def get_initrow(df):
             return r
         
         
-def detrend(signal, window_size):
-    detrended_signal = np.copy(signal)
-    # Loop through the signal and subtract the window mean
-    for i in range(len(signal) - window_size + 1):
-        window = signal[i:i+window_size]
-        window_median = np.median(window)
-        detrended_signal[i:i+window_size] -= window_median
-        
-    return detrended_signal
-
-
 tree = ET.parse('/home/lcastri/git/PeopleFlow/HRISim_docker/pedsim_ros/pedsim_simulator/scenarios/warehouse.xml')
 root = tree.getroot()
 
@@ -60,10 +49,13 @@ for waypoint in root.findall('waypoint'):
 
 
 # Load map information
-ADD_NOISE = False
-INCSV_PATH= os.path.expanduser('utilities_ws/src/RA-L/hrisim_postprocess/csv/shrunk')
-OUTCSV_PATH= os.path.expanduser('utilities_ws/src/RA-L/hrisim_postprocess/csv/my')
-BAGNAME= ['BL100_21102024', 'BL75_29102024', 'BL50_22102024', 'BL25_28102024', 'BL100_07112024', 'BL20_06112024']
+ADD_NOISE = True
+INCSV_PATH= os.path.expanduser('utilities_ws/src/RA-L/hrisim_postprocess/csv/HH/shrunk')
+if ADD_NOISE:
+    OUTCSV_PATH= os.path.expanduser('utilities_ws/src/RA-L/hrisim_postprocess/csv/HH/my_noised')
+else:
+    OUTCSV_PATH= os.path.expanduser('utilities_ws/src/RA-L/hrisim_postprocess/csv/HH/my_nonoise')
+BAGNAME= ['BL100_21102024', 'BL75_29102024', 'BL50_22102024', 'BL25_28102024']
 
 static_duration = 5
 dynamic_duration = 4
@@ -79,19 +71,15 @@ TTC = get_TTC()
 # Load data
 for bag in BAGNAME:
     print(f"\n### Analysing rosbag: {bag}")
-    for tod in TOD:
-        print(f"- time: {tod.value}")
-        DF = pd.read_csv(os.path.join(INCSV_PATH, f"{bag}", "noRT", tod.value, "static", f"{bag}_{tod.value}.csv"))
+    files = os.listdir(os.path.join(INCSV_PATH, bag))
+    files = sorted(set(f.split('_', 3)[0] + '_' + f.split('_', 3)[1] + '_' + f.split('_', 3)[2] for f in files))
+    files = sorted(set(item.replace('.csv', '') for item in files))
+    files = sorted(files, key=lambda x: int(x.split('_')[-1].replace('h', '')))
+    for file in files:
+        DF = pd.read_csv(os.path.join(INCSV_PATH, f"{bag}", f"{file}.csv"))
         r = get_initrow(DF)
         DF = DF[r:]
         n_rows = len(DF)
-        
-        if tod in [TOD.STARTING, TOD.MORNING, TOD.LUNCH]:
-            A = np.zeros_like(DF['T'].values)
-        elif tod in [TOD.AFTERNOON, TOD.QUITTING]:
-            A = np.ones_like(DF['T'].values)
-        elif tod in [TOD.OFF]:
-            A = 2*np.ones_like(DF['T'].values)
         
         isTaskActive = DF['G_X'].diff().fillna(0).values + DF['G_Y'].diff().fillna(0).values
         T = np.where((isTaskActive == 0) & (DF['B_S'].values == 0), 1, 0)
@@ -102,9 +90,6 @@ for bag in BAGNAME:
         DG = pd.Series(DG).shift(periods = 1, fill_value=0).values
         RV = DF['R_V'].values 
         if ADD_NOISE: RV += np.random.normal(0, 0.1, n_rows)
-        # if ADD_NOISE: RV += np.random.uniform(-0.5, 0.5, n_rows) # WORKING
-        # if ADD_NOISE: RV += np.roll(t_noise, 1) + np.random.normal(0, 0.03, n_rows)
-        # if ADD_NOISE: RV += np.where(DF['B_S'] == 0, np.random.normal(0, 0.1, n_rows), 0)
         
         RB = np.zeros(n_rows)
         BACs = {wp: np.zeros(n_rows) for wp in wps}
@@ -140,21 +125,19 @@ for bag in BAGNAME:
         # Add computed values to DF
         DF['R_V'] = RV
         DF['R_B'] = RB
-        DF['E_C'] = EC
-        DF["A"] = A
         DF["T"] = T
         for wp, bac_array in BACs.items():
             DF[f'{wp}_BAC'] = bac_array
         
         # Create output directory if it doesn't exist
-        out_path = os.path.join(OUTCSV_PATH, f'{bag}', f'{tod.value}')
+        out_path = os.path.join(OUTCSV_PATH, f'{bag}')
         os.makedirs(out_path, exist_ok=True)
         
         # Save the updated DF
-        DF.to_csv(os.path.join(out_path, f"{bag}_{tod.value}.csv"), index=False)
+        DF.to_csv(os.path.join(out_path, f'{file}.csv'), index=False)
 
         # Save WP-specific DataFrames
-        general_columns_name = ['pf_elapsed_time', 'TOD', 'T', 'A', 'R_V', 'T_R', 'R_B', 'B_S', 'E_C']
+        general_columns_name = ['pf_elapsed_time', 'TOD', 'T', 'R_V', 'T_R', 'R_B', 'B_S']
         for wp_name, wp_id in WPS.items():
             if wp_name in ['parking', 'charging_station']:
                 continue 
@@ -163,4 +146,4 @@ for bag in BAGNAME:
             wp_df = wp_df.rename(columns={f"{wp_name}_PD": "PD", f"{wp_name}_BAC": "BAC"})
             wp_df["WP"] = wp_id
             
-            wp_df.to_csv(os.path.join(out_path, f"{bag}_{tod.value}_{wp_name}.csv"), index=False)
+            wp_df.to_csv(os.path.join(out_path, f"{file}_{wp_name}.csv"), index=False)

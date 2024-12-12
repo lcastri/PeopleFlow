@@ -1,4 +1,5 @@
 from enum import Enum
+from shapely.geometry import Polygon
 
 
 class TOD(Enum):
@@ -12,22 +13,22 @@ class TOD(Enum):
 
 class WP(Enum):
   PARKING = "parking"
-  DOOR_ENTRANCE = "door-entrance"
-  DOOR_ENTRANCE_CANTEEN = "door-entrance-canteen"
-  CORRIDOR_ENTRANCE = "corridor-entrance"
-  DOOR_CORRIDOR1 = "door-corridor1"
-  DOOR_CORRIDOR2 = "door-corridor2"
-  DOOR_CORRIDOR3 = "door-corridor3"
+  DOOR_ENTRANCE = "door_entrance"
+  DOOR_ENTRANCE_CANTEEN = "door_entrance-canteen"
+  CORRIDOR_ENTRANCE = "corridor_entrance"
+  DOOR_CORRIDOR1 = "door_corridor1"
+  DOOR_CORRIDOR2 = "door_corridor2"
+  DOOR_CORRIDOR3 = "door_corridor3"
   SHELF12 = "shelf12"
   SHELF23 = "shelf23"
   SHELF34 = "shelf34"
   SHELF45 = "shelf45"
   SHELF56 = "shelf56"
-  DOOR_OFFICE1 = "door-office1"
-  DOOR_OFFICE2 = "door-office2"
-  DOOR_TOILET1 = "door-toilet1"
-  DOOR_TOILET2 = "door-toilet2"
-  DELIVERY_POINT = "delivery-point"
+  DOOR_OFFICE1 = "door_office1"
+  DOOR_OFFICE2 = "door_office2"
+  DOOR_TOILET1 = "door_toilet1"
+  DOOR_TOILET2 = "door_toilet2"
+  DELIVERY_POINT = "delivery_point"
   CORRIDOR0 = "corridor0"
   CORRIDOR1 = "corridor1"
   CORRIDOR2 = "corridor2"
@@ -44,85 +45,24 @@ class WP(Enum):
   TABLE4 = "table4"
   TABLE5 = "table5"
   TABLE6 = "table6"
-  CORR_CANTEEN_1 = "corr-canteen-1"
-  CORR_CANTEEN_2 = "corr-canteen-2"
-  CORR_CANTEEN_3 = "corr-canteen-3"
-  CORR_CANTEEN_4 = "corr-canteen-4"
-  CORR_CANTEEN_5 = "corr-canteen-5"
-  CORR_CANTEEN_6 = "corr-canteen-6"
+  CORR_CANTEEN_1 = "corr_canteen_1"
+  CORR_CANTEEN_2 = "corr_canteen_2"
+  CORR_CANTEEN_3 = "corr_canteen_3"
+  CORR_CANTEEN_4 = "corr_canteen_4"
+  CORR_CANTEEN_5 = "corr_canteen_5"
+  CORR_CANTEEN_6 = "corr_canteen_6"
   KITCHEN_1 = "kitchen1"
   KITCHEN_2 = "kitchen2"
   KITCHEN_3 = "kitchen3"
-  CORRIDOR_CANTEEN = "corridor-canteen"
+  CORRIDOR_CANTEEN = "corridor_canteen"
   SHELF1 = "shelf1"
   SHELF2 = "shelf2"
   SHELF3 = "shelf3"
   SHELF4 = "shelf4"
   SHELF5 = "shelf5"
   SHELF6 = "shelf6"
-  CHARGING_STATION = "charging-station"
+  CHARGING_STATION = "charging_station"
 
-# class WP(Enum):
-#   PARKING = "parking"
-#   DOOR_ENTRANCE = "door_entrance"
-#   DOOR_ENTRANCE_CANTEEN = "door_entrance-canteen"
-#   CORRIDOR_ENTRANCE = "corridor_entrance"
-#   DOOR_CORRIDOR1 = "door_corridor1"
-#   DOOR_CORRIDOR2 = "door_corridor2"
-#   DOOR_CORRIDOR3 = "door_corridor3"
-#   SHELF12 = "shelf12"
-#   SHELF23 = "shelf23"
-#   SHELF34 = "shelf34"
-#   SHELF45 = "shelf45"
-#   SHELF56 = "shelf56"
-#   DOOR_OFFICE1 = "door_office1"
-#   DOOR_OFFICE2 = "door_office2"
-#   DOOR_TOILET1 = "door_toilet1"
-#   DOOR_TOILET2 = "door_toilet2"
-#   DELIVERY_POINT = "delivery_point"
-#   CORRIDOR0 = "corridor0"
-#   CORRIDOR1 = "corridor1"
-#   CORRIDOR2 = "corridor2"
-#   CORRIDOR3 = "corridor3"
-#   CORRIDOR4 = "corridor4"
-#   CORRIDOR5 = "corridor5"
-#   ENTRANCE = "entrance"
-#   OFFICE1 = "office1"
-#   OFFICE2 = "office2"
-#   TOILET1 = "toilet1"
-#   TOILET2 = "toilet2"
-#   TABLE2 = "table2"
-#   TABLE3 = "table3"
-#   TABLE4 = "table4"
-#   TABLE5 = "table5"
-#   TABLE6 = "table6"
-#   CORR_CANTEEN_1 = "corr_canteen_1"
-#   CORR_CANTEEN_2 = "corr_canteen_2"
-#   CORR_CANTEEN_3 = "corr_canteen_3"
-#   CORR_CANTEEN_4 = "corr_canteen_4"
-#   CORR_CANTEEN_5 = "corr_canteen_5"
-#   CORR_CANTEEN_6 = "corr_canteen_6"
-#   KITCHEN_1 = "kitchen1"
-#   KITCHEN_2 = "kitchen2"
-#   KITCHEN_3 = "kitchen3"
-#   CORRIDOR_CANTEEN = "corridor_canteen"
-#   SHELF1 = "shelf1"
-#   SHELF2 = "shelf2"
-#   SHELF3 = "shelf3"
-#   SHELF4 = "shelf4"
-#   SHELF5 = "shelf5"
-#   SHELF6 = "shelf6"
-#   CHARGING_STATION = "charging_station"
-   
-  
-class NODES(Enum):
-  TOD = 0
-  R_V = 1
-  R_B = 2
-  # NP = 3
-  PD = 3
-  BAC = 4
-  WP = 5
   
 class TaskResult(Enum):
     SUCCESS = 1
@@ -203,4 +143,28 @@ WPS = {
     WP.SHELF5.value: 47,
     WP.SHELF6.value: 48,
     WP.CHARGING_STATION.value: 49,
+}
+
+AREAS = {
+    'shelves_12': Polygon([(-18.839, 9), (-10.5, 9), (-10.5, 3), (-18.839, 3)]),
+    'shelves_34': Polygon([(-18.839, 2.5), (-10.5, 2.5), (-10.5, -3), (-18.839, -3)]),
+    'shelves_56': Polygon([(-18.839, -3.5), (-10.5, -3.5), (-10.5, -10.5), (-18.839, -10.5)]),
+    'shelf_top_corr': Polygon([(-10.5, 10.5), (-7.2, 10.5), (-7.1, 2), (-10.5, 2)]),
+    'shelf_centre_corr': Polygon([(-10.5, 2), (-7.1, 2), (-7.1, -4), (-10.5, -4)]),
+    'shelf_bottom_corr': Polygon([(-10.5, -4), (-7.1, -4), (-7.1, -10.5), (-10.5, -10.5)]),
+    'entrance': Polygon([(10.6, 10), (10.6, 6.87), (2, 6.87), (2, 10)]),
+    'corridor_0': Polygon([(2, 10), (2, 6.87), (-1.55, 6.87), (-1.55, 10)]),
+    'corridor_1': Polygon([(-1.54, 10), (-1.54, 5), (-7.14, 5), (-7.19, 10)]),
+    'corridor_2': Polygon([(-7.14, 5), (-7.1, -1.93), (-1.54, -1.93), (-1.54, 5)]),
+    'corridor_3': Polygon([(-7.1, -1.93), (-1.54, -1.93), (-1.54, -5.05), (1.95, -5.05), (1.95, -10.5), (-7.1, -10.5)]),
+    'office_1': Polygon([(-1.54, 6.9), (1.95, 6.9), (1.95, 4), (-1.54, 4)]),   
+    'office_2': Polygon([(-1.54, 4), (1.95, 4), (1.95, 1), (-1.54, 1)]),   
+    'toilet_1': Polygon([(-1.54, 1), (1.95, 1), (1.95, -1.92), (-1.54, -1.92)]),   
+    'toilet_2': Polygon([(-1.54, -1.92), (1.95, -1.92), (1.95, -5), (-1.54, -5)]),   
+    'kitchen_1': Polygon([(10.6, 6.9), (1.95, 6.9), (1.95, 2), (5.8, 2), (5.8, 4.8), (10.6, 4.8)]),         
+    'kitchen_2': Polygon([(1.95, 2), (5.8, 2), (5.8, -2.4), (1.95, -2.4)]),         
+    'kitchen_3': Polygon([(1.95, -2.4), (5.8, -2.4), (5.8, -10.5), (1.95, -10.5)]),         
+    'tables_23': Polygon([(5.8, 4), (10.6, 4), (10.6, 0), (5.8, 0)]),         
+    'tables_45': Polygon([(5.8, -0.35), (10.6, -0.35), (10.6, -4.35), (5.8, -4.35)]),         
+    'tables_6': Polygon([(5.8, -4.9), (10.6, -4.9), (10.6, -10.5), (5.8, -10.5)])
 }
