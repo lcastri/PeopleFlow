@@ -3,6 +3,7 @@ import os
 import pickle
 import random
 import sys
+import time
 import rospy
 try:
     sys.path.insert(0, os.environ["PNP_HOME"] + '/scripts')
@@ -19,7 +20,11 @@ import actionlib
 import hrisim_util.ros_utils as ros_utils
 import hrisim_util.constants as constants
 import networkx as nx
+from peopleflow_msgs.msg import Time as pT
 
+
+def seconds_to_hh(seconds):
+    return int(time.strftime("%H", time.gmtime(seconds)))
 
 def send_goal(p, next_dest, nextnext_dest=None):
     pos = nx.get_node_attributes(G, 'pos')
@@ -41,24 +46,24 @@ def heuristic(a, b):
 
 
 def get_next_goal():
-    global BATTERY_LEVEL
+    global BATTERY_LEVEL, TOD
     
     if BATTERY_LEVEL == 100 and rospy.get_param('/robot_battery/is_charging'):
         rospy.logwarn("Battery is already full, not planning any tasks.")
         return None, None
     
     elif not rospy.get_param('/robot_battery/is_charging') and not rospy.get_param('/hri/robot_busy'):                                        
-        if rospy.get_param('/peopleflow/timeday') <= 5:
-            return TASK_LIST[constants.Task.DELIVERY].pop(0), constants.Task.DELIVERY, True
+        if TOD <= 5:
+            return TASK_LIST[constants.Task.DELIVERY.value].pop(0), constants.Task.DELIVERY, True
                     
-        elif 6 <= rospy.get_param('/peopleflow/timeday') <= 9:
+        elif 6 <= TOD <= 9:
             rospy.logwarn("It's afternoon or quitting time, going to a random shelf for inventory check.")
-            return TASK_LIST[constants.Task.INVENTORY].pop(0), constants.Task.INVENTORY, True
+            return TASK_LIST[constants.Task.INVENTORY.value].pop(0), constants.Task.INVENTORY, True
                     
-        elif rospy.get_param('/peopleflow/timeday') >= 10:
-            if len(TASK_LIST[constants.Task.CLEANING]) > 0:
+        elif TOD >= 10:
+            if len(TASK_LIST[constants.Task.CLEANING.value]) > 0:
                 rospy.logwarn("It's off time, going to clean the shop.")
-                return TASK_LIST[constants.Task.CLEANING].pop(0), constants.Task.CLEANING, True
+                return TASK_LIST[constants.Task.CLEANING.value].pop(0), constants.Task.CLEANING, True
             else:
                 rospy.logwarn("No cleaning tasks left, shutting down the planning.")
                 return None, None, False
@@ -102,7 +107,7 @@ def Plan(p):
             rospy.logwarn(f"Planning next goal: {next_sub_goal}")
             nextnext_sub_goal = QUEUE[0] if len(QUEUE) > 0 else None
             if nextnext_sub_goal is None and TASK is constants.Task.CLEANING: 
-                nextnext_sub_goal = TASK_LIST[constants.Task.CLEANING][0] if len(TASK_LIST[constants.Task.CLEANING]) > 0 else None
+                nextnext_sub_goal = TASK_LIST[constants.Task.CLEANING.value][0] if len(TASK_LIST[constants.Task.CLEANING.value]) > 0 else None
             send_goal(p, next_sub_goal, nextnext_sub_goal)
             rospy.set_param('/hrisim/robot_task', TASK.value)
             
@@ -136,6 +141,11 @@ def cb_robot_closest_wp(wp: String):
     global ROBOT_CLOSEST_WP, task_pub
     ROBOT_CLOSEST_WP = wp.data
     
+
+def cb_time(t: pT):
+    global TOD
+    TOD = seconds_to_hh(t.elapsed)
+    
     
 if __name__ == "__main__":  
     BATTERY_LEVEL = None
@@ -146,7 +156,7 @@ if __name__ == "__main__":
     
     p = PNPCmd()
     
-    TLISTPATH = '/home/lcastri/git/PeopleFlow/HRISim_docker/HRISim/hrisim_plans/helper/task_list.pkl'
+    TLISTPATH = '/root/ros_ws/src/HRISim/hrisim_plans/helper/task_list.pkl'
     with open(TLISTPATH, 'rb') as f:
         TASK_LIST = pickle.load(f)
     
@@ -156,6 +166,8 @@ if __name__ == "__main__":
         G.remove_node("parking")
     rospy.Subscriber("/hrisim/robot_battery", BatteryStatus, cb_battery)
     rospy.Subscriber("/hrisim/robot_closest_wp", String, cb_robot_closest_wp)
+    rospy.Subscriber("/peopleflow/time", pT, cb_time)
+
     task_pub = rospy.Publisher('/hrisim/robot_task_status', Int32, queue_size=10)
 
     p.begin()

@@ -6,9 +6,9 @@ import constants as constants
 SHELFS = [constants.WP.SHELF1, constants.WP.SHELF2, constants.WP.SHELF3, constants.WP.SHELF4, constants.WP.SHELF5, constants.WP.SHELF6]
 
 TASK_LIST = {
-    constants.Task.DELIVERY: [],
-    constants.Task.INVENTORY: [],
-    constants.Task.CLEANING: [],
+    constants.Task.DELIVERY.value: [],
+    constants.Task.INVENTORY.value: [],
+    constants.Task.CLEANING.value: [],
     }
    
 if __name__ == "__main__":  
@@ -22,8 +22,8 @@ if __name__ == "__main__":
     # DELIVERY
     random_shelfs = random.choices(SHELFS, k=1000)
     for s in random_shelfs:
-        TASK_LIST[constants.Task.DELIVERY].append(s)
-        TASK_LIST[constants.Task.DELIVERY].append(constants.WP.DELIVERY_POINT)
+        TASK_LIST[constants.Task.DELIVERY.value].append(s.value)
+        TASK_LIST[constants.Task.DELIVERY.value].append(constants.WP.DELIVERY_POINT.value)
         
     # INVENTORY
     random_shelfs = random.choices(SHELFS, k=1000)
@@ -42,11 +42,11 @@ if __name__ == "__main__":
             previous_shelf = new_shelf
 
     for s in filtered_shelfs:
-        TASK_LIST[constants.Task.INVENTORY].append(s)
+        TASK_LIST[constants.Task.INVENTORY.value].append(s.value)
         
     # CLEANING
     CLEANING_PATH = nx.approximation.traveling_salesman_problem(G, cycle=False)
-    TASK_LIST[constants.Task.CLEANING] = CLEANING_PATH
+    TASK_LIST[constants.Task.CLEANING.value] = CLEANING_PATH
     
     with open('task_list.pkl', 'wb') as f:
         pickle.dump(TASK_LIST, f)
