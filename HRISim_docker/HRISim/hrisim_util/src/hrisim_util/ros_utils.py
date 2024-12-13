@@ -33,3 +33,11 @@ def getPose(p: Pose):
     m = tf.transformations.quaternion_matrix(q)
     _, _, yaw = tf.transformations.euler_from_matrix(m)
     return x, y, yaw
+
+
+def seconds_to_hhmmss(seconds):
+    return time.strftime("%H:%M:%S", time.gmtime(seconds))
+
+
+def seconds_to_hh(seconds):
+    return time.strftime("%H", time.gmtime(seconds))

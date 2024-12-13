@@ -5,15 +5,11 @@ import xml.etree.ElementTree as ET
 import rospy
 from std_msgs.msg import Header, String
 from peopleflow_msgs.msg import Time as pT
-import time
 import hrisim_util.ros_utils as ros_utils
 import subprocess
 
 TIME_INIT = 8
 TSTOP = False
-
-def seconds_to_hhmmss(seconds):
-    return time.strftime("%H:%M:%S", time.gmtime(seconds))
 
 
 class Time:
@@ -52,7 +48,7 @@ class ScenarioManager():
                 continue
             else:
                 break
-        return str(seconds_to_hhmmss(TIME_INIT*3600 + self.elapsedTime))
+        return str(ros_utils.seconds_to_hhmmss(TIME_INIT*3600 + self.elapsedTime))
     
     @property
     def elapsedTime(self):

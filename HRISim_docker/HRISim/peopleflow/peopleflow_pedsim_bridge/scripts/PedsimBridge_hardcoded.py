@@ -66,8 +66,10 @@ class PedsimBridge():
                 #   task_duration = random.randint(0, SCHEDULE['starting']['duration'] - 10) 
                 # ! this agent won't ask again a destination for "task_duration" seconds
                 if agent.startingTime is None:
-                    agent.startingTime = random.randint(self.elapsedTime, SCHEDULE['starting']['duration'] - 10)
-                    agent.exitTime = int(sum([SCHEDULE[t]['duration'] for t in SCHEDULE if t in ['starting','morning','lunch','afternoon']]) + agent.startingTime)
+                    agent.startingTime = AGENTSPLAN[int(agent.id)]['startTime']
+                    agent.exitTime = AGENTSPLAN[int(agent.id)]['exitTime']
+                    # agent.startingTime = random.randint(self.elapsedTime, SCHEDULE['starting']['duration'] - 10)
+                    # agent.exitTime = int(sum([SCHEDULE[t]['duration'] for t in SCHEDULE if t in ['starting','morning','lunch','afternoon']]) + agent.startingTime)
                     agent.setTask('parking', agent.startingTime)
                         
                 # startingTime is now
@@ -76,8 +78,9 @@ class PedsimBridge():
                 #   task_duration = 0 
                 # ! atWork = True --> this agent won't enter again this if
                 else:
-                    next_destination = agent.selectDestination(self.timeOfDay, req.destinations)                           
-                    agent.setTask(next_destination, agent.getTaskDuration())
+                    # next_destination = agent.selectDestination(self.timeOfDay, req.destinations)                           
+                    next_destination = AGENTSPLAN[int(agent.id)]['tasks'][self.timeOfDay]['destinations'].pop(0)                           
+                    agent.setTask(next_destination, AGENTSPLAN[int(agent.id)]['tasks'][self.timeOfDay]['durations'].pop(0))
                     agent.atWork = True
                 
             # Quitting logic
@@ -97,8 +100,10 @@ class PedsimBridge():
             # New goal logic                
             elif agent.atWork and agent.isStuck:
                 if not agent.isQuitting:
-                    next_destination = agent.selectDestination(self.timeOfDay, req.destinations)
-                    agent.setTask(next_destination, agent.getTaskDuration())
+                    # next_destination = agent.selectDestination(self.timeOfDay, req.destinations)
+                    # agent.setTask(next_destination, agent.getTaskDuration())
+                    next_destination = AGENTSPLAN[int(agent.id)]['tasks'][self.timeOfDay]['destinations'].pop(0)                           
+                    agent.setTask(next_destination, AGENTSPLAN[int(agent.id)]['tasks'][self.timeOfDay]['durations'].pop(0))                          
                 else:
                     agent.setTask('parking', SCHEDULE['quitting']['duration'] - agent.startingTime + SCHEDULE['off']['duration'])
                     
@@ -112,8 +117,10 @@ class PedsimBridge():
                 if agent.closestWP in SHELFS:
                     next_destination = 'delivery_point'
                 else:
-                    next_destination = agent.selectDestination(self.timeOfDay, req.destinations)
-                agent.setTask(next_destination, agent.getTaskDuration())
+                    # next_destination = agent.selectDestination(self.timeOfDay, req.destinations)
+                    next_destination = AGENTSPLAN[int(agent.id)]['tasks'][self.timeOfDay]['destinations'].pop(0)                               
+                # agent.setTask(next_destination, agent.getTaskDuration())
+                agent.setTask(next_destination, AGENTSPLAN[int(agent.id)]['tasks'][self.timeOfDay]['durations'].pop(0))
                 
             elif not agent.isFree:
                 pass
@@ -157,11 +164,15 @@ if __name__ == '__main__':
     WPS = ros_utils.wait_for_param("/peopleflow/wps")
     ALLOW_TASK = rospy.get_param("~allow_task", False)
     MAX_TASKTIME = int(rospy.get_param("~max_tasktime"))
+    
     g_path = str(rospy.get_param("~g_path"))
-
     with open(g_path, 'rb') as f:
         G = pickle.load(f)
         G.remove_node("charging_station")
+        
+    agentsplan_path = '/root/ros_ws/src/HRISim/peopleflow/peopleflow_manager/hardcode/agent_task_list.pkl'
+    with open(agentsplan_path, 'rb') as f:
+        AGENTSPLAN = pickle.load(f)
         
     pedsimBridge = PedsimBridge()
                 

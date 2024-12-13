@@ -23,8 +23,6 @@ import networkx as nx
 from peopleflow_msgs.msg import Time as pT
 
 
-def seconds_to_hh(seconds):
-    return int(time.strftime("%H", time.gmtime(seconds)))
 
 def send_goal(p, next_dest, nextnext_dest=None):
     pos = nx.get_node_attributes(G, 'pos')
@@ -144,7 +142,7 @@ def cb_robot_closest_wp(wp: String):
 
 def cb_time(t: pT):
     global TOD
-    TOD = seconds_to_hh(t.elapsed)
+    TOD = int(ros_utils.seconds_to_hh(t.elapsed))
     
     
 if __name__ == "__main__":  
@@ -156,7 +154,7 @@ if __name__ == "__main__":
     
     p = PNPCmd()
     
-    TLISTPATH = '/root/ros_ws/src/HRISim/hrisim_plans/helper/task_list.pkl'
+    TLISTPATH = '/root/ros_ws/src/HRISim/hrisim_plans/hardcoded/task_list.pkl'
     with open(TLISTPATH, 'rb') as f:
         TASK_LIST = pickle.load(f)
     
