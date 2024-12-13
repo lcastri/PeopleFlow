@@ -6,7 +6,24 @@ import rospy
 import signal
 import hrisim_util.ros_utils as ros_utils
 
-TOPICS = "/map /tf /tf_static /robot_pose /mobile_base_controller/odom /move_base/goal /pedsim_simulator/simulated_agents /peopleflow/counter /peopleflow/time /hrisim/robot_battery /hrisim/robot_task /hrisim/robot_closest_wp /hrisim/robot_bac"
+TOPICS = [
+    "/map",
+    "/tf",
+    "/tf_static",
+    "/robot_pose",
+    "/mobile_base_controller/odom",
+    "/move_base/goal",
+    "/pedsim_simulator/simulated_agents",
+    "/peopleflow/counter",
+    "/peopleflow/time",
+    "/hrisim/robot_battery",
+    "/hrisim/robot_task",
+    "/hrisim/robot_closest_wp",
+    "/hrisim/robot_bac",
+    "/hrisim/robot_task_status",
+    "/hrisim/robot_human_collision"
+    "/hrisim/robot_clearing_distance"
+]
    
 if __name__ == '__main__':
     rospy.init_node('hrisim_recording')
@@ -15,7 +32,7 @@ if __name__ == '__main__':
     schedule = ros_utils.wait_for_param("/peopleflow/schedule")
     
     try:
-        bag_process = subprocess.Popen(['rosbag', 'record', '-O', '/root/shared/experiment.bag'] + TOPICS.split(), shell=False)
+        bag_process = subprocess.Popen(['rosbag', 'record', '-O', '/root/shared/experiment.bag'] + TOPICS, shell=False)
     except Exception as e:
         rospy.logerr(f"Failed to start ROS bag recording: {str(e)}")
         

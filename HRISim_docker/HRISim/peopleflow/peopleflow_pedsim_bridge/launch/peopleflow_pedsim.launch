@@ -3,7 +3,7 @@
   <arg name="allow_task" default = "true"/>
   <arg name="max_tasktime" default = "15"/>
 
-  <node name="peopleflow_pedsim_bridge" pkg="peopleflow_pedsim_bridge" type="PedsimBridge.py" output="screen" respawn="true" respawn_delay="3.0">
+  <node name="peopleflow_pedsim_bridge" pkg="peopleflow_pedsim_bridge" type="PedsimBridge_hardcoded.py" output="screen" respawn="true" respawn_delay="3.0">
     <param name="g_path"   value="$(find peopleflow_manager)/res/$(arg scenario)/graph.pkl"/> 
     <param name="allow_task"   type="bool" value="$(arg allow_task)"/> 
     <param name="max_tasktime"   value="$(arg max_tasktime)"/> 

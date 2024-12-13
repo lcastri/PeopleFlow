@@ -71,10 +71,11 @@ def Plan(p):
     while not ros_utils.wait_for_param("/pnp_ros/ready"):
         rospy.sleep(0.1)
         
-    global wp, NEXT_GOAL, QUEUE, GO_TO_CHARGER, task_pub
+    global wp, NEXT_GOAL, QUEUE, GO_TO_CHARGER, TASK_ON
     ros_utils.wait_for_param("/peopleflow/timeday")
     rospy.set_param('/hri/robot_busy', False)
     PLAN_ON = True
+    TASK_ON = 0
     rospy.set_param("/peopleflow/robot_plan_on", PLAN_ON)
     
     while PLAN_ON:
@@ -91,8 +92,10 @@ def Plan(p):
             GO_TO_CHARGER = False
             rospy.set_param('/robot_battery/is_charging', True)
             rospy.logwarn("Battery charging..")
+            TASK_ON = 0
             
         elif not rospy.get_param('/robot_battery/is_charging') and not GO_TO_CHARGER and len(QUEUE) == 0:
+            rospy.sleep(1)
             NEXT_GOAL, TASK, PLAN_ON = get_next_goal()
             if NEXT_GOAL is None: continue
             if isinstance(NEXT_GOAL, constants.WP): NEXT_GOAL = NEXT_GOAL.value
@@ -101,6 +104,7 @@ def Plan(p):
         
         #! Here the goal is taken from the queue
         if not rospy.get_param('/hri/robot_busy') and len(QUEUE) > 0:
+            TASK_ON = 1
             next_sub_goal = QUEUE.pop(0)
             rospy.logwarn(f"Planning next goal: {next_sub_goal}")
             nextnext_sub_goal = QUEUE[0] if len(QUEUE) > 0 else None
@@ -108,10 +112,9 @@ def Plan(p):
                 nextnext_sub_goal = TASK_LIST[constants.Task.CLEANING.value][0] if len(TASK_LIST[constants.Task.CLEANING.value]) > 0 else None
             send_goal(p, next_sub_goal, nextnext_sub_goal)
             rospy.set_param('/hrisim/robot_task', TASK.value)
-            
-            # Publish +1 when reaching the final goal
-            if len(QUEUE) == 0: task_pub.publish(constants.TaskResult.SUCCESS.value)
-        
+            if len(QUEUE) == 0: TASK_ON = 0
+                    
+    
     rospy.set_param("/peopleflow/robot_plan_on", PLAN_ON)
 
                                    
@@ -128,7 +131,6 @@ def cb_battery(msg):
         NEXT_GOAL = None
         QUEUE = []
         GO_TO_CHARGER = True
-        task_pub.publish(constants.TaskResult.FAILURE.value)
         
     elif BATTERY_LEVEL == 100 and rospy.get_param('/robot_battery/is_charging'):
         rospy.set_param('/robot_battery/is_charging', False)
@@ -136,9 +138,10 @@ def cb_battery(msg):
         
     
 def cb_robot_closest_wp(wp: String):
-    global ROBOT_CLOSEST_WP, task_pub
+    global ROBOT_CLOSEST_WP, task_pub, TASK_ON
     ROBOT_CLOSEST_WP = wp.data
     
+    task_pub.publish(TASK_ON)
 
 def cb_time(t: pT):
     global TOD
@@ -151,6 +154,7 @@ if __name__ == "__main__":
     NEXT_GOAL = None
     GO_TO_CHARGER = False
     QUEUE = []
+    TASK_ON = 0
     
     p = PNPCmd()
     

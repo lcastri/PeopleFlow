@@ -4,7 +4,7 @@ import rospy
 from gazebo_msgs.srv import SetModelState
 from gazebo_msgs.msg import ModelState
 from geometry_msgs.msg import PoseWithCovarianceStamped
-import tf
+from std_msgs.msg import Int32
 
 # Variable to store the robot's last valid pose
 last_valid_pose = None
@@ -79,6 +79,8 @@ def cb_pose(data):
         if head_position_z < 0.5:  # You can adjust the threshold based on your robot's normal head height
             rospy.logerr("Robot has fallen (head z-position: {:.2f}), resetting position.".format(head_position_z))
             reset_robot()
+            robot_collision_pub.publish(1)
+            
         else:
             # Store the current pose as the last valid one if the robot is upright
             last_valid_pose = data
@@ -86,11 +88,12 @@ def cb_pose(data):
         rospy.logerr("Could not retrieve the head position.")
 
 def listener():
-    global initial_pose_pub
+    global initial_pose_pub, robot_collision_pub
 
     rospy.init_node('robot_stand_up', anonymous=True)
     rospy.Subscriber("/robot_pose", PoseWithCovarianceStamped, cb_pose)
     initial_pose_pub = rospy.Publisher("/initialpose", PoseWithCovarianceStamped, queue_size=10)
+    robot_collision_pub = rospy.Publisher("/hrisim/robot_human_collision", Int32, queue_size=10)
 
     rospy.spin()
 
