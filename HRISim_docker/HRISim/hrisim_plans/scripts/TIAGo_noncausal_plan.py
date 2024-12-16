@@ -156,9 +156,9 @@ if __name__ == "__main__":
         G.remove_node("parking")
     CLEANING_PATH = nx.approximation.traveling_salesman_problem(G, cycle=False)
     rospy.logwarn(CLEANING_PATH)
+    task_pub = rospy.Publisher('/hrisim/robot_task_status', Int32, queue_size=10)
     rospy.Subscriber("/hrisim/robot_battery", BatteryStatus, cb_battery)
     rospy.Subscriber("/hrisim/robot_closest_wp", String, cb_robot_closest_wp)
-    task_pub = rospy.Publisher('/hrisim/robot_task_status', Int32, queue_size=10)
 
     p.begin()
 

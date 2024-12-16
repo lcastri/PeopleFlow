@@ -3,6 +3,7 @@
 import math
 import os
 import pickle
+import time
 import numpy as np
 import pandas as pd
 import rospy
@@ -37,17 +38,7 @@ def heuristic(a, b):
     (x1, y1) = pos[a]
     (x2, y2) = pos[b]
     return ((x1 - x2) ** 2 + (y1 - y2) ** 2) ** 0.5
-
-
-def timeOfTheDay(elapsedTime):
-    d = 0
-    for time in SCHEDULE:
-        d += SCHEDULE[time]['duration']
-        if elapsedTime > d:
-            continue
-        else:
-            return constants.TODS[SCHEDULE[time]['name']]
-        
+       
 
 class PredictionManager:
     def __init__(self):
@@ -60,7 +51,7 @@ class PredictionManager:
         self.BACs = {}
         self.PDs = {}
 
-        self.timeOfDay = ''        
+        self.TOD = ''        
         self.hhmmss = ''
         self.elapsed = 0
 
@@ -76,6 +67,9 @@ class PredictionManager:
         self.CIE = CausalInferenceEngine.load(CIEDIR)
         self.DAG = self.CIE.DAG['complete']
         self.MAX_LAG = self.DAG.max_lag
+        
+        dag = self.CIE.remove_intVarParents(self.DAG, 'R_V')
+        self.calculation_order = list(nx.topological_sort(self.CIE.DAG2NX(dag)))
             
         self.observations = deque(maxlen=self.MAX_LAG + 1)  # Store up to MAX_LAG + 1 steps (current and previous)
 
@@ -105,7 +99,7 @@ class PredictionManager:
             
             
     def cb_time(self, t: pT):
-        self.timeOfDay = constants.TODS[t.time_of_the_day.data] if t.time_of_the_day.data != 'None' else 'none'
+        self.TOD = int(ros_utils.seconds_to_hh(t.elapsed))
         self.hhmmss = t.hhmmss.data
         self.elapsed = t.elapsed
         
@@ -121,7 +115,7 @@ class PredictionManager:
         """
         # Create a dictionary for the current data
         current_data = {
-            "TOD": self.timeOfDay,
+            "TOD": self.TOD,
             "R_V": self.robot.v,
             "R_B": self.robot.battery_level,
             "B_S": 1 if self.robot.is_charging else 0,
@@ -135,7 +129,6 @@ class PredictionManager:
 
 
     def handle_get_risk_map(self, req):
-        
         # Convert the observations deque to a pandas DataFrame
         data = pd.DataFrame(list(self.observations))
         
@@ -156,8 +149,7 @@ class PredictionManager:
         output = {wp: {'BAC': None, 'PD': None} for wp in self.PDs.keys()}
         flattened_PDs = []
         flattened_BACs = []
-        
-        for wp in self.PDs.keys():
+        for i, wp in enumerate(self.PDs.keys()):
             # For each waypoint, pass the corresponding data to the causal inference engine
             wp_obs = data[["TOD", "R_V", "R_B", "B_S", f"PD_{wp}", f"BAC_{wp}"]].values
         
@@ -165,18 +157,23 @@ class PredictionManager:
             wp_obs_df["WP"] = constants.WPS[wp]
             
             # Init prior knowledge
-            # for TOD, check if it changes within the treatment_len
             prior_knowledge = {f: np.full(treatment_len, wp_obs_df[f].values[-1]) for f in ['B_S', 'WP']}
-            prior_knowledge['TOD'] = [timeOfTheDay(self.elapsed + i * PREDICTION_STEP) for i in range(treatment_len)]
-
-            res, _ = self.CIE.whatIf('R_V', 
-                                     ROBOT_MAX_VEL * np.ones(treatment_len), 
-                                     wp_obs_df.values,
-                                     prior_knowledge
-                                    )
+            prior_knowledge['TOD'] = [int(ros_utils.seconds_to_hh(self.elapsed + i * PREDICTION_STEP)) for i in range(treatment_len)]
+            if i > 0: prior_knowledge['R_B'] = prediction_df['R_B'].values
+            
+            
+            start = time.time()
+            res = self.CIE.whatIf('R_V', 
+                                  ROBOT_MAX_VEL * np.ones(treatment_len), 
+                                  wp_obs_df.values,
+                                  prior_knowledge,
+                                  self.calculation_order
+                                 )
+            end = time.time()
+            rospy.logerr(f"whatIf took {end-start} seconds")
 
             prediction_df = pd.DataFrame(res, columns=["TOD", "R_V", "R_B", "B_S", "PD", "BAC", "WP"])
-            rospy.logwarn(f"PREDICTION\n{prediction_df.head(10)}")
+            # rospy.logwarn(f"PREDICTION\n{prediction_df.head(10)}")
             output[wp]['BAC'] = prediction_df['BAC'].values
             output[wp]['PD'] = prediction_df['PD'].values
             

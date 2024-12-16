@@ -1,9 +1,7 @@
 #!/usr/bin/env python
 
-from enum import Enum
 import math
 import os
-import sys
 import pandas as pd
 import rospy
 from geometry_msgs.msg import PoseWithCovarianceStamped
@@ -12,7 +10,7 @@ from peopleflow_msgs.msg import WPPeopleCounters, Time as pT
 from tiago_battery.msg import BatteryStatus
 from move_base_msgs.msg import MoveBaseActionGoal
 from nav_msgs.msg import Odometry
-from std_msgs.msg import String
+from std_msgs.msg import String, Int32, Float32
 from rosgraph_msgs.msg import Clock
 import hrisim_util.ros_utils as ros_utils
 from robot_msgs.msg import BatteryAtChargers
@@ -65,7 +63,10 @@ class Robot():
         self.is_charging = 0
         self.closest_wp = ''
         self.task_result = 0
-    
+        self.clearing_distance = 0
+        self.H_collision = 0
+        self.busy = 0
+        
     @property
     def goalReached(self):
         return math.sqrt((self.x - self.gx)**2 + (self.y - self.gy)**2) <= GOAL_REACHED_THRES
@@ -120,7 +121,10 @@ class DataManager():
         rospy.Subscriber("/hrisim/robot_battery", BatteryStatus, self.cb_robot_battery)
         rospy.Subscriber("/hrisim/robot_bac", BatteryAtChargers, self.cb_robot_bac)
         rospy.Subscriber("/hrisim/robot_closest_wp", String, self.cb_robot_closest_wp)
-                   
+        rospy.Subscriber("/hrisim/robot_clearing_distance", Float32, self.cb_robot_clearing_distance)
+        rospy.Subscriber("/hrisim/robot_human_collision", Int32, self.cb_robot_human_collision)
+        rospy.Subscriber("/hrisim/robot_task_status", Int32, self.cb_robot_task_status)                       
+             
             
     def cb_clock(self, clock: Clock):
         self.rostime = clock.clock.to_sec()
@@ -185,6 +189,18 @@ class DataManager():
         
     def cb_robot_closest_wp(self, wp: String):
         self.robot.closest_wp = WPS[wp.data]
+           
+           
+    def cb_robot_clearing_distance(self, msg: Float32):
+        self.robot.clearing_distance = msg.data
+           
+           
+    def cb_robot_human_collision(self, msg: Int32):
+        self.robot.H_collision = msg.data
+        
+        
+    def cb_robot_task_status(self, msg: Int32):
+        self.robot.busy = msg.data
            
 
 def save_data_to_csv(data_rows, filename, csv_path, wps):   
@@ -316,8 +332,12 @@ if __name__ == '__main__':
                 'T_R': data_handler.robot.task_result if len(data_rows) > 0 else 0,
                 'R_B': data_handler.robot.battery_level,
                 'B_S': 1 if data_handler.robot.is_charging else 0,
+                'R_CD': data_handler.robot.clearing_distance,
+                'R_HC': data_handler.robot.H_collision,
+                'R_T': data_handler.robot.busy,
             }
-                        
+            
+            data_handler.robot.H_collision = 0
             data_handler.robot.task_result = TaskResult.WIP.value
             
             # Collect agents' data

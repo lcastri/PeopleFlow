@@ -4,6 +4,8 @@ import pickle
 import random
 import sys
 import time
+
+import numpy as np
 import rospy
 try:
     sys.path.insert(0, os.environ["PNP_HOME"] + '/scripts')
@@ -34,6 +36,27 @@ def send_goal(p, next_dest, nextnext_dest=None):
     else:
         coords = [x, y, 0]
     p.exec_action('goto', "_".join([str(coord) for coord in coords]))
+    
+    
+def get_prediction(p):
+    p.exec_action('predict', "")
+
+    risk_map_data = rospy.get_param('/hrisim/risk_map')
+    flattened_PDs = risk_map_data['PDs']
+    flattened_BACs = risk_map_data['BACs']
+    n_waypoints = risk_map_data['n_waypoints']
+    n_steps = risk_map_data['n_steps']
+
+    PDs_matrix = np.array(flattened_PDs).reshape(n_waypoints, n_steps)
+    BACs_matrix = np.array(flattened_BACs).reshape(n_waypoints, n_steps)
+
+    risk_map = {}
+    for i, wp in enumerate(risk_map_data['waypoint_ids']):
+        risk_map[wp] = {
+            'PD': PDs_matrix[i].tolist(),
+            'BAC': BACs_matrix[i].tolist()
+        }
+    return risk_map
     
     
 def heuristic(a, b):
@@ -80,6 +103,8 @@ def Plan(p):
     
     while PLAN_ON:
         rospy.logerr("Planning..")
+        risk_map = get_prediction(p)
+        
         if GO_TO_CHARGER:
             NEXT_GOAL = constants.WP.CHARGING_STATION
             TASK = constants.Task.CHARGING
@@ -119,7 +144,7 @@ def Plan(p):
 
                                    
 def cb_battery(msg):
-    global BATTERY_LEVEL, QUEUE, NEXT_GOAL, GO_TO_CHARGER, task_pub
+    global BATTERY_LEVEL, QUEUE, NEXT_GOAL, GO_TO_CHARGER
     BATTERY_LEVEL = float(msg.level.data)
     if not GO_TO_CHARGER and not rospy.get_param('/robot_battery/is_charging') and BATTERY_LEVEL <= 20:
         rospy.logwarn("Cancelling all goals..")
@@ -157,7 +182,7 @@ if __name__ == "__main__":
     TASK_ON = 0
     
     p = PNPCmd()
-    
+        
     TLISTPATH = '/root/ros_ws/src/HRISim/hrisim_plans/hardcoded/task_list.pkl'
     with open(TLISTPATH, 'rb') as f:
         TASK_LIST = pickle.load(f)

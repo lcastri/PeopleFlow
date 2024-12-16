@@ -67,7 +67,7 @@ RUN DEBIAN_FRONTEND=noninteractive pip install --upgrade pip setuptools wheel im
 RUN DEBIAN_FRONTEND=noninteractive pip install --upgrade --ignore-installed cython
 
 # Clone the causalflow repository
-ARG CACHE=0
+ARG CACHE=2
 RUN git clone -b dev-reasoning-gmm-robot https://github.com/lcastri/causalflow.git causalflow
 
 # Install Python dependencies
@@ -88,7 +88,6 @@ WORKDIR /root/ros_ws
 RUN DEBIAN_FRONTEND=noninteractive pip install tmule 
 RUN DEBIAN_FRONTEND=noninteractive pip install shapely
 RUN DEBIAN_FRONTEND=noninteractive pip install networkx
-# RUN DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends ros-noetic-jsk-rviz-plugins psmisc
 RUN apt-get update && \
     DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
     ros-noetic-jsk-rviz-plugins \

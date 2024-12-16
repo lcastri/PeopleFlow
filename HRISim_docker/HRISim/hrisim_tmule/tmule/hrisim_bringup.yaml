@@ -58,7 +58,7 @@ init_cmd: |
   # robot_mode == 2: SOCIAL mode means the robot's velocity is set by the social force just like the other agents -->
   export_default SCENARIO "warehouse"
   export_default ALLOW_TASK "true"
-  export_default RECORD "true"
+  export_default RECORD "false"
   export_default STARTING_ELAPSED "8"
   export_default MAX_TASKTIME "15"
   export_default SCALING_FACTOR "1"
@@ -115,7 +115,7 @@ windows:
     tags: ['core']
     panes:
       - 'roslaunch pnp_ros pnp_ros.launch plans_folder:=$PNP_PLANS actions_folder:=$PNP_ACTIONS conditions_folder:=$PNP_CONDITIONS'
-      - 'roscd hrisim_plans/scripts && python TIAGo_noncausal_hardcoded_plan.py'
+      - 'roscd hrisim_plans/scripts && python TIAGo_causal_hardcoded_plan.py'
   - name: scenario
     tags: ['exp']
     panes:
