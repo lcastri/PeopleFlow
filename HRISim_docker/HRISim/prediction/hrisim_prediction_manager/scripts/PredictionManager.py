@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 
+import copy
 import math
 import os
 import pickle
@@ -72,7 +73,8 @@ class PredictionManager:
         self.calculation_order = list(nx.topological_sort(self.CIE.DAG2NX(dag)))
             
         self.observations = deque(maxlen=self.MAX_LAG + 1)  # Store up to MAX_LAG + 1 steps (current and previous)
-
+        self.service = None
+             
                                       
     def cb_robot_pose(self, pose: PoseWithCovarianceStamped):
         self.robot.x, self.robot.y, self.robot.yaw = ros_utils.getPose(pose.pose.pose)
@@ -109,6 +111,20 @@ class PredictionManager:
             self.BACs[bac.WP_id.data] = bac.BAC.data
             
             
+    def get_treatment_len(self):        
+        # Calculate the prediction horizon based on the time needed to reach the furthest waypoint
+        travelled_distances = []
+        for wp in self.PDs.keys():
+            path = nx.astar_path(G, self.robot.closest_wp, wp, heuristic=heuristic, weight='weight')
+            travelled_distance = 0
+            for wp_idx in range(1, len(path)):
+                wp_current = path[wp_idx-1]
+                wp_next = path[wp_idx]
+                travelled_distance += math.sqrt((WPS_COORD[wp_next]['x'] - WPS_COORD[wp_current]['x'])**2 + (WPS_COORD[wp_next]['y'] - WPS_COORD[wp_current]['y'])**2)
+            travelled_distances.append(travelled_distance)
+        return math.ceil((max(travelled_distances)/ROBOT_MAX_VEL)/PREDICTION_STEP)
+            
+            
     def collect_data(self):
         """
         Collects the current state of all data and logs or processes it.
@@ -126,29 +142,16 @@ class PredictionManager:
 
         # Add current data to the sliding window
         self.observations.append(current_data)
-
-
-    def handle_get_risk_map(self, req):
+        
+        treatment_len = self.get_treatment_len()
+        
         # Convert the observations deque to a pandas DataFrame
         data = pd.DataFrame(list(self.observations))
         
-        # Calculate the prediction horizon based on the time needed to reach the furthest waypoint
-        travelled_distances = []
-        for wp in self.PDs.keys():
-            path = nx.astar_path(G, self.robot.closest_wp, wp, heuristic=heuristic, weight='weight')
-            travelled_distance = 0
-            for wp_idx in range(1, len(path)):
-                wp_current = path[wp_idx-1]
-                wp_next = path[wp_idx]
-                travelled_distance += math.sqrt((WPS_COORD[wp_next]['x'] - WPS_COORD[wp_current]['x'])**2 + (WPS_COORD[wp_next]['y'] - WPS_COORD[wp_current]['y'])**2)
-            travelled_distances.append(travelled_distance)
-        treatment_len = math.ceil((max(travelled_distances)/ROBOT_MAX_VEL)/PREDICTION_STEP)
         rospy.logwarn(f"treatment_len {treatment_len}")
         
         # Init output
         output = {wp: {'BAC': None, 'PD': None} for wp in self.PDs.keys()}
-        flattened_PDs = []
-        flattened_BACs = []
         for i, wp in enumerate(self.PDs.keys()):
             # For each waypoint, pass the corresponding data to the causal inference engine
             wp_obs = data[["TOD", "R_V", "R_B", "B_S", f"PD_{wp}", f"BAC_{wp}"]].values
@@ -162,27 +165,43 @@ class PredictionManager:
             if i > 0: prior_knowledge['R_B'] = prediction_df['R_B'].values
             
             
-            start = time.time()
+            # start = time.time()
             res = self.CIE.whatIf('R_V', 
                                   ROBOT_MAX_VEL * np.ones(treatment_len), 
                                   wp_obs_df.values,
                                   prior_knowledge,
                                   self.calculation_order
                                  )
-            end = time.time()
-            rospy.logerr(f"whatIf took {end-start} seconds")
+            # end = time.time()
+            # rospy.logwarn(f"whatIf took {end-start} seconds")
 
             prediction_df = pd.DataFrame(res, columns=["TOD", "R_V", "R_B", "B_S", "PD", "BAC", "WP"])
-            # rospy.logwarn(f"PREDICTION\n{prediction_df.head(10)}")
             output[wp]['BAC'] = prediction_df['BAC'].values
             output[wp]['PD'] = prediction_df['PD'].values
-            
-            flattened_PDs.extend(prediction_df['PD'].values)
-            flattened_BACs.extend(prediction_df['BAC'].values)
-            
-        return GetRiskMapResponse(list(output.keys()), 
+        
+        self.prediction = copy.deepcopy(output)
+
+        if self.service is None: 
+            self.service = rospy.Service('/get_risk_map', GetRiskMap, PM.handle_get_risk_map)
+            rospy.loginfo("Service '/get_risk_map' is ready.")
+
+        
+    def handle_get_risk_map(self, req):
+        # start_all = time.time()
+        
+        treatment_len = None
+        flattened_PDs = []
+        flattened_BACs = []
+        for wp in self.prediction.keys():
+            if treatment_len is None: treatment_len = len(self.prediction[wp]['PD'])
+            flattened_PDs.extend(self.prediction[wp]['PD'])
+            flattened_BACs.extend(self.prediction[wp]['BAC'])
+        
+        # end_all = time.time()
+        # rospy.logerr(f"Response took {end_all-start_all} seconds")
+        return GetRiskMapResponse(list(self.prediction.keys()), 
                                   treatment_len, 
-                                  len(output.keys()),
+                                  len(self.prediction.keys()),
                                   flattened_PDs,
                                   flattened_BACs)
 
@@ -209,12 +228,8 @@ if __name__ == "__main__":
             
     PM = PredictionManager()
     
-    rate = rospy.Rate(1 / PREDICTION_STEP)  # Adjust frequency to 1/7 Hz (every 7 seconds)
-    
-    # Advertise the service
-    service = rospy.Service('/get_risk_map', GetRiskMap, PM.handle_get_risk_map)
-    rospy.loginfo("Service '/get_risk_map' is ready.")
-    
+    rate = rospy.Rate(1 / PREDICTION_STEP)
+        
     rospy.loginfo("Starting periodic data collection.")
     while not rospy.is_shutdown():
         PM.collect_data()

@@ -24,6 +24,7 @@ import hrisim_util.constants as constants
 import networkx as nx
 from peopleflow_msgs.msg import Time as pT
 
+BATTERY_CRITICAL_LEVEL = 20
 
 
 def send_goal(p, next_dest, nextnext_dest=None):
@@ -57,18 +58,63 @@ def get_prediction(p):
             'BAC': BACs_matrix[i].tolist()
         }
     return risk_map
-    
-    
+
+
 def heuristic(a, b):
     pos = nx.get_node_attributes(G, 'pos')
     (x1, y1) = pos[a]
     (x2, y2) = pos[b]
-    return ((x1 - x2) ** 2 + (y1 - y2) ** 2) ** 0.5
+    return ((x1 - x2)**2 + (y1 - y2)**2)**0.5
 
 
-def get_next_goal():
-    global BATTERY_LEVEL, TOD
-    
+def update_G_weights(risk_map, g, robot_speed=0.5):    
+    ALPHA = 1
+    BETA = 100
+
+    # Get the position information from the graph
+    pos = nx.get_node_attributes(G, 'pos')
+
+    for u, v in g.edges():
+        # Calculate travel distance between nodes u and v
+        (x1, y1) = pos[u]
+        (x2, y2) = pos[v]
+        travel_distance = ((x1 - x2)**2 + (y1 - y2)**2)**0.5
+        
+        if u != 'charging_station' and v != 'charging_station':
+            # Estimate time it will take to reach the next node (simple time = distance / speed)
+            (xr, yr) = pos[ROBOT_CLOSEST_WP]
+            u_PD_ttr = ((x1 - xr)**2 + (y1 - yr)**2)**0.5 / robot_speed  # Time in seconds to move from r to u
+            v_PD_ttr = ((x2 - xr)**2 + (y2 - yr)**2)**0.5 / robot_speed  # Time in seconds to move from r to v
+            
+            # Find the closest time step to target_time based on your time steps
+            idx_u = int(u_PD_ttr // 7)  # Assuming 7 seconds per time step
+            idx_v = int(v_PD_ttr // 7)
+            rospy.logerr(f"IDX_U {idx_u}")
+            rospy.logerr(f"IDX_V {idx_v}")
+
+            # Bound the indices to make sure they are within valid range (for list access)
+            idx_u = min(len(risk_map[u]['PD']) - 1, idx_u)
+            idx_v = min(len(risk_map[v]['PD']) - 1, idx_v)
+            
+            # Get PD values at the estimated times for both u and v
+            PD_u = risk_map[u]['PD'][idx_u] 
+            PD_v = risk_map[v]['PD'][idx_v] 
+            
+            # Average PD cost (from current and neighbor nodes) 
+            PD_cost = (PD_u + PD_v) / 2
+        else:
+            PD_cost = 0
+
+        # Combine the travel cost and PD cost to compute the edge weight
+        weight = ALPHA * travel_distance + BETA * PD_cost
+        
+        # Assign the combined weight to the edge between u and v
+        g[u][v]['weight'] = weight
+        
+    return g
+
+
+def get_next_goal():    
     if BATTERY_LEVEL == 100 and rospy.get_param('/robot_battery/is_charging'):
         rospy.logwarn("Battery is already full, not planning any tasks.")
         return None, None
@@ -88,13 +134,29 @@ def get_next_goal():
             else:
                 rospy.logwarn("No cleaning tasks left, shutting down the planning.")
                 return None, None, False
+            
+            
+def check_BAC(risk_map, queue, robot_speed = 0.5):
+    pos = nx.get_node_attributes(G, 'pos')
+    (xr, yr) = pos[ROBOT_CLOSEST_WP]
+
+    for wp in queue:
+        (x, y) = pos[wp]
+        travel_distance = ((xr - x)**2 + (yr - y)**2)**0.5
+        time_to_reach_wp = travel_distance / robot_speed
+        wp_BAC_idx = int(time_to_reach_wp // 7)
+        wp_BAC_idx = min(len(risk_map[wp]['BAC']) - 1, wp_BAC_idx)
+        wp_BAC = risk_map[wp]['BAC'][wp_BAC_idx] - battery_consumption_to_reach_wp
+        if wp_BAC < BATTERY_CRITICAL_LEVEL: 
+            return True
         
+    return False
         
 def Plan(p):
     while not ros_utils.wait_for_param("/pnp_ros/ready"):
         rospy.sleep(0.1)
         
-    global wp, NEXT_GOAL, QUEUE, GO_TO_CHARGER, TASK_ON
+    global NEXT_GOAL, QUEUE, GO_TO_CHARGER, TASK_ON, G
     ros_utils.wait_for_param("/peopleflow/timeday")
     rospy.set_param('/hri/robot_busy', False)
     PLAN_ON = True
@@ -102,42 +164,56 @@ def Plan(p):
     rospy.set_param("/peopleflow/robot_plan_on", PLAN_ON)
     
     while PLAN_ON:
-        rospy.logerr("Planning..")
-        risk_map = get_prediction(p)
-        
         if GO_TO_CHARGER:
+            rospy.logerr("GO TO CHARGER")
             NEXT_GOAL = constants.WP.CHARGING_STATION
             TASK = constants.Task.CHARGING
             PLAN_ON = True
-            QUEUE = nx.astar_path(G, ROBOT_CLOSEST_WP, NEXT_GOAL.value, heuristic=heuristic, weight='weight')
-            while QUEUE:
+            while ROBOT_CLOSEST_WP != constants.WP.CHARGING_STATION:
+                RISK_MAP = get_prediction(p)
+                G = update_G_weights(RISK_MAP, G)
+                QUEUE = nx.astar_path(G, ROBOT_CLOSEST_WP, NEXT_GOAL.value, heuristic=heuristic, weight='weight')
+                QUEUE.pop(0)
+                rospy.logerr(f"Queue updated {QUEUE}")
+                
                 current_wp = QUEUE.pop(0)
                 next_wp = QUEUE[0] if QUEUE else None
                 send_goal(p, current_wp, next_wp)
+                
             GO_TO_CHARGER = False
             rospy.set_param('/robot_battery/is_charging', True)
             rospy.logwarn("Battery charging..")
             TASK_ON = 0
             
-        elif not rospy.get_param('/robot_battery/is_charging') and not GO_TO_CHARGER and len(QUEUE) == 0:
+        elif not rospy.get_param('/robot_battery/is_charging') and not GO_TO_CHARGER and TASK_ON == 0:
             rospy.sleep(1)
             NEXT_GOAL, TASK, PLAN_ON = get_next_goal()
             if NEXT_GOAL is None: continue
             if isinstance(NEXT_GOAL, constants.WP): NEXT_GOAL = NEXT_GOAL.value
-            QUEUE = nx.astar_path(G, ROBOT_CLOSEST_WP, NEXT_GOAL, heuristic=heuristic, weight='weight')
-            rospy.logwarn(f"{QUEUE}")
+            rospy.logerr(f"New goal defined: {NEXT_GOAL}")
         
         #! Here the goal is taken from the queue
-        if not rospy.get_param('/hri/robot_busy') and len(QUEUE) > 0:
+        if not rospy.get_param('/hri/robot_busy') and NEXT_GOAL is not None:
+            RISK_MAP = get_prediction(p)
+            G = update_G_weights(RISK_MAP, G)
+            QUEUE = nx.astar_path(G, ROBOT_CLOSEST_WP, NEXT_GOAL, heuristic=heuristic, weight='weight')
+            
+            GO_TO_CHARGER = check_BAC(RISK_MAP, QUEUE)
+            if GO_TO_CHARGER: continue
+            
+            QUEUE.pop(0)
+            rospy.logerr(f"Queue updated {QUEUE}")
+            
             TASK_ON = 1
-            next_sub_goal = QUEUE.pop(0)
-            rospy.logwarn(f"Planning next goal: {next_sub_goal}")
-            nextnext_sub_goal = QUEUE[0] if len(QUEUE) > 0 else None
-            if nextnext_sub_goal is None and TASK is constants.Task.CLEANING: 
-                nextnext_sub_goal = TASK_LIST[constants.Task.CLEANING.value][0] if len(TASK_LIST[constants.Task.CLEANING.value]) > 0 else None
-            send_goal(p, next_sub_goal, nextnext_sub_goal)
+            current_wp = QUEUE.pop(0)
+            next_wp = QUEUE[0] if len(QUEUE) > 0 else None
+            if next_wp is None and TASK is constants.Task.CLEANING: 
+                next_wp = TASK_LIST[constants.Task.CLEANING.value][0] if len(TASK_LIST[constants.Task.CLEANING.value]) > 0 else None
+            send_goal(p, current_wp, next_wp)
+            if len(QUEUE) == 0: 
+                TASK_ON = 0
+                NEXT_GOAL = None
             rospy.set_param('/hrisim/robot_task', TASK.value)
-            if len(QUEUE) == 0: TASK_ON = 0
                     
     
     rospy.set_param("/peopleflow/robot_plan_on", PLAN_ON)
@@ -145,8 +221,9 @@ def Plan(p):
                                    
 def cb_battery(msg):
     global BATTERY_LEVEL, QUEUE, NEXT_GOAL, GO_TO_CHARGER
+    
     BATTERY_LEVEL = float(msg.level.data)
-    if not GO_TO_CHARGER and not rospy.get_param('/robot_battery/is_charging') and BATTERY_LEVEL <= 20:
+    if not GO_TO_CHARGER and not rospy.get_param('/robot_battery/is_charging') and BATTERY_LEVEL <= BATTERY_CRITICAL_LEVEL:
         rospy.logwarn("Cancelling all goals..")
         client = actionlib.SimpleActionClient('/move_base', MoveBaseAction)
         client.wait_for_server()
@@ -163,7 +240,7 @@ def cb_battery(msg):
         
     
 def cb_robot_closest_wp(wp: String):
-    global ROBOT_CLOSEST_WP, task_pub, TASK_ON
+    global ROBOT_CLOSEST_WP, task_pub
     ROBOT_CLOSEST_WP = wp.data
     
     task_pub.publish(TASK_ON)
