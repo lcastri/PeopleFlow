@@ -2,41 +2,25 @@
 
 import math
 import pickle
-import random
 import rospy
 from robot_msgs.msg import BatteryStatus, BatteryAtCharger as msgBAC, BatteryAtChargers as msgBACs
-from std_msgs.msg import Header
+from std_msgs.msg import Header, String
 import networkx as nx
 import hrisim_util.ros_utils as ros_utils
-
 
 def heuristic(a, b):
     pos = nx.get_node_attributes(G, 'pos')
     (x1, y1) = pos[a]
     (x2, y2) = pos[b]
-    return ((x1 - x2) ** 2 + (y1 - y2) ** 2) ** 0.5
-
-
-def get_TTC():
-    ttc = {}
-    for wp in WPS:
-        path = nx.astar_path(G, wp, "charging_station", heuristic=heuristic, weight='weight')
-        distanceToCharger = 0
-        for wp_idx in range(1, len(path)):
-            wp_current = path[wp_idx-1]
-            wp_next = path[wp_idx]
-            distanceToCharger += math.sqrt((WPS[wp_next]['x'] - WPS[wp_current]['x'])**2 + (WPS[wp_next]['y'] - WPS[wp_current]['y'])**2)
-        
-        timeToCharger = math.ceil(distanceToCharger/ROBOT_MAX_VEL)
-        ttc[wp] = timeToCharger
-    return ttc
-
+    return ((x1 - x2)**2 + (y1 - y2)**2)**0.5
 
 class BatteryAtCharger():
     def __init__(self):
-        rospy.Subscriber("/hrisim/robot_battery", BatteryStatus, self.cb_robot_battery)
         self.bac_pub = rospy.Publisher('/hrisim/robot_bac', msgBACs, queue_size=10)
-        self.ttc = get_TTC()
+        self.robot_closest_wp = None
+        self.battery_consumption_per_time = STATIC_CONSUMPTION + DYNAMIC_CONSUMPTION * ROBOT_MAX_VEL
+        rospy.Subscriber("/hrisim/robot_closest_wp", String, self.cb_robot_closest_wp)
+        rospy.Subscriber("/hrisim/robot_battery", BatteryStatus, self.cb_robot_battery)
            
     def cb_robot_battery(self, b: BatteryStatus):
         msg = msgBACs()
@@ -44,13 +28,18 @@ class BatteryAtCharger():
         
         battery_level = b.level.data
         for wp in WPS:
+            battery_to_wp = ros_utils.get_time_to_wp(G, self.robot_closest_wp, wp, heuristic, robot_speed=ROBOT_MAX_VEL) * self.battery_consumption_per_time
+            battery_to_charger = ros_utils.get_time_to_wp(G, wp, 'charging_station', heuristic, robot_speed=ROBOT_MAX_VEL) * self.battery_consumption_per_time
+                       
             bac = msgBAC()
-            bac.BAC.data = battery_level - self.ttc[wp] * (STATIC_CONSUMPTION + DYNAMIC_CONSUMPTION * ROBOT_MAX_VEL)
+            bac.BAC.data = battery_level - battery_to_wp - battery_to_charger
             bac.WP_id.data = wp
             msg.BACs.append(bac)
         
-        self.bac_pub.publish(msg)    
+        self.bac_pub.publish(msg)
         
+    def cb_robot_closest_wp(self, wp: String):
+        self.robot_closest_wp = wp.data        
        
 if __name__ == '__main__':
     rospy.init_node('robot_bac')

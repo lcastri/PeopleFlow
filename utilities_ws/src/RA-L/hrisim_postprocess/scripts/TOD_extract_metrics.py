@@ -76,7 +76,8 @@ def compute_sc_for_zones(df):
 
 
 INDIR = '/home/lcastri/git/PeopleFlow/utilities_ws/src/RA-L/hrisim_postprocess/csv/TOD/original'
-BAGNAME= ['noncausal_13122024']
+# BAGNAME= ['noncausal_13122024']
+BAGNAME= ['causal_18122024']
 
 GOAL_REACHED_THRESHOLD = 0.2
 STALLED_THRESHOLD = 0.01
@@ -148,8 +149,34 @@ for bag in BAGNAME:
         METRICS[task_id]['average_clearing_distance'] = float(AVERAGE_CLEARING_DISTANCE)
         METRICS[task_id]['min_distance_to_humans'] = float(MIN_DISTANCE_TO_HUMANS)
         METRICS[task_id]['space_compliance'] = SPACE_COMPLIANCE
-    
+        
+    # Filter data where B_S == 1 (robot in charging state)
+    BS = DF[DF['B_S'] == 1]
 
+    # Compute contiguous charging sessions
+    charging_sessions = []
+    battery_at_start_charging = []
+    start_time = None
+    end_time = None
+
+    # Iterate through BS to find start and end of contiguous charging states
+    for i, row in BS.iterrows():
+        if start_time is None:  # Start of new charging session
+            start_time = row['ros_time']
+            battery_at_start_charging.append(row['R_B'])
+        
+        # Check if this is the end of a contiguous block
+        if i + 1 not in BS.index:
+            end_time = row['ros_time']
+            charging_sessions.append((start_time, end_time))
+            start_time = None
+
+    # Calculate durations of charging sessions
+    charging_times = [end - start for start, end in charging_sessions]
+    AVERAGE_CHARGING_TIME = np.mean(charging_times)
+    AVERAGE_BATTERY_LEVEL = np.mean(battery_at_start_charging)
+
+    # Add results to metrics dictionary
     METRICS['overall_success'] = sum([1 if METRICS[task]['success'] == 1 else 0 for task in TASK_IDs])
     METRICS['overall_failure'] = sum([1 if METRICS[task]['success'] == -1 else 0 for task in TASK_IDs])
     METRICS['overall_human_collision'] = sum([METRICS[task]['human_collision'] for task in TASK_IDs])
@@ -164,6 +191,8 @@ for bag in BAGNAME:
     METRICS['mean_average_clearing_distance'] = float(np.mean([METRICS[task]['average_clearing_distance'] for task in TASK_IDs]))
     METRICS['mean_min_distance_to_humans'] = float(np.mean([METRICS[task]['min_distance_to_humans'] for task in TASK_IDs]))
     METRICS['mean_space_compliance'] = {proxemic: None for proxemic in PROXEMIC_THRESHOLDS.keys()}
+    METRICS['mean_battery_charging_time'] = float(AVERAGE_CHARGING_TIME)
+    METRICS['mean_battery_at_start_charging'] = float(AVERAGE_BATTERY_LEVEL)
     for proxemic in PROXEMIC_THRESHOLDS.keys():
         METRICS['mean_space_compliance'][proxemic] = float(np.mean([METRICS[task]['space_compliance'][proxemic] for task in TASK_IDs]))
     

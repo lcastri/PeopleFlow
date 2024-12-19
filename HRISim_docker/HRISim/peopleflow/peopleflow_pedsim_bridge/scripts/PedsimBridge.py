@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
 import rospy
-import copy
+import networkx as nx 
 import random
 import pickle
 from pedsim_srvs.srv import GetNextDestination, GetNextDestinationResponse
@@ -147,7 +147,8 @@ class PedsimBridge():
             rospy.logerr(f"Time: {self.timeOfDay} - {self.elapsedTimeString}")
             rospy.logerr(f"Agent {agent.id} generated error: {str(e)}")
             rospy.logerr(f"Traceback: {traceback.format_exc()}")
-       
+
+
   
 if __name__ == '__main__':
     rospy.init_node('peopleflow_pedsim_bridge')
@@ -161,6 +162,8 @@ if __name__ == '__main__':
 
     with open(g_path, 'rb') as f:
         G = pickle.load(f)
+        ros_utils.load_graph_to_rosparam(G, "/peopleflow/G")
+
         G.remove_node("charging_station")
         
     pedsimBridge = PedsimBridge()

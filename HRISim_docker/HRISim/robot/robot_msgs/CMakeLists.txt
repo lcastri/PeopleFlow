@@ -13,6 +13,8 @@ add_message_files( DIRECTORY msg
   BatteryAtCharger.msg
   BatteryAtChargers.msg
   PathInfo.msg
+  TaskInfo.msg
+  TasksInfo.msg
 )
 
 # Generate added messages and services with any dependencies listed here

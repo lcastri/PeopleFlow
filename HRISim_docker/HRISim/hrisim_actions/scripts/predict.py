@@ -27,25 +27,6 @@ class predict(AbstractAction):
             # Call the service
             response = get_risk_map()
             
-            # # Unpack the service response
-            # waypoint_ids = response.waypoint_ids
-            # n_steps = response.n_steps
-            # n_waypoints = response.n_waypoint
-            # flattened_PDs = response.PDs
-            # flattened_BACs = response.BACs
-            
-            # # Reconstruct 2D arrays for PDs and BACs
-            # PDs_matrix = np.array(flattened_PDs).reshape(n_waypoints, n_steps)
-            # BACs_matrix = np.array(flattened_BACs).reshape(n_waypoints, n_steps)
-            
-            # # Combine waypoint IDs and risk values into a dictionary
-            # self.risk_map = {}
-            # for i, wp in enumerate(waypoint_ids):
-            #     self.risk_map[wp] = {
-            #         'PD': PDs_matrix[i].tolist(),
-            #         'BAC': BACs_matrix[i].tolist()
-            #     }
-            
             # Save the risk map as a ROS parameter
             rospy.set_param('/hrisim/risk_map', {
                 'waypoint_ids': response.waypoint_ids,

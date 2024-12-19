@@ -1,8 +1,6 @@
 #!/usr/bin/env python
 
 import rospy
-import copy
-import random
 import pickle
 from pedsim_srvs.srv import GetNextDestination, GetNextDestinationResponse
 from peopleflow_msgs.msg import Time as pT
@@ -10,6 +8,7 @@ from hrisim_util.Agent import Agent
 import hrisim_util.ros_utils as ros_utils
 import traceback
 import time
+from std_srvs.srv import Trigger
 
 SHELFS = ["shelf1", "shelf2", "shelf3", "shelf4", "shelf5", "shelf6"]
 TIME_INIT = 8
@@ -164,10 +163,24 @@ if __name__ == '__main__':
     WPS = ros_utils.wait_for_param("/peopleflow/wps")
     ALLOW_TASK = rospy.get_param("~allow_task", False)
     MAX_TASKTIME = int(rospy.get_param("~max_tasktime"))
+    rospy.wait_for_service('/update_graph_visualization')
+
     
     g_path = str(rospy.get_param("~g_path"))
     with open(g_path, 'rb') as f:
         G = pickle.load(f)
+        ros_utils.load_graph_to_rosparam(G, "/peopleflow/G")
+        
+        # Create a handle for the Trigger service
+        update_service = rospy.ServiceProxy('/update_graph_visualization', Trigger)
+        # Call the service
+        response = update_service()
+        # Check the response
+        if response.success:
+            rospy.loginfo(f"Graph visualization updated successfully: {response.message}")
+        else:
+            rospy.logwarn(f"Graph visualization update failed: {response.message}")
+
         G.remove_node("charging_station")
         
     agentsplan_path = '/root/ros_ws/src/HRISim/peopleflow/peopleflow_manager/hardcode/agent_task_list.pkl'

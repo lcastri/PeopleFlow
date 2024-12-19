@@ -1,0 +1,4 @@
+int32 task_id             # ID of the task to mark as finished
+int8 result               # Result of the task: 1 for success, -1 for failure
+---
+bool success              # True if the task was successfully updated, False otherwise

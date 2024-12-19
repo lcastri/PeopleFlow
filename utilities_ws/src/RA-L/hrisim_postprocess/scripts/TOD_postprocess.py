@@ -8,19 +8,16 @@ import networkx as nx
 import xml.etree.ElementTree as ET
 
 
-def get_TTC():
-    ttc = {}
-    for wp in wps:
-        path = nx.astar_path(G, wp, "charging_station", heuristic=heuristic, weight='weight')
-        distanceToCharger = 0
-        for wp_idx in range(1, len(path)):
-            wp_current = path[wp_idx-1]
-            wp_next = path[wp_idx]
-            distanceToCharger += math.sqrt((wps[wp_next]['x'] - wps[wp_current]['x'])**2 + (wps[wp_next]['y'] - wps[wp_current]['y'])**2)
-        
-        timeToCharger = math.ceil(distanceToCharger/ROBOT_MAX_VEL)
-        ttc[wp] = timeToCharger
-    return ttc
+def get_battery_consumption(wp_origin, wp_dest):
+    pos = nx.get_node_attributes(G, 'pos')
+    path = nx.astar_path(G, wp_origin, wp_dest, heuristic=heuristic, weight='weight')
+    distanceToCharger = 0
+    for wp_idx in range(1, len(path)):
+        (x1, y1) = pos[path[wp_idx-1]]
+        (x2, y2) = pos[path[wp_idx]]
+        distanceToCharger += math.sqrt((x1 - x2)**2 + (y1 - y2)**2)
+    time_to_goal = math.ceil(distanceToCharger/ROBOT_MAX_VEL)
+    return time_to_goal * (static_consumption + K * ROBOT_MAX_VEL)
 
 
 def heuristic(a, b):
@@ -52,8 +49,8 @@ for waypoint in root.findall('waypoint'):
 ADD_NOISE = True
 INCSV_PATH= os.path.expanduser('utilities_ws/src/RA-L/hrisim_postprocess/csv/TOD/shrunk')
 OUTCSV_PATH= os.path.expanduser(f'utilities_ws/src/RA-L/hrisim_postprocess/csv/TOD/my{"_noised" if ADD_NOISE else "_nonoise"}/')
-BAGNAME= ['BL75_29102024']
-# BAGNAME= ['BL100_21102024', 'BL75_29102024', 'BL50_22102024', 'BL25_28102024', 'BL100_07112024', 'BL20_06112024']
+# BAGNAME= ['BL100_21102024']
+BAGNAME= ['BL100_21102024', 'BL75_29102024', 'BL50_22102024', 'BL25_28102024']
 
 static_duration = 5
 dynamic_duration = 4
@@ -64,7 +61,6 @@ K = (100 / (dynamic_duration * 3600) - static_consumption)/ROBOT_MAX_VEL
 charge_rate = 100 / (charging_time * 3600)
 with open('/home/lcastri/git/PeopleFlow/HRISim_docker/HRISim/peopleflow/peopleflow_manager/res/warehouse/graph.pkl', 'rb') as f:
     G = pickle.load(f)
-TTC = get_TTC()
 
 # Load data
 for bag in BAGNAME:
@@ -92,9 +88,6 @@ for bag in BAGNAME:
         DG = pd.Series(DG).shift(periods = 1, fill_value=0).values
         RV = DF['R_V'].values 
         if ADD_NOISE: RV += np.random.normal(0, 0.1, n_rows)
-        # if ADD_NOISE: RV += np.random.uniform(-0.5, 0.5, n_rows) # WORKING
-        # if ADD_NOISE: RV += np.roll(t_noise, 1) + np.random.normal(0, 0.03, n_rows)
-        # if ADD_NOISE: RV += np.where(DF['B_S'] == 0, np.random.normal(0, 0.1, n_rows), 0)
         
         RB = np.zeros(n_rows)
         BACs = {wp: np.zeros(n_rows) for wp in wps}
@@ -121,10 +114,14 @@ for bag in BAGNAME:
         RB = np.clip(RB, 0, 100)  # Ensure battery level remains between 0 and 100
         
         # Compute BACs for each waypoint
+        R_CLOSEST_WP = np.zeros(n_rows, dtype=object)
+        for i in range(n_rows):
+            x, y = DF.loc[i+r, ['R_X', 'R_Y']]
+            closest_wp = min(wps, key=lambda wp: ((x - wps[wp]['x'])**2 + (y - wps[wp]['y'])**2))
+            R_CLOSEST_WP[i] = closest_wp
         for wp in wps:
-            TTC_wp = TTC[wp]  # Time to charge specific to each waypoint
-            bac_drain = TTC_wp * (static_consumption + K * ROBOT_MAX_VEL)
-            BACs[wp][1:] = np.maximum(0, RB[1:] - bac_drain)
+            for i in range(len(R_CLOSEST_WP) - 1):
+                BACs[wp][1:] = np.maximum(0, RB[1:] - get_battery_consumption(R_CLOSEST_WP[i], wp) - get_battery_consumption(wp, 'charging_station'))
             if ADD_NOISE: BACs[wp] += np.random.uniform(-0.04, 0.04, n_rows)
 
         # Add computed values to DF

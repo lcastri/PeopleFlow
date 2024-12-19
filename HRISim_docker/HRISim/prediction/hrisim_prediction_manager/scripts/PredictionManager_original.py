@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 
+import copy
 import math
 import os
 import pickle
@@ -61,6 +62,7 @@ class PredictionManager:
         rospy.Subscriber("/peopleflow/counter", WPPeopleCounters, self.cb_people_counter)
         rospy.Subscriber("/peopleflow/time", pT, self.cb_time)
         rospy.Subscriber("/hrisim/robot_battery", BatteryStatus, self.cb_robot_battery)
+        rospy.Subscriber("/hrisim/robot_bac", BatteryAtChargers, self.cb_robot_bac)
         rospy.Subscriber("/hrisim/robot_closest_wp", String, self.cb_robot_closest_wp)
         
         self.CIE = CausalInferenceEngine.load(CIEDIR)
@@ -102,6 +104,11 @@ class PredictionManager:
         self.TOD = int(ros_utils.seconds_to_hh(t.elapsed))
         self.hhmmss = t.hhmmss.data
         self.elapsed = t.elapsed
+        
+
+    def cb_robot_bac(self, bacs: BatteryAtChargers):
+        for bac in bacs.BACs:
+            self.BACs[bac.WP_id.data] = bac.BAC.data
             
             
     def get_treatment_len(self):        
@@ -116,7 +123,6 @@ class PredictionManager:
                 travelled_distance += math.sqrt((WPS_COORD[wp_next]['x'] - WPS_COORD[wp_current]['x'])**2 + (WPS_COORD[wp_next]['y'] - WPS_COORD[wp_current]['y'])**2)
             travelled_distances.append(travelled_distance)
         return math.ceil((max(travelled_distances)/ROBOT_MAX_VEL)/PREDICTION_STEP)
-        # return min(5, math.ceil((max(travelled_distances)/ROBOT_MAX_VEL)/PREDICTION_STEP))
             
             
     def collect_data(self):
@@ -132,27 +138,74 @@ class PredictionManager:
         }
         for wp in self.PDs.keys():
             current_data[f"PD_{wp}"] = self.PDs[wp]
+            # current_data[f"BAC_{wp}"] = self.BACs[wp]
 
         # Add current data to the sliding window
         self.observations.append(current_data)
         if self.service is None: 
             self.service = rospy.Service('/get_risk_map', GetRiskMap, PM.handle_get_risk_map)
         
+        # treatment_len = self.get_treatment_len()
+        
+        # # Convert the observations deque to a pandas DataFrame
+        # data = pd.DataFrame(list(self.observations))
+        
+        # rospy.logwarn(f"treatment_len {treatment_len}")
+        
+        # # Init output
+        # output = {wp: {'BAC': None, 'PD': None} for wp in self.PDs.keys()}
+        # for i, wp in enumerate(self.PDs.keys()):
+        #     # For each waypoint, pass the corresponding data to the causal inference engine
+        #     wp_obs = data[["TOD", "R_V", "R_B", "B_S", f"PD_{wp}", f"BAC_{wp}"]].values
+        
+        #     wp_obs_df = pd.DataFrame(wp_obs, columns=["TOD", "R_V", "R_B", "B_S", "PD", "BAC"])
+        #     wp_obs_df["WP"] = constants.WPS[wp]
+            
+        #     # Init prior knowledge
+        #     prior_knowledge = {f: np.full(treatment_len, wp_obs_df[f].values[-1]) for f in ['B_S', 'WP']}
+        #     prior_knowledge['TOD'] = [int(ros_utils.seconds_to_hh(self.elapsed + i * PREDICTION_STEP)) for i in range(treatment_len)]
+        #     if i > 0: prior_knowledge['R_B'] = prediction_df['R_B'].values
+            
+            
+        #     # start = time.time()
+        #     res = self.CIE.whatIf('R_V', 
+        #                           ROBOT_MAX_VEL * np.ones(treatment_len), 
+        #                           wp_obs_df.values,
+        #                           prior_knowledge,
+        #                           self.calculation_order
+        #                          )
+        #     # end = time.time()
+        #     # rospy.logwarn(f"whatIf took {end-start} seconds")
+
+        #     prediction_df = pd.DataFrame(res, columns=["TOD", "R_V", "R_B", "B_S", "PD", "BAC", "WP"])
+        #     output[wp]['BAC'] = prediction_df['BAC'].values
+        #     output[wp]['PD'] = prediction_df['PD'].values
+        
+        # self.prediction = copy.deepcopy(output)
+
+        # if self.service is None: 
+        #     self.service = rospy.Service('/get_risk_map', GetRiskMap, PM.handle_get_risk_map)
+        #     rospy.loginfo("Service '/get_risk_map' is ready.")
+
+        
     def handle_get_risk_map(self, req):
-        start_time = time.time()
         treatment_len = self.get_treatment_len()
         
         # Convert the observations deque to a pandas DataFrame
         data = pd.DataFrame(list(self.observations))
-               
+        
+        rospy.logwarn(f"treatment_len {treatment_len}")
+        
         # Init output
         flattened_PDs = []
         flattened_BACs = []
-        
         for i, wp in enumerate(self.PDs.keys()):
             # For each waypoint, pass the corresponding data to the causal inference engine
             wp_obs = data[["TOD", "R_V", "R_B", "B_S", f"PD_{wp}"]].values
+            # wp_obs = data[["TOD", "R_V", "R_B", "B_S", f"PD_{wp}", f"BAC_{wp}"]].values
+        
             wp_obs_df = pd.DataFrame(wp_obs, columns=["TOD", "R_V", "R_B", "B_S", "PD"])
+            # wp_obs_df = pd.DataFrame(wp_obs, columns=["TOD", "R_V", "R_B", "B_S", "PD", "BAC"])
             wp_obs_df["WP"] = constants.WPS[wp]
             
             # Init prior knowledge
@@ -160,23 +213,17 @@ class PredictionManager:
             prior_knowledge['TOD'] = [int(ros_utils.seconds_to_hh(self.elapsed + i * PREDICTION_STEP)) for i in range(treatment_len)]
             if i > 0: prior_knowledge['R_B'] = prediction_df['R_B'].values
             
-            start_time_cie = time.time()
-            if i == 0: rospy.logwarn(f"Time elapsed BEFORE CIE: {start_time_cie - start_time}")
             res = self.CIE.whatIf('R_V', 
                                   ROBOT_MAX_VEL * np.ones(treatment_len), 
                                   wp_obs_df.values,
                                   prior_knowledge,
                                   self.calculation_order
                                  )
-            end_time_cie = time.time()
-            rospy.logwarn(f"Time elapsed CIE: {end_time_cie - start_time_cie}")
 
             prediction_df = pd.DataFrame(res, columns=["TOD", "R_V", "R_B", "B_S", "PD", "WP"])
+            rospy.logwarn(prediction_df.head(10))
             flattened_PDs.extend(prediction_df['PD'].values)
             flattened_BACs.extend(prediction_df['R_B'].values)
-            
-        end_time = time.time()
-        rospy.logwarn(f"Time elapsed: {end_time - start_time}")
         
         return GetRiskMapResponse(list(self.PDs.keys()), 
                                   treatment_len, 
