@@ -1,3 +1,4 @@
+from itertools import combinations
 import math
 import os
 import pickle
@@ -63,13 +64,25 @@ def get_prediction(p):
 
 
 def heuristic(a, b):
+    ALPHA = 1
+    BETA = 1
     pos = nx.get_node_attributes(G, 'pos')
     (x1, y1) = pos[a]
     (x2, y2) = pos[b]
-    return ((x1 - x2)**2 + (y1 - y2)**2)**0.5
+    distance_cost = ((x1 - x2)**2 + (y1 - y2)**2)**0.5
+    
+    # Include PD cost in the heuristic
+    PD_a = RISK_MAP[a]['PD'][0]
+    PD_b = RISK_MAP[b]['PD'][0]
+    avg_PD_cost = (PD_a + PD_b) / 2
+    
+    # Balance factors as per importance
+    return ALPHA * distance_cost + BETA * avg_PD_cost
 
 
-def update_G_weights(risk_map, g, robot_speed=0.5):    
+def update_G_weights(risk_map, g, robot_speed=0.5):   
+    max_PD = max([pd for node in G.nodes() if node != constants.WP.CHARGING_STATION.value for pd in risk_map[node]['PD']])
+
     ALPHA = 1
     BETA = 2 
     
@@ -87,25 +100,28 @@ def update_G_weights(risk_map, g, robot_speed=0.5):
         travel_distances.append(travel_distance)
 
         if u != constants.WP.CHARGING_STATION.value and v != constants.WP.CHARGING_STATION.value:
-            # Estimate time it will take to reach the next node (simple time = distance / speed)
-            (xr, yr) = pos[ROBOT_CLOSEST_WP]
-            u_PD_ttr = ((x1 - xr)**2 + (y1 - yr)**2)**0.5 / robot_speed  # Time in seconds to move from r to u
-            v_PD_ttr = ((x2 - xr)**2 + (y2 - yr)**2)**0.5 / robot_speed  # Time in seconds to move from r to v
-            
-            # Find the closest time step to target_time based on your time steps
-            idx_u = math.ceil(u_PD_ttr / 7)  # Assuming 7 seconds per time step
-            idx_v = math.ceil(v_PD_ttr / 7)
+            if u == constants.WP.DOOR_CORRIDOR2.value or v == constants.WP.DOOR_CORRIDOR2.value:
+                PD_cost = max_PD
+            else:
+                # Estimate time it will take to reach the next node (simple time = distance / speed)
+                (xr, yr) = pos[ROBOT_CLOSEST_WP]
+                u_PD_ttr = ((x1 - xr)**2 + (y1 - yr)**2)**0.5 / robot_speed  # Time in seconds to move from r to u
+                v_PD_ttr = ((x2 - xr)**2 + (y2 - yr)**2)**0.5 / robot_speed  # Time in seconds to move from r to v
+                
+                # Find the closest time step to target_time based on your time steps
+                idx_u = math.ceil(u_PD_ttr / 7)  # Assuming 7 seconds per time step
+                idx_v = math.ceil(v_PD_ttr / 7)
 
-            # Bound the indices to make sure they are within valid range (for list access)
-            idx_u = min(len(risk_map[u]['PD']) - 1, idx_u)
-            idx_v = min(len(risk_map[v]['PD']) - 1, idx_v)
-            
-            # Get PD values at the estimated times for both u and v
-            PD_u = risk_map[u]['PD'][idx_u] 
-            PD_v = risk_map[v]['PD'][idx_v] 
-            
-            # Average PD cost (from current and neighbor nodes) 
-            PD_cost = (PD_u + PD_v) / 2
+                # Bound the indices to make sure they are within valid range (for list access)
+                idx_u = min(len(risk_map[u]['PD']) - 1, idx_u)
+                idx_v = min(len(risk_map[v]['PD']) - 1, idx_v)
+                
+                # Get PD values at the estimated times for both u and v
+                PD_u = risk_map[u]['PD'][idx_u] 
+                PD_v = risk_map[v]['PD'][idx_v] 
+                
+                # Average PD cost (from current and neighbor nodes) 
+                PD_cost = (PD_u + PD_v) / 2
         else:
             PD_cost = 0
         
@@ -113,6 +129,7 @@ def update_G_weights(risk_map, g, robot_speed=0.5):
         
         if not(u != constants.WP.CHARGING_STATION.value and v != constants.WP.CHARGING_STATION.value):
             pd_null.append(len(pd_costs)-1)
+            
     # Normalize travel distances and PD costs
     max_travel = max(travel_distances) if travel_distances else 1
     max_pd_cost = max(pd_costs) if pd_costs else 1
@@ -135,52 +152,15 @@ def update_G_weights(risk_map, g, robot_speed=0.5):
 
 
 def get_next_goal():    
-    if BATTERY_LEVEL == 100 and rospy.get_param('/robot_battery/is_charging'):
-        rospy.logwarn("Battery is already full, not planning any tasks.")
-        return None, None
-    
-    elif not rospy.get_param('/robot_battery/is_charging') and not rospy.get_param('/hri/robot_busy'):                                        
-        if TOD <= 5:
-            return TASK_LIST[constants.Task.DELIVERY.value].pop(0), constants.Task.DELIVERY, True
-                    
-        elif 6 <= TOD <= 9:
-            rospy.logwarn("It's afternoon or quitting time, going to a random shelf for inventory check.")
-            return TASK_LIST[constants.Task.INVENTORY.value].pop(0), constants.Task.INVENTORY, True
-                    
-        elif TOD >= 10:
-            if len(TASK_LIST[constants.Task.CLEANING.value]) > 0:
-                rospy.logwarn("It's off time, going to clean the shop.")
-                return TASK_LIST[constants.Task.CLEANING.value].pop(0), constants.Task.CLEANING, True
-            else:
-                rospy.logwarn("No cleaning tasks left, shutting down the planning.")
-                return None, None, False
+    if not rospy.get_param('/hri/robot_busy'):                                        
+        return TASK_LIST.pop(0), constants.Task.DELIVERY, True
                        
-            
-def check_BAC(risk_map, queue, robot_speed = 0.5):
-    for wp in queue:
-        if wp == constants.WP.CHARGING_STATION.value: continue
-        time_to_reach_wp = ros_utils.get_time_to_wp(G_original, ROBOT_CLOSEST_WP, wp, heuristic, robot_speed)
-        time_to_reach_charger = ros_utils.get_time_to_wp(G_original, wp, constants.WP.CHARGING_STATION.value, heuristic, robot_speed)
-        battery_consumption = time_to_reach_charger * (STATIC_CONSUMPTION + K * robot_speed)
-        
-        wp_BAC_idx = math.ceil(time_to_reach_wp / 7)
-        wp_BAC_idx = min(len(risk_map[wp]['BAC']) - 1, wp_BAC_idx)
-        wp_BAC = risk_map[wp]['BAC'][wp_BAC_idx] - battery_consumption
-        if wp_BAC >= BATTERY_CRITICAL_LEVEL:
-            rospy.logwarn(f"{wp} ttwp: {wp_BAC_idx} BWP: {risk_map[wp]['BAC'][wp_BAC_idx]} BTC: {battery_consumption}.")
-            rospy.logwarn(f"{wp} BAC: {wp_BAC}. Critical? False")
-        else:
-            rospy.logerr(f"{wp} ttwp: {wp_BAC_idx} BWP: {risk_map[wp]['BAC'][wp_BAC_idx]} BTC: {battery_consumption}.")
-            rospy.logerr(f"{wp} BAC: {wp_BAC}. Critical? True")
-            return True
-        
-    return False
         
 def Plan(p):
     while not ros_utils.wait_for_param("/pnp_ros/ready"):
         rospy.sleep(0.1)
         
-    global NEXT_GOAL, QUEUE, GO_TO_CHARGER, G
+    global NEXT_GOAL, QUEUE, G, RISK_MAP
     ros_utils.wait_for_param("/peopleflow/timeday")
     rospy.set_param('/hri/robot_busy', False)
     PLAN_ON = True
@@ -193,26 +173,8 @@ def Plan(p):
     finish_task_service = rospy.ServiceProxy('/hrisim/finish_task', FinishTask)
     
     while PLAN_ON:               
-        if GO_TO_CHARGER:
-            NEXT_GOAL = constants.WP.CHARGING_STATION
-            TASK = constants.Task.CHARGING
-            PLAN_ON = True
-            QUEUE = nx.astar_path(G, ROBOT_CLOSEST_WP, NEXT_GOAL.value, heuristic=heuristic, weight='weight')
-            while QUEUE:
-                current_wp = QUEUE.pop(0)
-                next_wp = QUEUE[0] if QUEUE else None
-                send_goal(p, current_wp, next_wp)
-            GO_TO_CHARGER = False
-            rospy.set_param('/robot_battery/is_charging', True)
-            rospy.logwarn("Battery charging..")
             
-            finish_task_service(task_id, -1)  # -1 for failure
-            rospy.loginfo(f"FinishTask service called for task ID {task_id} with success.")  
-            NEXT_GOAL = None
-            TASK = constants.Task.CHARGING
-            
-        elif not rospy.get_param('/robot_battery/is_charging') and not GO_TO_CHARGER and len(QUEUE) == 0:
-            if TOD is None: continue
+        if len(QUEUE) == 0:
             NEXT_GOAL, TASK, PLAN_ON = get_next_goal()
             if NEXT_GOAL is None: continue
             if isinstance(NEXT_GOAL, constants.WP): NEXT_GOAL = NEXT_GOAL.value
@@ -225,8 +187,6 @@ def Plan(p):
             _ = update_service()
 
             QUEUE = nx.astar_path(G, ROBOT_CLOSEST_WP, NEXT_GOAL, heuristic=heuristic, weight='weight')
-            GO_TO_CHARGER = check_BAC(RISK_MAP, QUEUE)
-            if GO_TO_CHARGER: continue
             
             task_id = new_task_service(NEXT_GOAL, QUEUE).task_id
             rospy.loginfo(f"NewTask service called. Assigned Task ID: {task_id}")            
@@ -246,50 +206,21 @@ def Plan(p):
     
     rospy.set_param("/peopleflow/robot_plan_on", PLAN_ON)
 
-                                   
-def cb_battery(msg):
-    global BATTERY_LEVEL, QUEUE, NEXT_GOAL, GO_TO_CHARGER
-    
-    BATTERY_LEVEL = float(msg.level.data)
-    if not GO_TO_CHARGER and not rospy.get_param('/robot_battery/is_charging') and BATTERY_LEVEL <= BATTERY_CRITICAL_LEVEL:
-        rospy.logwarn("Cancelling all goals..")
-        client = actionlib.SimpleActionClient('/move_base', MoveBaseAction)
-        client.wait_for_server()
-        client.cancel_all_goals()
-        p.action_cmd('goto', "", 'interrupt')
-        while rospy.get_param('/hri/robot_busy'): rospy.sleep(0.1)
-        NEXT_GOAL = None
-        QUEUE = []
-        GO_TO_CHARGER = True
-        
-    elif BATTERY_LEVEL == 100 and rospy.get_param('/robot_battery/is_charging'):
-        rospy.set_param('/robot_battery/is_charging', False)
-        rospy.logwarn("Battery is already full, not planning any tasks.")
-        
+                                          
     
 def cb_robot_closest_wp(wp: String):
-    global ROBOT_CLOSEST_WP, task_pub
+    global ROBOT_CLOSEST_WP
     ROBOT_CLOSEST_WP = wp.data
-    
-    
-def cb_time(t: pT):
-    global TOD
-    TOD = int(ros_utils.seconds_to_hh(t.elapsed))
-    
+        
     
 if __name__ == "__main__":  
-    BATTERY_LEVEL = None
     ROBOT_CLOSEST_WP = None
     NEXT_GOAL = None
-    GO_TO_CHARGER = False
     QUEUE = []
-    TOD = None
     
     p = PNPCmd()
         
-    TLISTPATH = '/root/ros_ws/src/HRISim/hrisim_plans/hardcoded/task_list.pkl'
-    with open(TLISTPATH, 'rb') as f:
-        TASK_LIST = pickle.load(f)
+    TASK_LIST = [constants.WP.OFFICE2]
     
     g_path = ros_utils.wait_for_param("/peopleflow_pedsim_bridge/g_path")
     with open(g_path, 'rb') as f:
@@ -297,9 +228,7 @@ if __name__ == "__main__":
         G.remove_node("parking")
         G_original = copy.deepcopy(G)
     
-    rospy.Subscriber("/hrisim/robot_battery", BatteryStatus, cb_battery)
     rospy.Subscriber("/hrisim/robot_closest_wp", String, cb_robot_closest_wp)
-    rospy.Subscriber("/peopleflow/time", pT, cb_time)
 
     STATIC_CONSUMPTION = rospy.get_param("/robot_battery/static_consumption")
     K = rospy.get_param("/robot_battery/dynamic_consumption")

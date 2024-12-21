@@ -20,7 +20,7 @@ TOPICS = [
     "/hrisim/robot_task",
     "/hrisim/robot_closest_wp",
     "/hrisim/robot_bac",
-    "/hrisim/robot_task_status",
+    "/hrisim/robot_tasks_info",
     "/hrisim/robot_human_collision",
     "/hrisim/robot_clearing_distance"
 ]
