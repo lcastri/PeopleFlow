@@ -117,7 +117,6 @@ bool Simulator::initializeSimulation() {
   nh_.param<double>("robot_radius", CONFIG.robot_radius, 2); // added by Luca
   nh_.param<double>("update_rate", CONFIG.updateRate, 25.0);
   nh_.param<double>("simulation_factor", CONFIG.simulationFactor, 1.0);
-  nh_.param<double>("scaling_factor", CONFIG.scalingFactor, 12); // added by Luca
   nh_.param<double>("is_stuck_threshold", CONFIG.isStuckThreshold, 60); // added by Luca
   nh_.param<double>("force_obstacle", CONFIG.forceObstacle, 10.0);
   nh_.param<double>("sigma_obstacle", CONFIG.sigmaObstacle, 0.2);

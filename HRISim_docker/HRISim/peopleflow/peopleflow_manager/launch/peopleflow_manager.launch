@@ -1,11 +1,9 @@
 <launch>
   <arg name="scenario" default = "warehouse"/>
-  <arg name="scaling_factor" default = "12"/>
   <arg name="starting_elapsed" default = "8"/>
 
   <node name="peopleflow_manager" pkg="peopleflow_manager" type="ScenarioManager.py" output="screen">
     <param name="scenario"   value="$(find pedsim_simulator)/scenarios/$(arg scenario)"/> 
-    <param name="scaling_factor"   value="$(arg scaling_factor)"/> 
     <param name="starting_elapsed"   value="$(arg starting_elapsed)"/> 
   </node>
  

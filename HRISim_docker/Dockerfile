@@ -42,8 +42,8 @@ COPY HRISim_docker/HRISim/robot/tiago_controller_conf_package.xml /root/tiago_ws
 # Copy files into the image
 COPY HRISim_docker/HRISim/robot/robot_twist_mux/modified_scripts/twist_mux.launch /opt/ros/noetic/share/twist_mux/launch
 COPY HRISim_docker/HRISim/hrisim_gazebo/modified_scripts/local_planner.yaml /root/tiago_ws/src/pal_navigation_cfg_public/pal_navigation_cfg_tiago/config/base/teb
-RUN mkdir -p ~/.pal/tiago_maps/configurations/
-COPY HRISim_docker/HRISim/hrisim_gazebo/tiago_maps/ /root/.pal/tiago_maps/configurations/
+# RUN mkdir -p ~/.pal/tiago_maps/configurations/
+# COPY HRISim_docker/HRISim/hrisim_gazebo/tiago_maps/ /root/.pal/tiago_maps/configurations/
 
 RUN /bin/bash -c 'source /opt/ros/noetic/setup.bash; cd ~/tiago_ws; catkin build'
 RUN echo "source ~/tiago_ws/devel/setup.bash" >> ~/.bashrc
@@ -124,6 +124,9 @@ COPY HRISim_docker/pedsim_ros /root/ros_ws/src/pedsim_ros
 ############################################################################## Final
 # Create a shared folder with the host machine
 RUN mkdir -p ~/shared
+
+RUN mkdir -p ~/.pal/tiago_maps/configurations/
+COPY HRISim_docker/HRISim/hrisim_gazebo/tiago_maps/ /root/.pal/tiago_maps/configurations/
 
 # Set the entrypoint to run the script
 ENTRYPOINT ["/usr/local/bin/entrypoint.sh"]

@@ -312,7 +312,7 @@ Visualization Manager:
           Marker Topic: twist_marker
           Name: Twist
           Namespaces:
-            "": true
+            {}
           Queue Size: 100
           Value: true
         - Class: rviz/Marker
@@ -921,8 +921,7 @@ Visualization Manager:
       Value: false
       Visibility:
         Control:
-          Move: true
-          Path: true
+          "": true
           Value: true
         Grid: true
         Localization:
@@ -940,49 +939,20 @@ Visualization Manager:
           Trajectory: true
           Value: true
         PedSim:
-          MarkerArray: true
-          TeleopPerson:
-            Axes: true
-            Distance line: true
-            Distance text: true
-            Goal: true
-            Goal line: true
-            Risk: true
-            TeleopPersons: true
+          "":
+            "": true
             Value: true
-          Time: true
-          TrackedPersons: true
           Value: true
-          Walls: true
-          Waypoints: true
         Planning:
           "":
             "": true
             Value: true
           Value: true
         ROS-Causal:
-          DAG: true
+          "": true
           Value: true
-          tsDAG: true
         Robot:
-          Dynamic Footprint: true
-          Dynamics: true
-          Footprint: true
-          Info: true
-          Mode: true
-          Odometry: true
-          RobotModel: true
-          Sensors:
-            Depth Cloud: true
-            Laser: true
-            RGBD scan: true
-            Sonar Cloud: true
-            Sonars: true
-            Value: true
-            Velodyne Cloud: true
-            Virtual Obstacles: true
-          TF: true
-          Twist: true
+          "": true
           Value: true
         Tracking:
           "": true
@@ -1224,7 +1194,7 @@ Visualization Manager:
           Marker Topic: /graph_visualization
           Name: WPGraph
           Namespaces:
-            "": true
+            {}
           Queue Size: 100
           Value: true
         - Class: rviz/Group
@@ -1354,7 +1324,7 @@ Visualization Manager:
   Views:
     Current:
       Class: rviz/Orbit
-      Distance: 35.72063446044922
+      Distance: 26.87112808227539
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.05999999865889549
         Stereo Focal Distance: 1
@@ -1362,17 +1332,17 @@ Visualization Manager:
         Value: false
       Field of View: 0.7853981852531433
       Focal Point:
-        X: -3.5342164039611816
-        Y: 3.079235792160034
-        Z: 0.7461376190185547
+        X: 0.013459242880344391
+        Y: 4.981814861297607
+        Z: 2.1780126094818115
       Focal Shape Fixed Size: true
       Focal Shape Size: 0.05000000074505806
       Invert Z Axis: false
       Name: Current View
       Near Clip Distance: 0.009999999776482582
-      Pitch: 1.0496952533721924
+      Pitch: 0.9547969102859497
       Target Frame: <Fixed Frame>
-      Yaw: 4.717776775360107
+      Yaw: 3.1077828407287598
     Saved: ~
 Window Geometry:
   DAG:

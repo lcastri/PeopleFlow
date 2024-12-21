@@ -61,7 +61,6 @@ init_cmd: |
   export_default RECORD "false"
   export_default STARTING_ELAPSED "8"
   export_default MAX_TASKTIME "15"
-  export_default SCALING_FACTOR "1"
   export_default IS_STUCK_THRESHOLD "30"
   export_default HUMAN_MODE "1"
   export_default MAX_HUMAN_SPEED "1.5"
@@ -77,7 +76,7 @@ init_cmd: |
   export_default FORCE_SOCIAL "10.0"
 
   # Gazebo arguments
-  export_default GUI "false"
+  export_default GUI "true"
   export_default MAX_STEP_SIZE "0.002"
   export_default REAL_TIME_UPDATE_RATE "0"
 
@@ -120,9 +119,9 @@ windows:
   - name: scenario
     tags: ['exp']
     panes:
-      - 'roslaunch peopleflow_manager peopleflow_manager.launch scenario:=$SCENARIO scaling_factor:=$SCALING_FACTOR starting_elapsed:=$STARTING_ELAPSED'
+      - 'roslaunch peopleflow_manager peopleflow_manager.launch scenario:=$SCENARIO starting_elapsed:=$STARTING_ELAPSED'
       - 'roslaunch peopleflow_pedsim_bridge peopleflow_pedsim.launch scenario:=$SCENARIO allow_task:=$ALLOW_TASK max_tasktime:=$MAX_TASKTIME'
-      - 'roslaunch pedsim_simulator mysimulator.launch scenario:=$SCENARIO robot_mode:=$HUMAN_MODE max_robot_speed:=$MAX_HUMAN_SPEED robot_radius:=$ROBOT_RADIUS scaling_factor:=$SCALING_FACTOR is_stuck_threshold:=$IS_STUCK_THRESHOLD force_obstacle:=$FORCE_OBSTACLE sigma_obstacle:=$SIGMA_OBSTACLE force_social:=$FORCE_SOCIAL with_teleop_ped:=$WITH_TELEOP_PED ped_x:=$HUMAN_x ped_y:=$HUMAN_y ped_theta:=0'
+      - 'roslaunch pedsim_simulator mysimulator.launch scenario:=$SCENARIO robot_mode:=$HUMAN_MODE max_robot_speed:=$MAX_HUMAN_SPEED robot_radius:=$ROBOT_RADIUS is_stuck_threshold:=$IS_STUCK_THRESHOLD force_obstacle:=$FORCE_OBSTACLE sigma_obstacle:=$SIGMA_OBSTACLE force_social:=$FORCE_SOCIAL with_teleop_ped:=$WITH_TELEOP_PED ped_x:=$HUMAN_x ped_y:=$HUMAN_y ped_theta:=0'
       # - 'rosrun rqt_peopleflow agents_info.py'
       # - 'rosrun peopleflow_graph_visualisation GraphVisualisation.py'
   # - name: data

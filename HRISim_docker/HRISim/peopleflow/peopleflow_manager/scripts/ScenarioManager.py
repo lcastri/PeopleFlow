@@ -65,7 +65,7 @@ class ScenarioManager():
         
         # Parse schedule
         for time in root.find('schedule').findall('time'):
-            tmp = Time(time.get('name'), float(time.get('duration')) * (1/SCALING_FACTOR))
+            tmp = Time(time.get('name'), float(time.get('duration')))
             for adddest in time.findall('adddest'):
                 dest_name = adddest.get('name')
                 tmp.dests[dest_name] = {'mean': tmp.duration * float(adddest.get('p')), 'std': float(adddest.get('std'))}
@@ -94,7 +94,7 @@ def pub_time():
     
 def isFinished():
     global TSTOP
-    
+    rospy.set_param("/peopleflow/robot_plan_on", True)
     if SM.elapsedTime is not None and (SM.elapsedTime > SM.T or not ros_utils.wait_for_param("/peopleflow/robot_plan_on")) and not TSTOP:
         try:
             rospy.logwarn(f"Calling shutdown...")
@@ -110,7 +110,6 @@ if __name__ == '__main__':
     rate = rospy.Rate(10)  # 10 Hz
     
     SCENARIO = str(rospy.get_param("~scenario"))
-    SCALING_FACTOR = int(rospy.get_param("~scaling_factor", 1))
     STARTING_ELAPSED = int(rospy.get_param("~starting_elapsed", 8)) - TIME_INIT
     
     SM = ScenarioManager()
