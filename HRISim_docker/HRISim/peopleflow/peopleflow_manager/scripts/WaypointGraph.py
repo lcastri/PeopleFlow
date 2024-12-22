@@ -83,7 +83,7 @@ for waypoint in root.findall('waypoint'):
     y = float(waypoint.get('y'))
     r = float(waypoint.get('r'))
     waypoints.append((wp_id, x, y, r))
-    if wp_id.startswith('door_'): doors.append((wp_id, x, y, r))
+    if wp_id.startswith('door-'): doors.append((wp_id, x, y, r))
     
 with open(os.path.join(MAP_NAME, 'map.yaml'), 'r') as yaml_file:
     map_info = yaml.safe_load(yaml_file)
