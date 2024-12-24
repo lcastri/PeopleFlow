@@ -68,7 +68,7 @@ class ScenarioManager():
             tmp = Time(time.get('name'), float(time.get('duration')))
             for adddest in time.findall('adddest'):
                 dest_name = adddest.get('name')
-                tmp.dests[dest_name] = {'mean': tmp.duration * float(adddest.get('p')), 'std': float(adddest.get('std'))}
+                tmp.dests[dest_name] = {'mean': float(adddest.get('p')), 'std': float(adddest.get('std'))}
             self.schedule[tmp.name] = tmp
         
         self.wps = {}

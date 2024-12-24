@@ -30,7 +30,8 @@ init_cmd: |
   export_default TIAGO_z "0.0"
   export_default TIAGO_R "0.0"
   export_default TIAGO_P "0.0"
-  export_default TIAGO_Y "1.5708"
+  export_default TIAGO_Y "0"
+  # export_default TIAGO_Y "1.5708"
   export_default INIT_BATTERY "100"
   export_default STATIC_DURATION "5"
   export_default DYNAMIC_DURATION "4"
@@ -71,12 +72,12 @@ init_cmd: |
   export_default SPAWN_AGENT "true"
   export_default SPAWN_TELEOP_AGENT "false"
   export_default SPAWN_TIMEOUT "10.0"
-  export_default FORCE_OBSTACLE "25.0"
+  export_default FORCE_OBSTACLE "15.0"
   export_default SIGMA_OBSTACLE "0.25"
   export_default FORCE_SOCIAL "10.0"
 
   # Gazebo arguments
-  export_default GUI "true"
+  export_default GUI "false"
   export_default MAX_STEP_SIZE "0.002"
   export_default REAL_TIME_UPDATE_RATE "0"
 
@@ -95,21 +96,21 @@ windows:
     panes:
       - 'roslaunch hrisim_gazebo simulation.launch gui:=$GUI robot:=$TIAGO_TYPE public_sim:=true world:=$WORLD TIAGO_x:=$TIAGO_x TIAGO_y:=$TIAGO_y TIAGO_z:=$TIAGO_z TIAGO_R:=$TIAGO_R TIAGO_P:=$TIAGO_P TIAGO_Y:=$TIAGO_Y spawn_agent:=$SPAWN_AGENT spawn_teleop_agent:=$SPAWN_TELEOP_AGENT spawn_timeout:=$SPAWN_TIMEOUT'
       - 'rviz -d "$(rospack find hrisim_rviz)/config/rviz/hrisim_rviz.rviz" --fixed-frame map'
-      # - 'rqt --standalone Peopleflow'
+      - 'rqt --standalone Peopleflow'
       # - 'rosrun robot_info robot_taskinfo.py'
-      # - 'rosrun peopleflow_info peopleflow_info.py'
-      # - 'roscd hrisim_gazebo && ./physics_params.sh $MAX_STEP_SIZE $REAL_TIME_UPDATE_RATE'
+      - 'rosrun peopleflow_info peopleflow_info.py'
+      - 'roscd hrisim_gazebo && ./physics_params.sh $MAX_STEP_SIZE $REAL_TIME_UPDATE_RATE'
   - name: robot
     tags: ['robot']
     panes:
       - 'roslaunch tiago_2dnav_gazebo navigation.launch public_sim:=true global_planner:=$GLOBAL_PLANNER local_planner:=$LOCAL_PLANNER localization:=$LOCALIZATION config_base_path:=$CONFIG_BASE_PATH map:=$MAP'
       - 'rosrun robot_twist_mux mytwist_mux.py'
       # - 'roslaunch robot_battery sim_battery.launch init_battery:=$INIT_BATTERY static_duration:=$STATIC_DURATION dynamic_duration:=$DYNAMIC_DURATION charging_time:=$CHARGING_TIME'
-      # - 'rosrun robot_recovery standUp.py'
-      # - 'rosrun robot_recovery localiseMe.py'
-      # - 'rosrun robot_info robot_closestWP.py'
+      - 'rosrun robot_recovery standUp.py'
+      - 'rosrun robot_recovery localiseMe.py'
+      - 'rosrun robot_info robot_closestWP.py'
       # - 'rosrun robot_battery BatteryAtTheCharger.py'
-      # - 'roslaunch robot_clearing_distance clearing_distance.launch'
+      - 'roslaunch robot_clearing_distance clearing_distance.launch'
       # - 'rosrun robot_task TaskInfoManager.py'
   # - name: planning
     # tags: ['core']
@@ -122,13 +123,13 @@ windows:
       - 'roslaunch peopleflow_manager peopleflow_manager.launch scenario:=$SCENARIO starting_elapsed:=$STARTING_ELAPSED'
       - 'roslaunch peopleflow_pedsim_bridge peopleflow_pedsim.launch scenario:=$SCENARIO allow_task:=$ALLOW_TASK max_tasktime:=$MAX_TASKTIME'
       - 'roslaunch pedsim_simulator mysimulator.launch scenario:=$SCENARIO robot_mode:=$HUMAN_MODE max_robot_speed:=$MAX_HUMAN_SPEED robot_radius:=$ROBOT_RADIUS is_stuck_threshold:=$IS_STUCK_THRESHOLD force_obstacle:=$FORCE_OBSTACLE sigma_obstacle:=$SIGMA_OBSTACLE force_social:=$FORCE_SOCIAL with_teleop_ped:=$WITH_TELEOP_PED ped_x:=$HUMAN_x ped_y:=$HUMAN_y ped_theta:=0'
-      # - 'rosrun rqt_peopleflow agents_info.py'
+      - 'rosrun rqt_peopleflow agents_info.py'
       # - 'rosrun peopleflow_graph_visualisation GraphVisualisation.py'
-  # - name: data
-  #   tags: ['exp']
-  #   panes:
-  #     - 'rosrun peopleflow_counter PeopleCounter.py'
-  #     - if [[ "$RECORD" == "true" ]]; then rosrun hrisim_recording record.py; fi
+  - name: data
+    tags: ['exp']
+    panes:
+      - 'rosrun peopleflow_counter PeopleCounter.py'
+      - if [[ "$RECORD" == "true" ]]; then rosrun hrisim_recording record.py; fi
   # - name: prediction
   #   tags: ['exp']
   #   panes:

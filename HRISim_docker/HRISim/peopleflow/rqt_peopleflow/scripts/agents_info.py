@@ -67,7 +67,7 @@ if __name__ == '__main__':
 
     with open(g_path, 'rb') as f:
         G = pickle.load(f)
-        G.remove_node("charging_station")
+        G.remove_node("charging-station")
         
     pfagents = PFAgentsInfo()
                 

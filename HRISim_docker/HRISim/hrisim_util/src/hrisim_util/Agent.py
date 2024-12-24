@@ -119,27 +119,26 @@ class Agent:
     
     def selectDestination(self, selected_time, potential_dests):
         destinations = self.schedule[selected_time]['dests']
-        if self.pastFinalDest is not None and self.pastFinalDest != 'delivery_point': potential_dests.remove(self.pastFinalDest)
+        #! I am commenting this line to allow the agents to select the same destination
+        # if self.pastFinalDest is not None and self.pastFinalDest != 'delivery_point': potential_dests.remove(self.pastFinalDest)
         
         # Generate probabilities
+        tmp_dest = []
         probabilities = []
         for dest in potential_dests:
             mean = destinations[dest]['mean']
             std = destinations[dest]['std']
             
-            if std == 0:
-                probability = 0.0
-            else:
-                probability = stats.norm(mean, std).pdf(mean)
-
+            if mean == 0: continue
+            # probability = stats.norm(mean, std).pdf(mean)
+            probability = mean
+            tmp_dest.append(dest)
             probabilities.append(probability)
 
         # Normalize the probabilities
         probabilities = np.array(probabilities)
-        normalized_probabilities = probabilities / probabilities.sum()
-
         # Randomly select a destination
-        selected_destination = np.random.choice(potential_dests, p=normalized_probabilities)
+        selected_destination = np.random.choice(tmp_dest, p=probabilities)
         
         return selected_destination
     

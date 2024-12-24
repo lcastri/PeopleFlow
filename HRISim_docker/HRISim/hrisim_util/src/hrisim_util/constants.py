@@ -3,11 +3,16 @@ from shapely.geometry import Polygon
 
 
 class TOD(Enum):
-    STARTING = "starting"
-    MORNING = "morning"
-    LUNCH = "lunch"
-    AFTERNOON = "afternoon"
-    QUITTING = "quitting"
+    H1 = "H1"
+    H2 = "H2"
+    H3 = "H3"
+    H4 = "H4"
+    H5 = "H5"
+    H6 = "H6"
+    H7 = "H7"
+    H8 = "H8"
+    H9 = "H9"
+    H10 = "H10"
     OFF = "off"
 
 
@@ -84,12 +89,17 @@ TASKS = {
 }
 
 TODS = {
-    TOD.STARTING.value: 0,
-    TOD.MORNING.value: 1,
-    TOD.LUNCH.value: 2,
-    TOD.AFTERNOON.value: 3,
-    TOD.QUITTING.value: 4,
-    TOD.OFF.value: 5
+    TOD.H1.value: 1,
+    TOD.H2.value: 2,
+    TOD.H3.value: 3,
+    TOD.H4.value: 4,
+    TOD.H5.value: 5,
+    TOD.H6.value: 6,
+    TOD.H7.value: 7,
+    TOD.H8.value: 8,
+    TOD.H9.value: 9,
+    TOD.H10.value: 10,
+    TOD.OFF.value: 11
 }
 
 WPS = {
