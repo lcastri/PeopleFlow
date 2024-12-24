@@ -7,6 +7,7 @@ from robot_msgs.msg import BatteryStatus, BatteryAtCharger as msgBAC, BatteryAtC
 from std_msgs.msg import Header, String
 import networkx as nx
 import hrisim_util.ros_utils as ros_utils
+import hrisim_util.constants as constants
 
 def heuristic(a, b):
     pos = nx.get_node_attributes(G, 'pos')
@@ -29,7 +30,7 @@ class BatteryAtCharger():
         battery_level = b.level.data
         for wp in WPS:
             battery_to_wp = ros_utils.get_time_to_wp(G, self.robot_closest_wp, wp, heuristic, robot_speed=ROBOT_MAX_VEL) * self.battery_consumption_per_time
-            battery_to_charger = ros_utils.get_time_to_wp(G, wp, 'charging_station', heuristic, robot_speed=ROBOT_MAX_VEL) * self.battery_consumption_per_time
+            battery_to_charger = ros_utils.get_time_to_wp(G, wp, constants.WP.CHARGING_STATION.value, heuristic, robot_speed=ROBOT_MAX_VEL) * self.battery_consumption_per_time
                        
             bac = msgBAC()
             bac.BAC.data = battery_level - battery_to_wp - battery_to_charger

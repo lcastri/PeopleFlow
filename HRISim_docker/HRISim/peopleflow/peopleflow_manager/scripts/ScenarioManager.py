@@ -115,7 +115,6 @@ if __name__ == '__main__':
     SM = ScenarioManager()
                     
     time_pub = rospy.Publisher('/peopleflow/time', pT, queue_size=10)
-    task_pub = rospy.Publisher('/hrisim/robot_task', String, queue_size=10)
 
     while not rospy.is_shutdown():
         # Time
@@ -123,9 +122,5 @@ if __name__ == '__main__':
         rospy.set_param('/peopleflow/timeday', str(SM.timeOfTheDay))
         
         isFinished()
-        
-        
-        # Robot task
-        task_pub.publish(String(rospy.get_param("/hrisim/robot_task", 'none')))
-        
+                
         rate.sleep()

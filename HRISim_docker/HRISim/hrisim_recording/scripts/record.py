@@ -17,7 +17,6 @@ TOPICS = [
     "/peopleflow/counter",
     "/peopleflow/time",
     "/hrisim/robot_battery",
-    "/hrisim/robot_task",
     "/hrisim/robot_closest_wp",
     "/hrisim/robot_bac",
     "/hrisim/robot_task_status",
