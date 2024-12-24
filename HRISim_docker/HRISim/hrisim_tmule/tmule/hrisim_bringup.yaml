@@ -124,11 +124,11 @@ windows:
       - 'roslaunch peopleflow_pedsim_bridge peopleflow_pedsim.launch scenario:=$SCENARIO allow_task:=$ALLOW_TASK max_tasktime:=$MAX_TASKTIME'
       - 'roslaunch pedsim_simulator mysimulator.launch scenario:=$SCENARIO robot_mode:=$HUMAN_MODE max_robot_speed:=$MAX_HUMAN_SPEED robot_radius:=$ROBOT_RADIUS is_stuck_threshold:=$IS_STUCK_THRESHOLD force_obstacle:=$FORCE_OBSTACLE sigma_obstacle:=$SIGMA_OBSTACLE force_social:=$FORCE_SOCIAL with_teleop_ped:=$WITH_TELEOP_PED ped_x:=$HUMAN_x ped_y:=$HUMAN_y ped_theta:=0'
       - 'rosrun rqt_peopleflow agents_info.py'
+      - 'rosrun peopleflow_counter PeopleCounter.py'
       - 'rosrun peopleflow_graph_visualisation GraphVisualisation.py'
   - name: data
     tags: ['exp']
     panes:
-      - 'rosrun peopleflow_counter PeopleCounter.py'
       - if [[ "$RECORD" == "true" ]]; then rosrun hrisim_recording record.py; fi
   # - name: prediction
   #   tags: ['exp']

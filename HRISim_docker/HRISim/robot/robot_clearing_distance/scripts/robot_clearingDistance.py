@@ -41,13 +41,16 @@ class ClearingDistanceNode:
 
             # Load the map image
             map_image = cv2.imread(image_path, cv2.IMREAD_GRAYSCALE)
+            rospy.logerr(f"image_path: {image_path}")
             if map_image is None:
                 rospy.logerr(f"Failed to load map image from {image_path}")
                 rospy.signal_shutdown("Could not load map image")
                 return None, None, None
+            else:
+                rospy.logerr(f"Loaded map image, shape: {map_image.shape}, dtype: {map_image.dtype}")
 
             # Convert the map to binary
-            binary_map = (map_image < 254).astype(np.uint8)  # Treat dark pixels as obstacles (1), others as free space (0)
+            binary_map = (map_image == 0).astype(np.uint8) 
 
             # Precompute the distance transform
             distance_transform = distance_transform_edt(1 - binary_map) * resolution  # 1-free space, 0-obstacles
@@ -83,6 +86,7 @@ class ClearingDistanceNode:
         if pixel_x < 0 or pixel_y < 0 or pixel_x >= self.map_data.shape[1] or pixel_y >= self.map_data.shape[0]:
             rospy.logwarn("Robot is outside of the map boundaries.")
             return float('inf')
+        rospy.loginfo(f"Robot position: world ({robot_x:.2f}, {robot_y:.2f}), pixels ({pixel_x}, {pixel_y})")
 
         # Lookup precomputed clearance from distance transform
         clearance = self.distance_transform[pixel_y, pixel_x]
