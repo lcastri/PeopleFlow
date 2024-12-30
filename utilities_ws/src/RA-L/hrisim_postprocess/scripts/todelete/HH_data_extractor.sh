@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Set the base parameters
-BAGNAME="BL25_28102024"
+BAGNAME="noncausal_27122024"
 INTERVAL=3600  # Duration of each segment in seconds
 END_TIME=42619  # Total time in seconds (adjust this to your actual end time)
 

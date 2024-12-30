@@ -3,7 +3,7 @@
   <arg name="bagname"/>
   <arg name="scenario" default="warehouse"/>
   <arg name="playback_speed" default="10" />
-  <arg name="next_save_time" default="0" /> 
+  <arg name="time_of_the_day" default="H1" /> 
   <arg name="load_goal" default="false" /> 
   <arg name="start_time" default="0" /> <!-- New argument for start time in seconds -->
 
@@ -17,7 +17,7 @@
       <param name="bagname" value="$(arg bagname)" />
       <param name="node_path" value="$(find hrisim_postprocess)" />
       <param name="scenario" value="$(arg scenario)" />
-      <param name="next_save_time" value="$(arg next_save_time)" />
+      <param name="time_of_the_day" value="$(arg time_of_the_day)" />
       <param name="load_goal" value="$(arg load_goal)" />
   </node>
 

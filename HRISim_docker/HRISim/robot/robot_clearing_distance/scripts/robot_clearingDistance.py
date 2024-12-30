@@ -80,13 +80,12 @@ class ClearingDistanceNode:
 
         # Convert robot position to map pixels
         pixel_x = int((robot_x - self.map_origin[0]) / self.map_resolution)
-        pixel_y = int((robot_y - self.map_origin[1]) / self.map_resolution)
+        pixel_y = int((-robot_y - self.map_origin[1] + 2) / self.map_resolution)
 
         # Validate position within bounds
         if pixel_x < 0 or pixel_y < 0 or pixel_x >= self.map_data.shape[1] or pixel_y >= self.map_data.shape[0]:
             rospy.logwarn("Robot is outside of the map boundaries.")
             return float('inf')
-        rospy.loginfo(f"Robot position: world ({robot_x:.2f}, {robot_y:.2f}), pixels ({pixel_x}, {pixel_y})")
 
         # Lookup precomputed clearance from distance transform
         clearance = self.distance_transform[pixel_y, pixel_x]

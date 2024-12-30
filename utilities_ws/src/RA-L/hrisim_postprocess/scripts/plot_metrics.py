@@ -3,12 +3,12 @@ import numpy as np
 import json
 import os
 
-INDIR = '/home/lcastri/git/PeopleFlow/utilities_ws/src/RA-L/hrisim_postprocess/csv/TOD/original'
-BAGNAMES = ['noncausal_13122024', 'causal_18122024']
-# BAGNAMES = ['noncausal_13122024']
+INDIR = '/home/lcastri/git/PeopleFlow/utilities_ws/src/RA-L/hrisim_postprocess/csv/HH/original'
+BAGNAMES = ['noncausal_27122024']
 
 # Initialize aggregated data structures
 aggregated_metrics = {}
+battery_metrics = {}
 time_metrics = {}
 velocity_metrics = {}
 distance_metrics = {}
@@ -23,7 +23,10 @@ for bagname in BAGNAMES:
         
     aggregated_metrics[bagname] = {
         "Overall Success": METRICS['overall_success'],
-        "Overall Failure": METRICS['overall_failure'],
+        "Overall Failure": METRICS['overall_failure']
+    }
+    
+    battery_metrics[bagname] = {
         "Mean Battery Charging Time (s)": METRICS['mean_battery_charging_time'],
         "Mean Battery Level at Start Charging (%)": METRICS['mean_battery_at_start_charging'],
     }
@@ -31,20 +34,20 @@ for bagname in BAGNAMES:
     time_metrics[bagname] = {
         "Mean Stalled Time (s)": METRICS['mean_stalled_time'],
         "Mean Time to Goal (s)": METRICS['mean_time_to_reach_goal'],
-        "Mean Path Length (m)": METRICS['mean_path_length']
-    }
-
-    velocity_metrics[bagname] = {
-        "Mean Min Velocity (m/s)": METRICS['mean_min_velocity'],
-        "Mean Max Velocity (m/s)": METRICS['mean_max_velocity'],
-        "Mean Avg Velocity (m/s)": METRICS['mean_average_velocity']
-    }
-
-    distance_metrics[bagname] = {
-        "Mean Min Clearing Distance (m)": METRICS['mean_min_clearing_distance'],
-        "Mean Max Clearing Distance (m)": METRICS['mean_max_clearing_distance'],
+        "Mean Path Length (m)": METRICS['mean_path_length'],
+        "Mean Avg Velocity (m/s)": METRICS['mean_average_velocity'],
         "Mean Avg Clearing Distance (m)": METRICS['mean_average_clearing_distance'],
     }
+
+    # velocity_metrics[bagname] = {
+    #     "Mean Min Velocity (m/s)": METRICS['mean_min_velocity'],
+    #     "Mean Max Velocity (m/s)": METRICS['mean_max_velocity'],
+    # }
+
+    # distance_metrics[bagname] = {
+    #     "Mean Min Clearing Distance (m)": METRICS['mean_min_clearing_distance'],
+    #     "Mean Max Clearing Distance (m)": METRICS['mean_max_clearing_distance'],
+    # }
 
     human_related_metrics[bagname] = {
         "Human Collisions": METRICS['overall_human_collision'],
@@ -77,9 +80,8 @@ def plot_grouped_bar(metrics_dict, title, ylabel, figsize=(10, 6), palette="Set2
     plt.tight_layout()
 
 # Plot all metrics
-plot_grouped_bar(aggregated_metrics, "Overall Aggregated Metrics", "Count")
-plot_grouped_bar(time_metrics, "Time-Related Metrics", "Seconds / Meters")
-plot_grouped_bar(velocity_metrics, "Velocity Metrics", "m/s")
-plot_grouped_bar(distance_metrics, "Distance Metrics", "Meters")
+plot_grouped_bar(aggregated_metrics, "Success/Failure Metrics", "Count")
+plot_grouped_bar(time_metrics, "Time/Velocity-Related Metrics", "s / m / m/s")
+plot_grouped_bar(human_related_metrics, "Human-related Metrics", "Count / m")
 plot_grouped_bar(space_compliance_metrics, "Space Compliance Metrics", "Percentage")
 plt.show()

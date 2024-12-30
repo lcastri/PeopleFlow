@@ -11,6 +11,7 @@ import hrisim_util.ros_utils as ros_utils
 import hrisim_util.constants as constants
 import traceback
 import time
+from std_srvs.srv import Trigger
 
 TIME_INIT = 8
 
@@ -66,7 +67,8 @@ class PedsimBridge():
                 #   task_duration = random.randint(0, SCHEDULE[constants.TOD.H1]['duration'] - 10) 
                 # ! this agent won't ask again a destination for "task_duration" seconds
                 if agent.startingTime is None:
-                    agent.startingTime = random.randint(self.elapsedTime, SCHEDULE[constants.TOD.H1.value]['duration'] - 10)
+                    agent.startingTime = random.randint(self.elapsedTime, SCHEDULE[constants.TOD.H1.value]['duration'] - 60)
+                    # agent.startingTime = random.randint(self.elapsedTime, SCHEDULE[constants.TOD.H1.value]['duration'] - 10)
                     agent.exitTime = int(sum([SCHEDULE[t]['duration'] for t in SCHEDULE if t in [e.value for e in constants.TOD if e != constants.TOD.H10 and e != constants.TOD.OFF]]) + agent.startingTime)
                     agent.setTask(constants.WP.PARKING.value, agent.startingTime)
                         
@@ -154,10 +156,19 @@ if __name__ == '__main__':
     ALLOW_TASK = rospy.get_param("~allow_task", False)
     MAX_TASKTIME = int(rospy.get_param("~max_tasktime"))
     g_path = str(rospy.get_param("~g_path"))
-
     with open(g_path, 'rb') as f:
         G = pickle.load(f)
         ros_utils.load_graph_to_rosparam(G, "/peopleflow/G")
+        
+        # Create a handle for the Trigger service
+        update_service = rospy.ServiceProxy('/update_graph_visualization', Trigger)
+        # Call the service
+        response = update_service()
+        # Check the response
+        if response.success:
+            rospy.loginfo(f"Graph visualization updated successfully: {response.message}")
+        else:
+            rospy.logwarn(f"Graph visualization update failed: {response.message}")
 
         G.remove_node(constants.WP.CHARGING_STATION.value)
         

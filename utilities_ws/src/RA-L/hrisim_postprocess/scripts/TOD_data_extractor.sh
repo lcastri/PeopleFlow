@@ -1,8 +1,25 @@
 #!/bin/bash
 
-roslaunch hrisim_postprocess TOD_bringup.launch bagname:=causal_18122024 time_of_the_day:=starting start_time:=0 load_goal:=false
-roslaunch hrisim_postprocess TOD_bringup.launch bagname:=causal_18122024 time_of_the_day:=morning start_time:=3580 load_goal:=true
-roslaunch hrisim_postprocess TOD_bringup.launch bagname:=causal_18122024 time_of_the_day:=lunch start_time:=17980 load_goal:=true
-roslaunch hrisim_postprocess TOD_bringup.launch bagname:=causal_18122024 time_of_the_day:=afternoon start_time:=21580 load_goal:=true
-roslaunch hrisim_postprocess TOD_bringup.launch bagname:=causal_18122024 time_of_the_day:=quitting start_time:=32380 load_goal:=true
-roslaunch hrisim_postprocess TOD_bringup.launch bagname:=causal_18122024 time_of_the_day:=off start_time:=35980 load_goal:=true
+bagname="noncausal_27122024"
+
+for i in {1..11}
+do
+    if [ $i -eq 1 ]; then
+        load_goal=false
+    else
+        load_goal=true
+    fi
+
+    if [ $i -eq 11 ]; then
+        time_of_the_day="off"
+    else
+        time_of_the_day="H$i"
+    fi
+    if [ $i -eq 1 ]; then
+        start_time=0
+    else
+        start_time=$((3600 * (i-1) - 20))
+    fi
+
+    roslaunch hrisim_postprocess HH_bringup.launch bagname:=$bagname time_of_the_day:=$time_of_the_day start_time:=$start_time load_goal:=$load_goal
+done

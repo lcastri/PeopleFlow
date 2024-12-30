@@ -3,11 +3,13 @@ import random
 import networkx as nx
 import constants as constants
 
-SHELFS = [constants.WP.SHELF1, constants.WP.SHELF2, constants.WP.SHELF3, constants.WP.SHELF4, constants.WP.SHELF5, constants.WP.SHELF6]
+WORKING_TOP_TARGETS = [constants.WP.TARGET_1.value, constants.WP.TARGET_2.value, constants.WP.TARGET_3.value]
+WORKING_BOTTOM_TARGETS = [constants.WP.TARGET_4.value, constants.WP.TARGET_5.value, constants.WP.TARGET_6.value]
+LUNCH_TARGETS = [constants.WP.ENTRANCE.value, constants.WP.TARGET_7.value]
 
 TASK_LIST = {
     constants.Task.DELIVERY.value: [],
-    constants.Task.INVENTORY.value: [],
+    'LUNCH': [],
     constants.Task.CLEANING.value: [],
     }
    
@@ -20,29 +22,16 @@ if __name__ == "__main__":
     CLEANING_PATH = nx.approximation.traveling_salesman_problem(G, cycle=False)
 
     # DELIVERY
-    random_shelfs = random.choices(SHELFS, k=1000)
-    for s in random_shelfs:
-        TASK_LIST[constants.Task.DELIVERY.value].append(s.value)
-        TASK_LIST[constants.Task.DELIVERY.value].append(constants.WP.DELIVERY_POINT.value)
+    random_target = 2000
+    for s in range(random_target):
+        TASK_LIST[constants.Task.DELIVERY.value].append(random.choice(WORKING_TOP_TARGETS))
+        TASK_LIST[constants.Task.DELIVERY.value].append(random.choice(WORKING_BOTTOM_TARGETS))
         
-    # INVENTORY
-    random_shelfs = random.choices(SHELFS, k=1000)
-    previous_shelf = None
-    filtered_shelfs = []
-
-    for shelf in random_shelfs:
-        if shelf != previous_shelf:
-            filtered_shelfs.append(shelf)
-            previous_shelf = shelf
-        else:
-            # Choose a different shelf if the current one matches the previous
-            alternative_shelfs = [s for s in SHELFS if s != previous_shelf]
-            new_shelf = random.choice(alternative_shelfs)
-            filtered_shelfs.append(new_shelf)
-            previous_shelf = new_shelf
-
-    for s in filtered_shelfs:
-        TASK_LIST[constants.Task.INVENTORY.value].append(s.value)
+    # LUNCH
+    random_target = 2000
+    for s in range(random_target):
+        TASK_LIST['LUNCH'].append(constants.WP.ENTRANCE.value)
+        TASK_LIST['LUNCH'].append(constants.WP.TARGET_7.value)
         
     # CLEANING
     CLEANING_PATH = nx.approximation.traveling_salesman_problem(G, cycle=False)

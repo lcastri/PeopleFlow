@@ -75,9 +75,8 @@ def compute_sc_for_zones(df):
     return {zone: float(1 - np.mean(penalties)) for zone, penalties in zone_compliance.items()}
 
 
-INDIR = '/home/lcastri/git/PeopleFlow/utilities_ws/src/RA-L/hrisim_postprocess/csv/TOD/original'
-# BAGNAME= ['noncausal_13122024']
-BAGNAME= ['causal_18122024']
+INDIR = '/home/lcastri/git/PeopleFlow/utilities_ws/src/RA-L/hrisim_postprocess/csv/HH/original'
+BAGNAME= ['noncausal_27122024']
 
 GOAL_REACHED_THRESHOLD = 0.2
 STALLED_THRESHOLD = 0.01

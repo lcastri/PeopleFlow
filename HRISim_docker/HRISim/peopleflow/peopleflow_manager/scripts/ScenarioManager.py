@@ -3,7 +3,7 @@
 import xml.etree.ElementTree as ET
 
 import rospy
-from std_msgs.msg import Header, String
+from std_msgs.msg import Header
 from peopleflow_msgs.msg import Time as pT
 import hrisim_util.ros_utils as ros_utils
 import subprocess
@@ -94,7 +94,6 @@ def pub_time():
     
 def isFinished():
     global TSTOP
-    rospy.set_param("/peopleflow/robot_plan_on", True)
     if SM.elapsedTime is not None and (SM.elapsedTime > SM.T or not ros_utils.wait_for_param("/peopleflow/robot_plan_on")) and not TSTOP:
         try:
             rospy.logwarn(f"Calling shutdown...")

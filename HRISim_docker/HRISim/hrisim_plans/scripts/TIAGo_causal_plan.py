@@ -19,8 +19,13 @@ import actionlib
 import hrisim_util.ros_utils as ros_utils
 import hrisim_util.constants as constants
 import networkx as nx
+from robot_srvs.srv import NewTask, NewTaskResponse, FinishTask, FinishTaskResponse
 
-SHELFS = [constants.WP.SHELF1, constants.WP.SHELF2, constants.WP.SHELF3, constants.WP.SHELF4, constants.WP.SHELF5, constants.WP.SHELF6]
+
+WORKING_TOP_TARGETS = [constants.WP.TARGET_1.value, constants.WP.TARGET_2.value, constants.WP.TARGET_3.value]
+WORKING_BOTTOM_TARGETS = [constants.WP.TARGET_4.value, constants.WP.TARGET_5.value, constants.WP.TARGET_6.value]
+LUNCH_TARGETS = [constants.WP.ENTRANCE.value, constants.WP.TARGET_7.value]
+
 
 def send_goal(p, next_dest, nextnext_dest=None):
     pos = nx.get_node_attributes(G, 'pos')
@@ -42,27 +47,24 @@ def heuristic(a, b):
 
 
 def get_next_goal():
-    global BATTERY_LEVEL, ROBOT_CLOSEST_WP, CLEANING_PATH
+    global ROBOT_CLOSEST_WP, CLEANING_PATH
     
-    if BATTERY_LEVEL == 100 and rospy.get_param('/robot_battery/is_charging'):
-        rospy.logwarn("Battery is already full, not planning any tasks.")
-        return None, None
-    
-    elif not rospy.get_param('/robot_battery/is_charging') and not rospy.get_param('/hri/robot_busy'):                                        
-        if rospy.get_param('/peopleflow/timeday') <= 5:
-            rospy.logwarn("ROBOT POSITION: " + str(ROBOT_CLOSEST_WP))
-            if ROBOT_CLOSEST_WP != constants.WP.DELIVERY_POINT.value:
-                rospy.logwarn("Something to deliver, going to the delivery point.")
-                return constants.WP.DELIVERY_POINT, constants.Task.DELIVERY, True
-            else: 
-                rospy.logwarn("Robot is already at delivery point, going to a random shelf.")
-                return random.choice(SHELFS), constants.Task.DELIVERY, True
+    if not rospy.get_param('/robot_battery/is_charging') and not rospy.get_param('/hri/robot_busy'):     
+        if rospy.get_param('/peopleflow/timeday') in [constants.TOD.H1.value, constants.TOD.H2.value, constants.TOD.H3.value, 
+                                                      constants.TOD.H4.value, constants.TOD.H5.value, constants.TOD.H7.value, 
+                                                      constants.TOD.H8.value, constants.TOD.H9.value, constants.TOD.H10.value]:
+            if ROBOT_CLOSEST_WP in WORKING_TOP_TARGETS:
+                return random.choice(WORKING_BOTTOM_TARGETS), constants.Task.DELIVERY, True
+            else:
+                return random.choice(WORKING_TOP_TARGETS), constants.Task.DELIVERY, True
                     
-        elif 6 <= rospy.get_param('/peopleflow/timeday') <= 9:
-            rospy.logwarn("It's afternoon or quitting time, going to a random shelf for inventory check.")
-            return random.choice(SHELFS), constants.Task.INVENTORY, True
-                    
-        elif rospy.get_param('/peopleflow/timeday') >=10:
+        elif rospy.get_param('/peopleflow/timeday') in [constants.TOD.H6.value]:
+            if ROBOT_CLOSEST_WP == constants.WP.ENTRANCE.value:
+                return constants.WP.TARGET_7.value, constants.Task.DELIVERY, True
+            else:
+                return constants.WP.ENTRANCE.value, constants.Task.DELIVERY, True
+            
+        elif rospy.get_param('/peopleflow/timeday') in [constants.TOD.OFF.value]:
             if len(CLEANING_PATH) > 0:
                 rospy.logwarn("It's off time, going to clean the shop.")
                 return CLEANING_PATH.pop(0), constants.Task.CLEANING, True
@@ -85,12 +87,13 @@ def Plan(p):
         rospy.logerr("Planning..")
         if GO_TO_CHARGER:
             NEXT_GOAL = constants.WP.CHARGING_STATION
-            TASK = constants.Task.CHARGING
             PLAN_ON = True
             QUEUE = nx.astar_path(G, ROBOT_CLOSEST_WP, NEXT_GOAL.value, heuristic=heuristic, weight='weight')
             for wp in QUEUE:
                 send_goal(p, wp, QUEUE[0] if len(QUEUE) > 0 else None)
             GO_TO_CHARGER = False
+            TASK = constants.Task.CHARGING
+            finish_task_service(task_id, constants.TaskResult.FAILURE.value)  # 1 for success
             rospy.set_param('/robot_battery/is_charging', True)
             rospy.logwarn("Battery charging..")
             

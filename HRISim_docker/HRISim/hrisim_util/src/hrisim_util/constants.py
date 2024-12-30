@@ -1,5 +1,14 @@
 from enum import Enum
 
+class TaskResult(Enum):
+    SUCCESS = 1
+    FAILURE = -1
+
+class Task(Enum):
+    DELIVERY = "delivery"
+    CLEANING = "cleaning"
+    CHARGING = "charging"
+
 class TOD(Enum):
     H1 = "H1"
     H2 = "H2"
@@ -62,7 +71,16 @@ class WP(Enum):
     WA_3_R= "wa-3-r"
     WA_4_R= "wa-4-r"
     WA_5_R= "wa-5-r"
-    WA_6_R= "wa-6-r"
+    WA_1_C= "wa-1-c"
+    WA_2_C= "wa-2-c"
+    WA_3_C= "wa-3-c"
+    WA_4_C= "wa-4-c"
+    WA_5_C= "wa-5-c"
+    WA_1_L= "wa-1-l"
+    WA_2_L= "wa-2-l"
+    WA_3_L= "wa-3-l"
+    WA_4_L= "wa-4-l"
+    WA_5_L= "wa-5-l"
     TARGET_1= "target-1"
     TARGET_2= "target-2"
     TARGET_3= "target-3"

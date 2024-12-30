@@ -7,13 +7,6 @@ import xml.etree.ElementTree as ET
 
 MAX_TASK_TIME = 15
 
-SHELFS = [constants.WP.SHELF1.value, 
-          constants.WP.SHELF2.value, 
-          constants.WP.SHELF3.value, 
-          constants.WP.SHELF4.value, 
-          constants.WP.SHELF5.value, 
-          constants.WP.SHELF6.value]
-
 class Time:
     def __init__(self, name, duration) -> None:
         self.name = name
@@ -31,7 +24,7 @@ def readScenario():
         tmp = Time(time.get('name'), float(time.get('duration')))
         for adddest in time.findall('adddest'):
             dest_name = adddest.get('name')
-            tmp.dests[dest_name] = {'mean': tmp.duration * float(adddest.get('p')), 'std': float(adddest.get('std'))}
+            tmp.dests[dest_name] = {'mean': float(adddest.get('p')), 'std': float(adddest.get('std'))}
         schedule[tmp.name] = tmp
     
     
@@ -51,25 +44,26 @@ def readScenario():
     return agents, schedule
 
 
-def selectDestination(selected_time, agent):
+def selectDestination(selected_time, potential_dests):
     destinations = SCHEDULE[selected_time].dests
+    #! I am commenting this line to allow the agents to select the same destination
+    # if self.pastFinalDest is not None and self.pastFinalDest != 'delivery_point': potential_dests.remove(self.pastFinalDest)
     
     # Generate probabilities
+    tmp_dest = []
     probabilities = []
-    for dest in AGENTS[agent]['potential_dests']:
+    for dest in potential_dests:
         mean = destinations[dest]['mean']
-        std = destinations[dest]['std']
         
-        if std == 0:
-            probability = 0.0
-        else:
-            probability = stats.norm(mean, std).pdf(mean)
+        if mean == 0: continue
+        # probability = stats.norm(mean, std).pdf(mean)
+        probability = mean
+        tmp_dest.append(dest)
         probabilities.append(probability)
     # Normalize the probabilities
     probabilities = np.array(probabilities)
-    normalized_probabilities = probabilities / probabilities.sum()
     # Randomly select a destination
-    selected_destination = np.random.choice(AGENTS[agent]['potential_dests'], p=normalized_probabilities)
+    selected_destination = np.random.choice(tmp_dest, p=probabilities)
     
     return selected_destination
 
@@ -88,14 +82,14 @@ if __name__ == "__main__":
     
     for agent in AGENTS:
         AGENTS[agent]['tasks'] = {tod: {"destinations":[], "durations":[]} for tod in SCHEDULE}
-        AGENTS[agent]['startTime'] = random.randint(60, SCHEDULE['starting'].duration - 10)
-        AGENTS[agent]['exitTime'] = int(sum([SCHEDULE[t].duration for t in SCHEDULE if t in ['starting','morning','lunch','afternoon']]) + AGENTS[agent]['startTime'])
+        AGENTS[agent]['startTime'] = random.randint(20, SCHEDULE[constants.TOD.H1.value].duration - 30)
+        AGENTS[agent]['exitTime'] = int(sum([SCHEDULE[t].duration for t in SCHEDULE if t in [e.value for e in constants.TOD if e != constants.TOD.H10 and e != constants.TOD.OFF]]) + AGENTS[agent]['startTime'])
         print(f"Agent {agent}: startTime {AGENTS[agent]['startTime']} exitTime {AGENTS[agent]['exitTime']}")
                    
         for tod in SCHEDULE:
             print(f"TOD {tod}")
             while len(AGENTS[agent]['tasks'][tod]['destinations']) < 2500:
-                destination = selectDestination(tod, agent)
+                destination = selectDestination(tod, AGENTS[agent]['potential_dests'])
                 AGENTS[agent]['tasks'][tod]['destinations'].append(destination)
                 AGENTS[agent]['tasks'][tod]['durations'].append(getTaskDuration(destination))
                     
