@@ -37,5 +37,5 @@ if __name__ == "__main__":
     CLEANING_PATH = nx.approximation.traveling_salesman_problem(G, cycle=False)
     TASK_LIST[constants.Task.CLEANING.value] = CLEANING_PATH
     
-    with open('task_list.pkl', 'wb') as f:
+    with open('/home/lcastri/git/PeopleFlow/HRISim_docker/HRISim/hrisim_plans/hardcoded/task_list.pkl', 'wb') as f:
         pickle.dump(TASK_LIST, f)

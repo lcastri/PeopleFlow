@@ -5,7 +5,7 @@ import os
 from utils import *
 
 # Helper function for grouped bar plots
-def plot_grouped_bar(metrics_dict, title, ylabel, figsize=(14, 8), palette="Set2", outdir=None):
+def plot_grouped_bar(metrics_dict, title, ylabel, figsize=(14, 8), outdir=None):
     metric_categories = list(metrics_dict[BAGNAMES[0]].keys())
     x = np.arange(len(metric_categories))
     width = 0.35
@@ -25,10 +25,13 @@ def plot_grouped_bar(metrics_dict, title, ylabel, figsize=(14, 8), palette="Set2
 
     if outdir is not None:
         plt.savefig(os.path.join(outdir, f"{title}.png"), dpi=300, bbox_inches='tight')
+    else:
+        plt.show()
 
 INDIR = '/home/lcastri/git/PeopleFlow/utilities_ws/src/RA-L/hrisim_postprocess/csv/HH/original'
-OUTDIR = '/home/lcastri/git/PeopleFlow/utilities_ws/src/RA-L/hrisim_postprocess/csv/HH/original'
-BAGNAMES = ['noncausal_27122024']
+BAGNAMES = ['noncausal_27122024', 'causal_30122024']
+OUTDIR = os.path.join('/home/lcastri/git/PeopleFlow/utilities_ws/src/RA-L/hrisim_postprocess/csv/HH/original', 'comparison', '__'.join(BAGNAMES), 'timesplit')
+os.makedirs(OUTDIR, exist_ok=True)
 
 # Initialize aggregated data structures
 aggregated_metrics = {}

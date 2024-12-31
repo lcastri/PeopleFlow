@@ -1,6 +1,6 @@
 #!/bin/bash
 
-bagname="noncausal_27122024"
+bagname="causal_30122024"
 
 for i in {1..11}
 do

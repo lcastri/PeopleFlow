@@ -44,10 +44,12 @@ class goto(AbstractAction):
             result_state = self.client.get_state()
             if result_state == actionlib.GoalStatus.SUCCEEDED:
                 rospy.loginfo("Goal reached successfully!")
-                self._on_goTo_done()  # You can keep this if needed
-            else:
+                rospy.set_param('/hrisim/goal_status', 1)
+                self._on_goTo_done()
+            elif result_state in [actionlib.GoalStatus.ABORTED, actionlib.GoalStatus.PREEMPTED, actionlib.GoalStatus.REJECTED]:
                 rospy.logwarn(f"Goal failed with state: {result_state}")
-                self._stop_action()  # You can keep this if needed
+                rospy.set_param('/hrisim/goal_status', -1)
+                self._stop_action()
 
     def _on_goTo_done(self):
         self.params.append("done")
@@ -63,6 +65,6 @@ class goto(AbstractAction):
         reached = False
         if len(params) > 0:
             if params[-1] == "done" or params[-1] == "interrupted":
-                rospy.set_param('/hri/robot_busy', False)
+                rospy.set_param('/hrisim/robot_busy', False)
                 reached = True
         return reached

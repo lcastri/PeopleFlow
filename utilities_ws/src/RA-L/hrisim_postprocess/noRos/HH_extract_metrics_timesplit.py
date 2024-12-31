@@ -94,7 +94,7 @@ def compute_sc_for_zones(df):
 
 
 INDIR = '/home/lcastri/git/PeopleFlow/utilities_ws/src/RA-L/hrisim_postprocess/csv/HH/original'
-BAGNAME= 'noncausal_27122024'
+BAGNAME= 'causal_30122024'
 SCENARIO = 'warehouse'
 WPS_COORD = readScenario()
 
@@ -133,17 +133,6 @@ for tod in TOD:
         'min_distance_to_humans': None,
         'space_compliance': None
     } for task_id in TASK_IDs}
-
-    # # Merge tasks continued from the previous DF with the current DF
-    # if tasks_to_continue:
-    #     continued_task_ids = list(tasks_to_continue.keys())
-    #     for task_id in continued_task_ids:
-    #         current_df = DF[DF['Task_ID'] == task_id]
-    #         combined_df = pd.concat([prev_df, current_df], ignore_index=True)
-    #         DF = DF[DF['Task_ID'] != task_id]  # Exclude overlapping tasks
-    #         DF = pd.concat([DF, combined_df], ignore_index=True)  # Update DF
-
-    # tasks_to_continue = {}
 
     # Iterate over unique tasks
     for task_id in TASK_IDs:

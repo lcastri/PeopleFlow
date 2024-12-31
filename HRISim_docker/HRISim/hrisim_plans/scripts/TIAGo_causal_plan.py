@@ -49,7 +49,7 @@ def heuristic(a, b):
 def get_next_goal():
     global ROBOT_CLOSEST_WP, CLEANING_PATH
     
-    if not rospy.get_param('/robot_battery/is_charging') and not rospy.get_param('/hri/robot_busy'):     
+    if not rospy.get_param('/robot_battery/is_charging') and not rospy.get_param('/hrisim/robot_busy'):     
         if rospy.get_param('/peopleflow/timeday') in [constants.TOD.H1.value, constants.TOD.H2.value, constants.TOD.H3.value, 
                                                       constants.TOD.H4.value, constants.TOD.H5.value, constants.TOD.H7.value, 
                                                       constants.TOD.H8.value, constants.TOD.H9.value, constants.TOD.H10.value]:
@@ -79,7 +79,7 @@ def Plan(p):
         
     global wp, NEXT_GOAL, QUEUE, GO_TO_CHARGER
     ros_utils.wait_for_param("/peopleflow/timeday")
-    rospy.set_param('/hri/robot_busy', False)
+    rospy.set_param('/hrisim/robot_busy', False)
     PLAN_ON = True
     rospy.set_param("/peopleflow/robot_plan_on", PLAN_ON)
     
@@ -104,7 +104,7 @@ def Plan(p):
             QUEUE = nx.astar_path(G, ROBOT_CLOSEST_WP, NEXT_GOAL, heuristic=heuristic, weight='weight')
             rospy.logwarn(f"{QUEUE}")
             
-        if not rospy.get_param('/hri/robot_busy'):
+        if not rospy.get_param('/hrisim/robot_busy'):
             next_sub_goal = QUEUE.pop(0)
             rospy.logwarn(f"Planning next goal: {next_sub_goal}")
             nextnext_sub_goal = QUEUE[0] if len(QUEUE) > 0 else None
@@ -124,7 +124,7 @@ def cb_battery(msg):
         client.wait_for_server()
         client.cancel_all_goals()
         p.action_cmd('goto', "", 'interrupt')
-        while rospy.get_param('/hri/robot_busy'): rospy.sleep(0.1)
+        while rospy.get_param('/hrisim/robot_busy'): rospy.sleep(0.1)
         NEXT_GOAL = None
         QUEUE = []
         GO_TO_CHARGER = True

@@ -94,6 +94,7 @@ def pub_time():
     
 def isFinished():
     global TSTOP
+    rospy.set_param("/peopleflow/robot_plan_on", True)
     if SM.elapsedTime is not None and (SM.elapsedTime > SM.T or not ros_utils.wait_for_param("/peopleflow/robot_plan_on")) and not TSTOP:
         try:
             rospy.logwarn(f"Calling shutdown...")

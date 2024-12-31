@@ -115,7 +115,7 @@ def get_next_goal():
         rospy.logwarn("Battery is already full, not planning any tasks.")
         return None, None
     
-    elif not rospy.get_param('/robot_battery/is_charging') and not rospy.get_param('/hri/robot_busy'):                                        
+    elif not rospy.get_param('/robot_battery/is_charging') and not rospy.get_param('/hrisim/robot_busy'):                                        
         if TOD <= 5:
             return TASK_LIST[constants.Task.DELIVERY.value].pop(0), constants.Task.DELIVERY, True
                     
@@ -172,7 +172,7 @@ def Plan(p):
         
     global NEXT_GOAL, QUEUE, GO_TO_CHARGER, TASK_ON, G
     ros_utils.wait_for_param("/peopleflow/timeday")
-    rospy.set_param('/hri/robot_busy', False)
+    rospy.set_param('/hrisim/robot_busy', False)
     PLAN_ON = True
     TASK_ON = 0
     rospy.set_param("/peopleflow/robot_plan_on", PLAN_ON)
@@ -210,7 +210,7 @@ def Plan(p):
             rospy.logerr(f"New goal defined: {NEXT_GOAL}")
         
         #! Here the goal is taken from the queue
-        if not rospy.get_param('/hri/robot_busy') and NEXT_GOAL is not None:
+        if not rospy.get_param('/hrisim/robot_busy') and NEXT_GOAL is not None:
             RISK_MAP = get_prediction(p)
             G = update_G_weights(RISK_MAP, G)
             QUEUE = nx.astar_path(G, ROBOT_CLOSEST_WP, NEXT_GOAL, heuristic=heuristic, weight='weight')
@@ -246,7 +246,7 @@ def cb_battery(msg):
         client.wait_for_server()
         client.cancel_all_goals()
         p.action_cmd('goto', "", 'interrupt')
-        while rospy.get_param('/hri/robot_busy'): rospy.sleep(0.1)
+        while rospy.get_param('/hrisim/robot_busy'): rospy.sleep(0.1)
         NEXT_GOAL = None
         QUEUE = []
         GO_TO_CHARGER = True

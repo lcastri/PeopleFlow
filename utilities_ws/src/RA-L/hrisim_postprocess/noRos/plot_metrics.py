@@ -4,7 +4,9 @@ import json
 import os
 
 INDIR = '/home/lcastri/git/PeopleFlow/utilities_ws/src/RA-L/hrisim_postprocess/csv/HH/original'
-BAGNAMES = ['noncausal_27122024']
+BAGNAMES = ['noncausal_27122024', 'causal_30122024']
+OUTDIR = os.path.join('/home/lcastri/git/PeopleFlow/utilities_ws/src/RA-L/hrisim_postprocess/csv/HH/original', 'comparison', '__'.join(BAGNAMES), 'overall')
+os.makedirs(OUTDIR, exist_ok=True)
 
 # Initialize aggregated data structures
 aggregated_metrics = {}
@@ -62,7 +64,7 @@ for bagname in BAGNAMES:
     }
 
 # Helper function for grouped bar plots
-def plot_grouped_bar(metrics_dict, title, ylabel, figsize=(10, 6), palette="Set2"):
+def plot_grouped_bar(metrics_dict, title, ylabel, figsize=(14, 8), outdir=None):
     metric_categories = list(metrics_dict[BAGNAMES[0]].keys())
     x = np.arange(len(metric_categories))
     width = 0.35
@@ -70,6 +72,7 @@ def plot_grouped_bar(metrics_dict, title, ylabel, figsize=(10, 6), palette="Set2
     plt.figure(figsize=figsize)
     for i, bagname in enumerate(BAGNAMES):
         values = list(metrics_dict[bagname].values())
+        # values = [val if val is not None else 0 for val in metrics_dict[bagname].values()]  # Replace None with 0
         plt.bar(x + i * width, values, width, label=bagname)
 
     plt.xticks(x + width / 2, metric_categories)
@@ -79,9 +82,14 @@ def plot_grouped_bar(metrics_dict, title, ylabel, figsize=(10, 6), palette="Set2
     plt.grid()
     plt.tight_layout()
 
+    if outdir is not None:
+        plt.savefig(os.path.join(outdir, f"{title}.png"), dpi=300, bbox_inches='tight')
+    else:
+        plt.show()
+
+
 # Plot all metrics
-plot_grouped_bar(aggregated_metrics, "Success/Failure Metrics", "Count")
-plot_grouped_bar(time_metrics, "Time/Velocity-Related Metrics", "s / m / m/s")
-plot_grouped_bar(human_related_metrics, "Human-related Metrics", "Count / m")
-plot_grouped_bar(space_compliance_metrics, "Space Compliance Metrics", "Percentage")
-plt.show()
+plot_grouped_bar(aggregated_metrics, "Success Failure Metrics", "Count", outdir=OUTDIR)
+plot_grouped_bar(time_metrics, "Time Velocity-Related Metrics", "s / m / m/s", outdir=OUTDIR)
+plot_grouped_bar(human_related_metrics, "Human-related Metrics", "Count / m", outdir=OUTDIR)
+plot_grouped_bar(space_compliance_metrics, "Space Compliance Metrics", "Percentage", outdir=OUTDIR)

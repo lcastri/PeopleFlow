@@ -1,7 +1,6 @@
 import pickle
 import random
 import numpy as np
-from scipy import stats
 import constants as constants
 import xml.etree.ElementTree as ET
 
@@ -31,7 +30,8 @@ def readScenario():
     # Parse agents
     agents = {}
     for agent in root.findall('agent'):
-        agent_id = len(agents) + 1
+        agent_id = len(agents) + 1 #! THIS MUST BE DECOMMENTED IF YOU CONSIDER TIAGo AS AN AGENT
+        # agent_id = len(agents)  #! THIS MUST BE DECOMMENTED IF YOU DON'T CONSIDER TIAGo AS AN AGENT
         agent_type = agent.get('type')
         if agent_type == "2": continue
 
@@ -93,5 +93,5 @@ if __name__ == "__main__":
                 AGENTS[agent]['tasks'][tod]['destinations'].append(destination)
                 AGENTS[agent]['tasks'][tod]['durations'].append(getTaskDuration(destination))
                     
-    with open('agent_task_list.pkl', 'wb') as f:
+    with open('/home/lcastri/git/PeopleFlow/HRISim_docker/HRISim/peopleflow/peopleflow_manager/hardcode/agent_task_list.pkl', 'wb') as f:
         pickle.dump(AGENTS, f)

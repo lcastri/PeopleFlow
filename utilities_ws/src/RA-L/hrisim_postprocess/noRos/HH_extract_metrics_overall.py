@@ -93,7 +93,7 @@ def compute_sc_for_zones(df):
 
 
 INDIR = '/home/lcastri/git/PeopleFlow/utilities_ws/src/RA-L/hrisim_postprocess/csv/HH/original'
-BAGNAME= 'noncausal_27122024'
+BAGNAME= 'causal_30122024'
 SCENARIO = 'warehouse'
 WPS_COORD = readScenario()
 
