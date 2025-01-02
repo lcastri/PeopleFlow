@@ -180,6 +180,14 @@ void AgentStateMachine::activateState(AgentState stateIn) {
       individualPlanner->setAgent(agent);
       individualPlanner->setDestination(destination);
       agent->setWaypointPlanner(individualPlanner);
+      if (agent->isPerformingTask) {
+        ROS_DEBUG("Agent %d performing task", agent->getId());
+        agent->disableForce("GroupCoherence");
+        agent->disableForce("GroupGaze");
+        agent->disableForce("Obstacle");
+        agent->disableForce("Social");
+        agent->disableForce("Random");
+      }
       break;
     case StateQueueing:
       if (queueingPlanner == nullptr)

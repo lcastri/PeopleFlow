@@ -93,7 +93,7 @@ def compute_sc_for_zones(df):
 
 
 INDIR = '/home/lcastri/git/PeopleFlow/utilities_ws/src/RA-L/hrisim_postprocess/csv/HH/original'
-BAGNAME= 'causal_30122024'
+BAGNAME= 'noncausal-test-01012025'
 SCENARIO = 'warehouse'
 WPS_COORD = readScenario()
 
@@ -107,7 +107,7 @@ with open(os.path.join(INDIR, BAGNAME, 'tasks.json')) as json_file:
     TASKS = json.load(json_file)
 
 dfs = []
-for tod in TOD:
+for tod in [TOD.H1, TOD.H2, TOD.H3, TOD.H4, TOD.H5, TOD.H6, TOD.H7, TOD.H8]:
     DF = pd.read_csv(os.path.join(INDIR, f"{BAGNAME}", f"{BAGNAME}_{tod.value}.csv"))
     r = get_initrow(DF)
     DF = DF[r:]
@@ -135,6 +135,9 @@ METRICS = {task_id: {'success': None,
                      'space_compliance': None} for task_id in TASK_IDs}
 # Iterate over unique tasks
 for task_id in TASK_IDs:
+    if TASKS[str(task_id)]['end'] == 0: 
+        del METRICS[task_id]
+        continue
     
     task_df = DF[DF['Task_ID'] == task_id]
     
@@ -190,25 +193,27 @@ for i, row in BS.iterrows():
 charging_times = [end - start for start, end in charging_sessions]
 AVERAGE_CHARGING_TIME = np.mean(charging_times)
 AVERAGE_BATTERY_LEVEL = np.mean(battery_at_start_charging)
+
 # Add results to metrics dictionary
-METRICS['overall_success'] = sum([1 if METRICS[task]['success'] == 1 else 0 for task in TASK_IDs])
-METRICS['overall_failure'] = sum([1 if METRICS[task]['success'] == -1 else 0 for task in TASK_IDs])
-METRICS['overall_human_collision'] = sum([METRICS[task]['human_collision'] for task in TASK_IDs])
-METRICS['mean_stalled_time'] = float(np.mean([METRICS[task]['stalled_time'] for task in TASK_IDs]))
-METRICS['mean_time_to_reach_goal'] = float(np.mean([METRICS[task]['time_to_reach_goal'] for task in TASK_IDs]))
-METRICS['mean_path_length'] = float(np.mean([METRICS[task]['path_length'] for task in TASK_IDs]))
-METRICS['mean_min_velocity'] = float(np.mean([METRICS[task]['min_velocity'] for task in TASK_IDs]))
-METRICS['mean_max_velocity'] = float(np.mean([METRICS[task]['max_velocity'] for task in TASK_IDs]))
-METRICS['mean_average_velocity'] = float(np.mean([METRICS[task]['average_velocity'] for task in TASK_IDs]))
-METRICS['mean_min_clearing_distance'] = float(np.mean([METRICS[task]['min_clearing_distance'] for task in TASK_IDs]))
-METRICS['mean_max_clearing_distance'] = float(np.mean([METRICS[task]['max_clearing_distance'] for task in TASK_IDs]))
-METRICS['mean_average_clearing_distance'] = float(np.mean([METRICS[task]['average_clearing_distance'] for task in TASK_IDs]))
-METRICS['mean_min_distance_to_humans'] = float(np.mean([METRICS[task]['min_distance_to_humans'] for task in TASK_IDs]))
+tmp_tasks = list(METRICS.keys())
+METRICS['overall_success'] = sum([1 if METRICS[task]['success'] == 1 else 0 for task in tmp_tasks])
+METRICS['overall_failure'] = sum([1 if METRICS[task]['success'] == -1 else 0 for task in tmp_tasks])
+METRICS['overall_human_collision'] = sum([METRICS[task]['human_collision'] for task in tmp_tasks])
+METRICS['mean_stalled_time'] = float(np.mean([METRICS[task]['stalled_time'] for task in tmp_tasks]))
+METRICS['mean_time_to_reach_goal'] = float(np.mean([METRICS[task]['time_to_reach_goal'] for task in tmp_tasks]))
+METRICS['mean_path_length'] = float(np.mean([METRICS[task]['path_length'] for task in tmp_tasks]))
+METRICS['mean_min_velocity'] = float(np.mean([METRICS[task]['min_velocity'] for task in tmp_tasks]))
+METRICS['mean_max_velocity'] = float(np.mean([METRICS[task]['max_velocity'] for task in tmp_tasks]))
+METRICS['mean_average_velocity'] = float(np.mean([METRICS[task]['average_velocity'] for task in tmp_tasks]))
+METRICS['mean_min_clearing_distance'] = float(np.mean([METRICS[task]['min_clearing_distance'] for task in tmp_tasks]))
+METRICS['mean_max_clearing_distance'] = float(np.mean([METRICS[task]['max_clearing_distance'] for task in tmp_tasks]))
+METRICS['mean_average_clearing_distance'] = float(np.mean([METRICS[task]['average_clearing_distance'] for task in tmp_tasks]))
+METRICS['mean_min_distance_to_humans'] = float(np.mean([METRICS[task]['min_distance_to_humans'] for task in tmp_tasks]))
 METRICS['mean_space_compliance'] = {proxemic: None for proxemic in PROXEMIC_THRESHOLDS.keys()}
 METRICS['mean_battery_charging_time'] = float(AVERAGE_CHARGING_TIME)
 METRICS['mean_battery_at_start_charging'] = float(AVERAGE_BATTERY_LEVEL)
 for proxemic in PROXEMIC_THRESHOLDS.keys():
-    METRICS['mean_space_compliance'][proxemic] = float(np.mean([METRICS[task]['space_compliance'][proxemic] for task in TASK_IDs]))
+    METRICS['mean_space_compliance'][proxemic] = float(np.mean([METRICS[task]['space_compliance'][proxemic] for task in tmp_tasks]))
 
 with open(os.path.join(INDIR, f"{BAGNAME}", "metrics.json"), 'w') as json_file:
     json.dump(METRICS, json_file)

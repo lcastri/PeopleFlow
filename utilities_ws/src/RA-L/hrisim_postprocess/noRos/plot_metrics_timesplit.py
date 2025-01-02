@@ -29,7 +29,8 @@ def plot_grouped_bar(metrics_dict, title, ylabel, figsize=(14, 8), outdir=None):
         plt.show()
 
 INDIR = '/home/lcastri/git/PeopleFlow/utilities_ws/src/RA-L/hrisim_postprocess/csv/HH/original'
-BAGNAMES = ['noncausal_27122024', 'causal_30122024']
+BAGNAMES = ['noncausal-test-01012025']
+# BAGNAMES = ['noncausal_27122024', 'causal_30122024']
 OUTDIR = os.path.join('/home/lcastri/git/PeopleFlow/utilities_ws/src/RA-L/hrisim_postprocess/csv/HH/original', 'comparison', '__'.join(BAGNAMES), 'timesplit')
 os.makedirs(OUTDIR, exist_ok=True)
 

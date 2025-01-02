@@ -19,6 +19,7 @@ class goto(AbstractAction):
     def _start_action(self):
         rospy.set_param('/hri/robot_busy', True)
         rospy.logwarn(f"STARTED goto " + " ".join(self.params))
+        TIME_THRESHOLD = float(self.params[3])
 
         if len(self.params) < 1:
             rospy.logwarn("Wrong use of action, pass the coordinates the robots needs to reach in /map frame as X_Y_Theta")
@@ -38,17 +39,19 @@ class goto(AbstractAction):
             self.client.send_goal(self.goal_msg)
             
             rospy.loginfo("Waiting for goTo result...")
-            self.client.wait_for_result()
+            if TIME_THRESHOLD > 0:
+                self.client.wait_for_result(timeout=rospy.Duration(TIME_THRESHOLD))
+            else:
+                self.client.wait_for_result()
             
             # Check result state
             result_state = self.client.get_state()
             if result_state == actionlib.GoalStatus.SUCCEEDED:
-                rospy.loginfo("Goal reached successfully!")
                 rospy.set_param('/hrisim/goal_status', 1)
                 self._on_goTo_done()
-            elif result_state in [actionlib.GoalStatus.ABORTED, actionlib.GoalStatus.PREEMPTED, actionlib.GoalStatus.REJECTED]:
-                rospy.logwarn(f"Goal failed with state: {result_state}")
+            else:
                 rospy.set_param('/hrisim/goal_status', -1)
+                self.client.cancel_all_goals()
                 self._stop_action()
 
     def _on_goTo_done(self):

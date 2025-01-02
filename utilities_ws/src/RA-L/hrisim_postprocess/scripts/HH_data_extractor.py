@@ -75,6 +75,9 @@ class DataManager():
         self.robot = Robot(x, y, gx, gy)
         self.agents = {}
         self.tasks = {}
+        self.n_tasks = 0
+        self.n_success = 0
+        self.n_failure = 0
         
         self.WPs = {}
         self.BACs = {}
@@ -172,6 +175,10 @@ class DataManager():
             
         self.robot.task = tasks[-1].task_id if len(tasks) else -1
         
+        self.n_tasks = msg.num_tasks
+        self.n_success = msg.num_success
+        self.n_failure = msg.num_failure
+        
         
         
 def shutdown_callback(data_rows, filename, csv_path, goal_path, data):   
@@ -185,7 +192,9 @@ def shutdown_callback(data_rows, filename, csv_path, goal_path, data):
                   'result': task.result,
                   'path': task.path,
                   'final_destination': task.destination} for id, task in data.tasks.items()}
-        
+    tasks['n_tasks'] = data.n_tasks
+    tasks['n_success'] = data.n_success
+    tasks['n_failure'] = data.n_failure
 
     # Save the goal data into a JSON file
     with open(goal_path, 'w') as json_file:

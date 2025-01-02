@@ -4,7 +4,7 @@ import numpy as np
 import constants as constants
 import xml.etree.ElementTree as ET
 
-MAX_TASK_TIME = 15
+MAX_TASK_TIME = 60
 
 class Time:
     def __init__(self, name, duration) -> None:

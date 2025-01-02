@@ -6121,21 +6121,21 @@
 <waypoint id="kitchen-1"          x="2.25"   y="2.2"   r="0.75"/>
 <waypoint id="kitchen-2"          x="2.25"   y="-2.2"  r="0.75"/>
 <waypoint id="wa-1-l"             x="-17.7" y="7.5"  r="1.1"/>
-<waypoint id="wa-2-l"             x="-17.7" y="4.5"   r="1"/>
+<waypoint id="wa-2-l"             x="-17.7" y="4.5"   r="1.3"/>
 <waypoint id="wa-3-l"             x="-17.7" y="0"   r="1"/>
 <waypoint id="wa-3-cl"             x="-15.5" y="0"   r="1"/>
-<waypoint id="wa-4-l"             x="-17.7" y="-3.5"  r="1.1"/>
+<waypoint id="wa-4-l"             x="-17.7" y="-3.5"  r="1.3"/>
 <waypoint id="wa-5-l"             x="-17.7" y="-7"  r="1.1"/>
 <waypoint id="wa-1-c"             x="-13.5"   y="7.5"  r="1.1"/>
-<waypoint id="wa-2-c"             x="-13.5" y="4.4"   r="1"/>
+<waypoint id="wa-2-c"             x="-13.5" y="4.4"   r="1.3"/>
 <waypoint id="wa-3-c"             x="-13.5" y="0"   r="1"/>
-<waypoint id="wa-4-c"             x="-13.5" y="-3.5"  r="1.1"/>
+<waypoint id="wa-4-c"             x="-13.5" y="-3.5"  r="1.3"/>
 <waypoint id="wa-5-c"             x="-13.5" y="-7"  r="1.2"/>
 <waypoint id="wa-1-r"             x="-9.5" y="7.5"  r="1"/>
-<waypoint id="wa-2-r"             x="-9.5" y="4.3"   r="1"/>
+<waypoint id="wa-2-r"             x="-9.5" y="4.3"   r="1.3"/>
 <waypoint id="wa-3-r"             x="-9.5" y="0"     r="1"/>
 <waypoint id="wa-3-cr"             x="-11.5" y="0"     r="1"/>
-<waypoint id="wa-4-r"             x="-9.5" y="-3.5"    r="1.1"/>
+<waypoint id="wa-4-r"             x="-9.5" y="-3.5"    r="1.3"/>
 <waypoint id="wa-5-r"             x="-9.5" y="-7"  r="1.2"/>
 <waypoint id="target-1"           x="-17.7" y="9"  r="0.5"/>
 <waypoint id="target-2"           x="-13.5"   y="9"  r="0.5"/>
@@ -6185,7 +6185,7 @@
     <addwaypoint id="target-6"/>
     <addwaypoint id="target-7"/>
   </agent>
-  <agent x="8" y="20" n="1" dx="2" dy="5" type="0">
+  <!-- <agent x="8" y="20" n="1" dx="2" dy="5" type="0">
     <addwaypoint id="office-1"/>
     <addwaypoint id="office-2"/>
     <addwaypoint id="toilet-1"/>
@@ -7801,11 +7801,11 @@
     <addwaypoint id="target-5"/>
     <addwaypoint id="target-6"/>
     <addwaypoint id="target-7"/>
-  </agent>
+  </agent> -->
   
   <schedule>
     <!-- Time resolution: seconds -->
-    <time name="H1" duration="600" >    <!-- 01h : 8am - 9am -->
+    <time name="H1" duration="360" >    <!-- 01h : 8am - 9am -->
       <adddest name="parking"         p="0.05" std="0" />
       <adddest name="office-1"        p="0.025" std="0" />
       <adddest name="office-2"        p="0.025" std="0" />
@@ -7839,7 +7839,7 @@
       <adddest name="kitchen-2"       p="0.025" std="0" />
     </time>
     <!-- 02h : 9am - 10am -->
-    <time name="H2" duration="600" >
+    <time name="H2" duration="360" >
       <adddest name="parking"         p="0" std="0" />
       <adddest name="office-1"        p="0.05" std="0" />
       <adddest name="office-2"        p="0.05" std="0" />
@@ -7873,7 +7873,7 @@
       <adddest name="kitchen-2"       p="0.01" std="0" />
     </time>
     <!-- 03h : 10am - 11am -->
-    <time name="H3" duration="600" >
+    <time name="H3" duration="360" >
       <adddest name="parking"         p="0" std="0" />
       <adddest name="office-1"        p="0.05" std="0" />
       <adddest name="office-2"        p="0.05" std="0" />
@@ -7907,7 +7907,7 @@
       <adddest name="kitchen-2"       p="0.01" std="0.005" />
     </time>
     <!-- 04h : 11am - 12am -->
-    <time name="H4" duration="600" >
+    <time name="H4" duration="360" >
       <adddest name="parking"         p="0" std="0" />
       <adddest name="office-1"        p="0.05" std="0" />
       <adddest name="office-2"        p="0.05" std="0" />
@@ -7941,7 +7941,7 @@
       <adddest name="kitchen-2"       p="0.01" std="0" />
     </time>
     <!-- 05h : 12am - 1pm -->
-    <time name="H5" duration="600" >
+    <time name="H5" duration="360" >
       <adddest name="parking"         p="0" std="0" />
       <adddest name="office-1"        p="0.05" std="0" />
       <adddest name="office-2"        p="0.05" std="0" />
@@ -7975,7 +7975,7 @@
       <adddest name="kitchen-2"       p="0.01" std="0" />
     </time>
     <!-- 06h : 1pm - 2pm -->
-    <time name="H6" duration="600" >
+    <time name="H6" duration="360" >
       <adddest name="parking"         p="0" std="0" />
       <adddest name="office-1"        p="0" std="0" />
       <adddest name="office-2"        p="0" std="0" />
@@ -8009,7 +8009,7 @@
       <adddest name="kitchen-2"       p="0.225" std="0" />
     </time>
     <!-- 07h : 2pmm - 3pm -->
-    <time name="H7" duration="600" >
+    <time name="H7" duration="360" >
       <adddest name="parking"         p="0" std="0" />
       <adddest name="office-1"        p="0.05" std="0" />
       <adddest name="office-2"        p="0.05" std="0" />
@@ -8043,7 +8043,7 @@
       <adddest name="kitchen-2"       p="0.01" std="0" />
     </time>
     <!-- 08h : 3pm - 4pm -->
-    <time name="H8" duration="600" >
+    <time name="H8" duration="360" >
       <adddest name="parking"         p="0" std="0" />
       <adddest name="office-1"        p="0.05" std="0" />
       <adddest name="office-2"        p="0.05" std="0" />
@@ -8077,7 +8077,7 @@
       <adddest name="kitchen-2"       p="0.01" std="0" />
     </time>
     <!-- 09h : 4pm - 5pm -->
-    <time name="H9" duration="600" >
+    <time name="H9" duration="360" >
       <adddest name="parking"         p="0" std="0" />
       <adddest name="office-1"        p="0.05" std="0" />
       <adddest name="office-2"        p="0.05" std="0" />
@@ -8111,7 +8111,7 @@
       <adddest name="kitchen-2"       p="0.01" std="0" />
     </time>
     <!-- 10h : 5pm - 6pm -->
-    <time name="H10" duration="600" >
+    <time name="H10" duration="360" >
       <adddest name="parking"         p="0" std="0" />
       <adddest name="office-1"        p="0.05" std="0" />
       <adddest name="office-2"        p="0.05" std="0" />

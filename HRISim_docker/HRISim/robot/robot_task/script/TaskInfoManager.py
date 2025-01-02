@@ -64,7 +64,7 @@ class RobotTaskManager():
         for task in self.tasks_msg.Tasks:
             if task.task_id == req.task_id:
                 task.end_time = rospy.Time.now()
-                task.result = req.task
+                task.result = req.result
                 return FinishTaskResponse(True)
         return FinishTaskResponse(False)
 

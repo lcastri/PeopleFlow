@@ -38,9 +38,9 @@ def send_goal(p, next_dest, nextnext_dest=None):
     if nextnext_dest is not None:
         x2, y2 = pos[nextnext_dest]
         angle = math.atan2(y2-y, x2-x)
-        coords = [x, y, angle]
+        coords = [x, y, angle, TIME_THRESHOLD]
     else:
-        coords = [x, y, 0]
+        coords = [x, y, 0, TIME_THRESHOLD]
     p.exec_action('goto', "_".join([str(coord) for coord in coords]))
     
     
@@ -316,6 +316,7 @@ def Plan(p):
             send_goal(p, next_sub_goal, nextnext_sub_goal)
             GOAL_STATUS = rospy.get_param('/hrisim/goal_status')
             if GOAL_STATUS == -1:
+                rospy.logerr("Goal failed!")
                 QUEUE = []
                 finish_task_service(task_id, constants.TaskResult.FAILURE.value)  # 1 for success
                 continue
@@ -379,6 +380,7 @@ if __name__ == "__main__":
 
     STATIC_CONSUMPTION = rospy.get_param("/robot_battery/static_consumption")
     K = rospy.get_param("/robot_battery/dynamic_consumption")
+    TIME_THRESHOLD = ros_utils.wait_for_param("/hrisim/abort_time_threshold")
 
     p.begin()
 

@@ -94,7 +94,7 @@ def compute_sc_for_zones(df):
 
 
 INDIR = '/home/lcastri/git/PeopleFlow/utilities_ws/src/RA-L/hrisim_postprocess/csv/HH/original'
-BAGNAME= 'causal_30122024'
+BAGNAME= 'noncausal-test-01012025'
 SCENARIO = 'warehouse'
 WPS_COORD = readScenario()
 
@@ -110,7 +110,7 @@ with open(os.path.join(INDIR, BAGNAME, 'tasks.json')) as json_file:
 METRICS_ALL = {}
 tasks_to_continue = {}  # Dictionary to store tasks that continue to the next DF
 
-for tod in TOD:
+for tod in [TOD.H1, TOD.H2, TOD.H3, TOD.H4, TOD.H5, TOD.H6, TOD.H7, TOD.H8]:
     DF = pd.read_csv(os.path.join(INDIR, f"{BAGNAME}", f"{BAGNAME}_{tod.value}.csv"))
     r = get_initrow(DF)
     DF = DF[r:]
@@ -136,6 +136,9 @@ for tod in TOD:
 
     # Iterate over unique tasks
     for task_id in TASK_IDs:
+        if TASKS[str(task_id)]['end'] == 0: 
+            del METRICS[task_id]
+            continue
             
         task_df = DF[DF['Task_ID'] == task_id]
         if task_id in tasks_to_continue:
