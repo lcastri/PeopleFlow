@@ -20,6 +20,7 @@ import hrisim_util.constants as constants
 import networkx as nx
 from peopleflow_msgs.msg import Time as pT
 from robot_srvs.srv import NewTask, NewTaskResponse, FinishTask, FinishTaskResponse
+from std_srvs.srv import Empty  # Import the Empty service
 
 
 WORKING_TOP_TARGETS = [constants.WP.TARGET_1.value, constants.WP.TARGET_2.value, constants.WP.TARGET_3.value]
@@ -80,6 +81,7 @@ def Plan(p):
     rospy.wait_for_service('/hrisim/finish_task')
     new_task_service = rospy.ServiceProxy('/hrisim/new_task', NewTask)
     finish_task_service = rospy.ServiceProxy('/hrisim/finish_task', FinishTask)
+    shutdown_service = rospy.ServiceProxy('/hrisim/shutdown', Empty)
     
     while PLAN_ON:
         rospy.logerr("Planning..")
@@ -126,8 +128,9 @@ def Plan(p):
             
             if len(QUEUE) == 0: 
                 finish_task_service(task_id, constants.TaskResult.SUCCESS.value)
-                    
+                
     rospy.set_param("/peopleflow/robot_plan_on", PLAN_ON)
+    shutdown_service()             
 
                                    
 def cb_battery(msg):

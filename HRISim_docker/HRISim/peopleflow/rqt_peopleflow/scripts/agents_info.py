@@ -24,7 +24,8 @@ class PFAgentsInfo():
         self.agents = {}
         agents_param = rospy.get_param('/peopleflow/agents', None)
         if agents_param is not None:
-            self.agents = {agent_id: Agent.from_dict(agent_data, SCHEDULE, G, ALLOW_TASK, MAX_TASKTIME, OBSTACLES) for agent_id, agent_data in agents_param.items()} 
+            self.agents = {agent_id: Agent.from_dict(agent_data, SCHEDULE, G, ALLOW_TASK, MAX_TASKTIME) for agent_id, agent_data in agents_param.items()} 
+            # self.agents = {agent_id: Agent.from_dict(agent_data, SCHEDULE, G, ALLOW_TASK, MAX_TASKTIME, OBSTACLES) for agent_id, agent_data in agents_param.items()} 
        
     def pub_agents(self):
         self.load_agents()

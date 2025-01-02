@@ -7,10 +7,9 @@ from std_msgs.msg import Header
 from peopleflow_msgs.msg import Time as pT
 import hrisim_util.ros_utils as ros_utils
 import subprocess
+from std_srvs.srv import Empty  # Import the Empty service
 
 TIME_INIT = 8
-TSTOP = False
-
 
 class Time:
     def __init__(self, name, duration) -> None:
@@ -102,17 +101,13 @@ def pub_time():
     time_pub.publish(msg)
     
     
-def isFinished():
-    global TSTOP
-    rospy.set_param("/peopleflow/robot_plan_on", True)
-    if SM.elapsedTime is not None and (SM.elapsedTime > SM.T or not ros_utils.wait_for_param("/peopleflow/robot_plan_on")) and not TSTOP:
-        try:
-            rospy.logwarn(f"Calling shutdown...")
-            subprocess.Popen(['bash', '-c', 'tmux send-keys -t HRISim_bringup:0.0 "tstop" C-m'], shell=False)
-            TSTOP = True
-            rospy.logwarn(f"Shutting down...")
-        except Exception as e:
-            rospy.logerr(f"Failed to execute tstop: {str(e)}")
+def shutdown_cb(req=None):
+    try:
+        rospy.logwarn(f"Calling shutdown...")
+        subprocess.Popen(['bash', '-c', 'tmux send-keys -t HRISim_bringup:0.0 "tstop" C-m'], shell=False)
+        rospy.logwarn(f"Shutting down...")
+    except Exception as e:
+        rospy.logerr(f"Failed to execute tstop: {str(e)}")
     
     
 if __name__ == '__main__':
@@ -125,12 +120,14 @@ if __name__ == '__main__':
     SM = ScenarioManager()
                     
     time_pub = rospy.Publisher('/peopleflow/time', pT, queue_size=10)
-
+    
+    # Advertise the shutdown service
+    rospy.Service('/hrisim/shutdown', Empty, shutdown_cb)
+    
+    rospy.loginfo("Shutdown service is running...")
     while not rospy.is_shutdown():
         # Time
         pub_time()
         rospy.set_param('/peopleflow/timeday', str(SM.timeOfTheDay))
-        
-        isFinished()
-                
+                        
         rate.sleep()

@@ -21,7 +21,6 @@ def readScenario():
         tmp[waypoint_id] = {'x': x, 'y': y, 'r': r}
     return tmp
         
-
 def get_initrow(df):
     for r in range(len(df)):
         if (df.iloc[r]["G_X"] != -1000 and df.iloc[r]["G_Y"] != -1000 and df.iloc[r].notnull().all()):
@@ -50,6 +49,12 @@ def compute_stalled_time(df):
             stalled_time += stalled_df.loc[stalled_df.index[t], 'ros_time'] - stalled_df.loc[stalled_df.index[t-1], 'ros_time']
 
     return stalled_time
+
+def compute_travelled_distance(task_df):
+    """Compute the actual distance traveled by the robot."""
+    coords = task_df[['R_X', 'R_Y']].to_numpy()
+    distances = np.sqrt(np.sum(np.diff(coords, axis=0)**2, axis=1))
+    return np.sum(distances)
 
 def compute_sc_for_zones(df):
     """
@@ -93,11 +98,11 @@ def compute_sc_for_zones(df):
 
 
 INDIR = '/home/lcastri/git/PeopleFlow/utilities_ws/src/RA-L/hrisim_postprocess/csv/HH/original'
-BAGNAME= 'noncausal-test-01012025'
+BAGNAME= 'noncausal-test-02012025'
 SCENARIO = 'warehouse'
 WPS_COORD = readScenario()
 
-STALLED_THRESHOLD = 0.01
+STALLED_THRESHOLD = 0.05
 PROXEMIC_THRESHOLDS =  {'intimate': 0.5, 
                         'personal': 1.2, 
                         'social': 3.6, 
@@ -107,7 +112,8 @@ with open(os.path.join(INDIR, BAGNAME, 'tasks.json')) as json_file:
     TASKS = json.load(json_file)
 
 dfs = []
-for tod in [TOD.H1, TOD.H2, TOD.H3, TOD.H4, TOD.H5, TOD.H6, TOD.H7, TOD.H8]:
+# for tod in [TOD.H1, TOD.H2, TOD.H3, TOD.H4, TOD.H5, TOD.H6, TOD.H7, TOD.H8]:
+for tod in TOD:
     DF = pd.read_csv(os.path.join(INDIR, f"{BAGNAME}", f"{BAGNAME}_{tod.value}.csv"))
     r = get_initrow(DF)
     DF = DF[r:]
@@ -125,6 +131,7 @@ METRICS = {task_id: {'success': None,
                      'stalled_time': None,
                      'time_to_reach_goal': None,
                      'path_length': None,
+                     'travelled_distance': None,
                      'min_velocity': None,
                      'max_velocity': None,
                      'average_velocity': None,
@@ -147,6 +154,7 @@ for task_id in TASK_IDs:
     TIME_TO_GOAL = TASKS[str(task_id)]['end'] - TASKS[str(task_id)]['start']
     PATH_LENGTH = np.sum([math.sqrt((WPS_COORD[TASKS[str(task_id)]['path'][wp_idx]]['x'] - WPS_COORD[TASKS[str(task_id)]['path'][wp_idx+1]]['x'])**2 + (WPS_COORD[TASKS[str(task_id)]['path'][wp_idx]]['y'] - WPS_COORD[TASKS[str(task_id)]['path'][wp_idx+1]]['y'])**2)
                              for wp_idx in range(len(TASKS[str(task_id)]['path'])-1)])
+    TRAVELLED_DISTANCE = compute_travelled_distance(task_df)
     MIN_VELOCITY = task_df['R_V'].min()
     MAX_VELOCITY = task_df['R_V'].max()
     AVERAGE_VELOCITY = task_df['R_V'].mean()
@@ -162,6 +170,7 @@ for task_id in TASK_IDs:
     METRICS[task_id]['stalled_time'] = float(STALLED_TIME)
     METRICS[task_id]['time_to_reach_goal'] = float(TIME_TO_GOAL)
     METRICS[task_id]['path_length'] = float(PATH_LENGTH)
+    METRICS[task_id]['travelled_distance'] = float(TRAVELLED_DISTANCE)
     METRICS[task_id]['min_velocity'] = float(MIN_VELOCITY)
     METRICS[task_id]['max_velocity'] = float(MAX_VELOCITY)
     METRICS[task_id]['average_velocity'] = float(AVERAGE_VELOCITY)
@@ -202,6 +211,7 @@ METRICS['overall_human_collision'] = sum([METRICS[task]['human_collision'] for t
 METRICS['mean_stalled_time'] = float(np.mean([METRICS[task]['stalled_time'] for task in tmp_tasks]))
 METRICS['mean_time_to_reach_goal'] = float(np.mean([METRICS[task]['time_to_reach_goal'] for task in tmp_tasks]))
 METRICS['mean_path_length'] = float(np.mean([METRICS[task]['path_length'] for task in tmp_tasks]))
+METRICS['mean_travelled_distance'] = float(np.mean([METRICS[task]['travelled_distance'] for task in tmp_tasks]))
 METRICS['mean_min_velocity'] = float(np.mean([METRICS[task]['min_velocity'] for task in tmp_tasks]))
 METRICS['mean_max_velocity'] = float(np.mean([METRICS[task]['max_velocity'] for task in tmp_tasks]))
 METRICS['mean_average_velocity'] = float(np.mean([METRICS[task]['average_velocity'] for task in tmp_tasks]))

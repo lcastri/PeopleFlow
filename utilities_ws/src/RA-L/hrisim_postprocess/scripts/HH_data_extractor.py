@@ -253,7 +253,7 @@ if __name__ == '__main__':
     NODE_PATH = rospy.get_param('~node_path')
     scn = rospy.get_param('~scenario')
     SCENARIO = os.path.join(NODE_PATH, 'scenarios', f'{scn}.xml')
-    CSV_PATH = os.path.join(NODE_PATH, 'csv', 'original', BAGNAME)
+    CSV_PATH = os.path.join(NODE_PATH, 'csv', 'HH','original', BAGNAME)
     os.makedirs(CSV_PATH, exist_ok=True)
     LOADGOAL = rospy.get_param('~load_goal')
     TIMEOFTHEDAY = rospy.get_param('~time_of_the_day')

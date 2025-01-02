@@ -39,9 +39,11 @@ class PedsimBridge():
         agent_id = str(req.agent_id)
         agents_param = rospy.get_param(f'/peopleflow/agents/{agent_id}', None)
         if agents_param is not None:
-            a = Agent.from_dict(agents_param, SCHEDULE, G, ALLOW_TASK, MAX_TASKTIME, OBSTACLES)
+            a = Agent.from_dict(agents_param, SCHEDULE, G, ALLOW_TASK, MAX_TASKTIME)
+            # a = Agent.from_dict(agents_param, SCHEDULE, G, ALLOW_TASK, MAX_TASKTIME, OBSTACLES)
         else:
-            a = Agent(agent_id, SCHEDULE, G, ALLOW_TASK, MAX_TASKTIME, OBSTACLES)
+            a = Agent(agent_id, SCHEDULE, G, ALLOW_TASK, MAX_TASKTIME)
+            # a = Agent(agent_id, SCHEDULE, G, ALLOW_TASK, MAX_TASKTIME, OBSTACLES)
         a.x = req.origin.x
         a.y = req.origin.y
         a.isStuck = req.is_stuck
@@ -67,7 +69,7 @@ class PedsimBridge():
                 #   task_duration = random.randint(0, SCHEDULE[constants.TOD.H1]['duration'] - 10) 
                 # ! this agent won't ask again a destination for "task_duration" seconds
                 if agent.startingTime is None:
-                    agent.startingTime = random.randint(self.elapsedTime, SCHEDULE[constants.TOD.H1.value]['duration'] - 60)
+                    agent.startingTime = random.randint(self.elapsedTime, SCHEDULE[constants.TOD.H1.value]['duration'] - 90)
                     # agent.startingTime = random.randint(self.elapsedTime, SCHEDULE[constants.TOD.H1.value]['duration'] - 10)
                     agent.exitTime = int(sum([SCHEDULE[t]['duration'] for t in SCHEDULE if t in [e.value for e in constants.TOD if e != constants.TOD.H10 and e != constants.TOD.OFF]]) + agent.startingTime)
                     agent.setTask(constants.WP.PARKING.value, agent.startingTime)

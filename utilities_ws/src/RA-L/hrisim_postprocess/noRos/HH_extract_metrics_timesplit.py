@@ -52,6 +52,12 @@ def compute_stalled_time(df):
 
     return stalled_time
 
+def compute_travelled_distance(task_df):
+    """Compute the actual distance traveled by the robot."""
+    coords = task_df[['R_X', 'R_Y']].to_numpy()
+    distances = np.sqrt(np.sum(np.diff(coords, axis=0)**2, axis=1))
+    return np.sum(distances)
+
 def compute_sc_for_zones(df):
     """
     Compute the Personal Space Compliance (PSC) metric for multiple humans across proxemic zones.
@@ -94,11 +100,11 @@ def compute_sc_for_zones(df):
 
 
 INDIR = '/home/lcastri/git/PeopleFlow/utilities_ws/src/RA-L/hrisim_postprocess/csv/HH/original'
-BAGNAME= 'noncausal-test-01012025'
+BAGNAME= 'noncausal-test-02012025'
 SCENARIO = 'warehouse'
 WPS_COORD = readScenario()
 
-STALLED_THRESHOLD = 0.01
+STALLED_THRESHOLD = 0.05
 PROXEMIC_THRESHOLDS =  {'intimate': 0.5, 
                         'personal': 1.2, 
                         'social': 3.6, 
@@ -110,7 +116,8 @@ with open(os.path.join(INDIR, BAGNAME, 'tasks.json')) as json_file:
 METRICS_ALL = {}
 tasks_to_continue = {}  # Dictionary to store tasks that continue to the next DF
 
-for tod in [TOD.H1, TOD.H2, TOD.H3, TOD.H4, TOD.H5, TOD.H6, TOD.H7, TOD.H8]:
+# for tod in [TOD.H1, TOD.H2, TOD.H3, TOD.H4, TOD.H5, TOD.H6, TOD.H7, TOD.H8]:
+for tod in TOD:
     DF = pd.read_csv(os.path.join(INDIR, f"{BAGNAME}", f"{BAGNAME}_{tod.value}.csv"))
     r = get_initrow(DF)
     DF = DF[r:]
@@ -124,6 +131,7 @@ for tod in [TOD.H1, TOD.H2, TOD.H3, TOD.H4, TOD.H5, TOD.H6, TOD.H7, TOD.H8]:
         'stalled_time': None,
         'time_to_reach_goal': None,
         'path_length': None,
+        'travelled_distance': None,
         'min_velocity': None,
         'max_velocity': None,
         'average_velocity': None,
@@ -164,6 +172,8 @@ for tod in [TOD.H1, TOD.H2, TOD.H3, TOD.H4, TOD.H5, TOD.H6, TOD.H7, TOD.H8]:
             )
             for wp_idx in range(len(TASKS[str(task_id)]['path'])-1)
         ])
+        TRAVELLED_DISTANCE = compute_travelled_distance(task_df)
+
         MIN_VELOCITY = task_df['R_V'].min()
         MAX_VELOCITY = task_df['R_V'].max()
         AVERAGE_VELOCITY = task_df['R_V'].mean()
@@ -178,6 +188,7 @@ for tod in [TOD.H1, TOD.H2, TOD.H3, TOD.H4, TOD.H5, TOD.H6, TOD.H7, TOD.H8]:
         METRICS[task_id]['stalled_time'] = float(STALLED_TIME)
         METRICS[task_id]['time_to_reach_goal'] = float(TIME_TO_GOAL)
         METRICS[task_id]['path_length'] = float(PATH_LENGTH)
+        METRICS[task_id]['travelled_distance'] = float(TRAVELLED_DISTANCE)
         METRICS[task_id]['min_velocity'] = float(MIN_VELOCITY)
         METRICS[task_id]['max_velocity'] = float(MAX_VELOCITY)
         METRICS[task_id]['average_velocity'] = float(AVERAGE_VELOCITY)
@@ -194,6 +205,7 @@ for tod in [TOD.H1, TOD.H2, TOD.H3, TOD.H4, TOD.H5, TOD.H6, TOD.H7, TOD.H8]:
     METRICS['mean_stalled_time'] = float(np.mean([METRICS[task]['stalled_time'] for task in tmp_keys]))
     METRICS['mean_time_to_reach_goal'] = float(np.mean([METRICS[task]['time_to_reach_goal'] for task in tmp_keys]))
     METRICS['mean_path_length'] = float(np.mean([METRICS[task]['path_length'] for task in tmp_keys]))
+    METRICS['mean_travelled_distance'] = float(np.mean([METRICS[task]['travelled_distance'] for task in tmp_keys]))
     METRICS['mean_min_velocity'] = float(np.mean([METRICS[task]['min_velocity'] for task in tmp_keys]))
     METRICS['mean_max_velocity'] = float(np.mean([METRICS[task]['max_velocity'] for task in tmp_keys]))
     METRICS['mean_average_velocity'] = float(np.mean([METRICS[task]['average_velocity'] for task in tmp_keys]))

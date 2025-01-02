@@ -6100,14 +6100,18 @@
 <waypoint id="corridor-3-l"       x="-6.5"  y="6"   r="0.75"/>
 <waypoint id="corridor-4-l"       x="-6.5"  y="0"  r="0.75"/>
 <waypoint id="corridor-5-l"       x="-6.5"  y="-6"  r="0.75"/>
+<waypoint id="support-1"          x="-6.5"  y="9"  r="1"/>
+<waypoint id="support-2"          x="-6.5"  y="-9.2"  r="1"/>
+<waypoint id="support-3"          x="-6.5"  y="-3.5"  r="0.75"/>
+<waypoint id="support-4"          x="-6.5"  y="4.3"  r="0.75"/>
 <waypoint id="door-office-1"      x="-1.8"  y="4.85"   r="0.25"/>
 <waypoint id="door-office-2"      x="-1.8"  y="1.85"   r="0.25"/>
 <waypoint id="door-toilet-1"      x="-1.7"  y="-1"  r="0.25"/>
 <waypoint id="door-toilet-2"      x="-1.7"  y="-4.25"  r="0.25"/>
-<waypoint id="office-1"           x="0"     y="5.75"  r="1"/>
-<waypoint id="office-2"           x="0"     y="2.6"  r="1"/>
-<waypoint id="toilet-1"           x="-0.1"  y="-0.75" r="1"/>
-<waypoint id="toilet-2"           x="-0.2"  y="-3.55" r="1"/>
+<waypoint id="office-1"           x="0.4"     y="5.5"  r="1"/>
+<waypoint id="office-2"           x="0.4"     y="2.6"  r="1"/>
+<waypoint id="toilet-1"           x="0.5"     y="-0.5" r="1"/>
+<waypoint id="toilet-2"           x="0.5"     y="-3.55" r="1"/>
 <waypoint id="door-corridor-1"    x="-7.5"  y="6"  r="0.25"/>
 <waypoint id="door-corridor-2"    x="-7.5"  y="0"  r="0.25"/>
 <waypoint id="door-corridor-3"    x="-7.5"  y="-6"  r="0.25"/>
@@ -6115,11 +6119,9 @@
 <waypoint id="table-23"           x="7.1"   y="-2.2"  r="2.2"/>
 <waypoint id="support-0"          x="7.1"   y="-6.5"  r="2.2"/>
 <waypoint id="corridor-canteen-1" x="6.5"   y="5.95"  r="0.1"/>
-<waypoint id="corridor-canteen-2" x="4.0"   y="2.2"   r="0.75"/>
-<waypoint id="corridor-canteen-3" x="4.0"   y="-2.2"  r="0.75"/>
-<waypoint id="corridor-canteen-4" x="3"   y="-6.0"  r="1.1"/>
-<waypoint id="kitchen-1"          x="2.25"   y="2.2"   r="0.75"/>
-<waypoint id="kitchen-2"          x="2.25"   y="-2.2"  r="0.75"/>
+<waypoint id="corridor-canteen-2" x="3.5"   y="2.2"   r="1.5"/>
+<waypoint id="corridor-canteen-3" x="3.5"   y="-2.2"  r="1.5"/>
+<waypoint id="corridor-canteen-4" x="3.0"   y="-6.0"  r="1.1"/>
 <waypoint id="wa-1-l"             x="-17.7" y="7.5"  r="1.1"/>
 <waypoint id="wa-2-l"             x="-17.7" y="4.5"   r="1.3"/>
 <waypoint id="wa-3-l"             x="-17.7" y="0"   r="1"/>
@@ -6157,8 +6159,8 @@
     <addwaypoint id="office-2"/>
     <addwaypoint id="toilet-1"/>
     <addwaypoint id="toilet-2"/>
-    <addwaypoint id="kitchen-1"/>
-    <addwaypoint id="kitchen-2"/>
+    <addwaypoint id="corridor-canteen-2"/>
+    <addwaypoint id="corridor-canteen-3"/>
     <addwaypoint id="table-12"/>
     <addwaypoint id="table-23"/>
     <addwaypoint id="parking"/>
@@ -6190,8 +6192,8 @@
     <addwaypoint id="office-2"/>
     <addwaypoint id="toilet-1"/>
     <addwaypoint id="toilet-2"/>
-    <addwaypoint id="kitchen-1"/>
-    <addwaypoint id="kitchen-2"/>
+    <addwaypoint id="corridor-canteen-2"/>
+    <addwaypoint id="corridor-canteen-3"/>
     <addwaypoint id="table-12"/>
     <addwaypoint id="table-23"/>
     <addwaypoint id="parking"/>
@@ -6223,8 +6225,8 @@
     <addwaypoint id="office-2"/>
     <addwaypoint id="toilet-1"/>
     <addwaypoint id="toilet-2"/>
-    <addwaypoint id="kitchen-1"/>
-    <addwaypoint id="kitchen-2"/>
+    <addwaypoint id="corridor-canteen-2"/>
+    <addwaypoint id="corridor-canteen-3"/>
     <addwaypoint id="table-12"/>
     <addwaypoint id="table-23"/>
     <addwaypoint id="parking"/>
@@ -6256,8 +6258,8 @@
     <addwaypoint id="office-2"/>
     <addwaypoint id="toilet-1"/>
     <addwaypoint id="toilet-2"/>
-    <addwaypoint id="kitchen-1"/>
-    <addwaypoint id="kitchen-2"/>
+    <addwaypoint id="corridor-canteen-2"/>
+    <addwaypoint id="corridor-canteen-3"/>
     <addwaypoint id="table-12"/>
     <addwaypoint id="table-23"/>
     <addwaypoint id="parking"/>
@@ -6289,8 +6291,8 @@
     <addwaypoint id="office-2"/>
     <addwaypoint id="toilet-1"/>
     <addwaypoint id="toilet-2"/>
-    <addwaypoint id="kitchen-1"/>
-    <addwaypoint id="kitchen-2"/>
+    <addwaypoint id="corridor-canteen-2"/>
+    <addwaypoint id="corridor-canteen-3"/>
     <addwaypoint id="table-12"/>
     <addwaypoint id="table-23"/>
     <addwaypoint id="parking"/>
@@ -6322,8 +6324,8 @@
     <addwaypoint id="office-2"/>
     <addwaypoint id="toilet-1"/>
     <addwaypoint id="toilet-2"/>
-    <addwaypoint id="kitchen-1"/>
-    <addwaypoint id="kitchen-2"/>
+    <addwaypoint id="corridor-canteen-2"/>
+    <addwaypoint id="corridor-canteen-3"/>
     <addwaypoint id="table-12"/>
     <addwaypoint id="table-23"/>
     <addwaypoint id="parking"/>
@@ -6355,8 +6357,8 @@
     <addwaypoint id="office-2"/>
     <addwaypoint id="toilet-1"/>
     <addwaypoint id="toilet-2"/>
-    <addwaypoint id="kitchen-1"/>
-    <addwaypoint id="kitchen-2"/>
+    <addwaypoint id="corridor-canteen-2"/>
+    <addwaypoint id="corridor-canteen-3"/>
     <addwaypoint id="table-12"/>
     <addwaypoint id="table-23"/>
     <addwaypoint id="parking"/>
@@ -6388,8 +6390,8 @@
     <addwaypoint id="office-2"/>
     <addwaypoint id="toilet-1"/>
     <addwaypoint id="toilet-2"/>
-    <addwaypoint id="kitchen-1"/>
-    <addwaypoint id="kitchen-2"/>
+    <addwaypoint id="corridor-canteen-2"/>
+    <addwaypoint id="corridor-canteen-3"/>
     <addwaypoint id="table-12"/>
     <addwaypoint id="table-23"/>
     <addwaypoint id="parking"/>
@@ -6421,8 +6423,8 @@
     <addwaypoint id="office-2"/>
     <addwaypoint id="toilet-1"/>
     <addwaypoint id="toilet-2"/>
-    <addwaypoint id="kitchen-1"/>
-    <addwaypoint id="kitchen-2"/>
+    <addwaypoint id="corridor-canteen-2"/>
+    <addwaypoint id="corridor-canteen-3"/>
     <addwaypoint id="table-12"/>
     <addwaypoint id="table-23"/>
     <addwaypoint id="parking"/>
@@ -6454,8 +6456,8 @@
     <addwaypoint id="office-2"/>
     <addwaypoint id="toilet-1"/>
     <addwaypoint id="toilet-2"/>
-    <addwaypoint id="kitchen-1"/>
-    <addwaypoint id="kitchen-2"/>
+    <addwaypoint id="corridor-canteen-2"/>
+    <addwaypoint id="corridor-canteen-3"/>
     <addwaypoint id="table-12"/>
     <addwaypoint id="table-23"/>
     <addwaypoint id="parking"/>
@@ -6487,8 +6489,8 @@
     <addwaypoint id="office-2"/>
     <addwaypoint id="toilet-1"/>
     <addwaypoint id="toilet-2"/>
-    <addwaypoint id="kitchen-1"/>
-    <addwaypoint id="kitchen-2"/>
+    <addwaypoint id="corridor-canteen-2"/>
+    <addwaypoint id="corridor-canteen-3"/>
     <addwaypoint id="table-12"/>
     <addwaypoint id="table-23"/>
     <addwaypoint id="parking"/>
@@ -6520,8 +6522,8 @@
     <addwaypoint id="office-2"/>
     <addwaypoint id="toilet-1"/>
     <addwaypoint id="toilet-2"/>
-    <addwaypoint id="kitchen-1"/>
-    <addwaypoint id="kitchen-2"/>
+    <addwaypoint id="corridor-canteen-2"/>
+    <addwaypoint id="corridor-canteen-3"/>
     <addwaypoint id="table-12"/>
     <addwaypoint id="table-23"/>
     <addwaypoint id="parking"/>
@@ -6553,8 +6555,8 @@
     <addwaypoint id="office-2"/>
     <addwaypoint id="toilet-1"/>
     <addwaypoint id="toilet-2"/>
-    <addwaypoint id="kitchen-1"/>
-    <addwaypoint id="kitchen-2"/>
+    <addwaypoint id="corridor-canteen-2"/>
+    <addwaypoint id="corridor-canteen-3"/>
     <addwaypoint id="table-12"/>
     <addwaypoint id="table-23"/>
     <addwaypoint id="parking"/>
@@ -6586,8 +6588,8 @@
     <addwaypoint id="office-2"/>
     <addwaypoint id="toilet-1"/>
     <addwaypoint id="toilet-2"/>
-    <addwaypoint id="kitchen-1"/>
-    <addwaypoint id="kitchen-2"/>
+    <addwaypoint id="corridor-canteen-2"/>
+    <addwaypoint id="corridor-canteen-3"/>
     <addwaypoint id="table-12"/>
     <addwaypoint id="table-23"/>
     <addwaypoint id="parking"/>
@@ -6619,8 +6621,8 @@
     <addwaypoint id="office-2"/>
     <addwaypoint id="toilet-1"/>
     <addwaypoint id="toilet-2"/>
-    <addwaypoint id="kitchen-1"/>
-    <addwaypoint id="kitchen-2"/>
+    <addwaypoint id="corridor-canteen-2"/>
+    <addwaypoint id="corridor-canteen-3"/>
     <addwaypoint id="table-12"/>
     <addwaypoint id="table-23"/>
     <addwaypoint id="parking"/>
@@ -6652,8 +6654,8 @@
     <addwaypoint id="office-2"/>
     <addwaypoint id="toilet-1"/>
     <addwaypoint id="toilet-2"/>
-    <addwaypoint id="kitchen-1"/>
-    <addwaypoint id="kitchen-2"/>
+    <addwaypoint id="corridor-canteen-2"/>
+    <addwaypoint id="corridor-canteen-3"/>
     <addwaypoint id="table-12"/>
     <addwaypoint id="table-23"/>
     <addwaypoint id="parking"/>
@@ -6685,8 +6687,8 @@
     <addwaypoint id="office-2"/>
     <addwaypoint id="toilet-1"/>
     <addwaypoint id="toilet-2"/>
-    <addwaypoint id="kitchen-1"/>
-    <addwaypoint id="kitchen-2"/>
+    <addwaypoint id="corridor-canteen-2"/>
+    <addwaypoint id="corridor-canteen-3"/>
     <addwaypoint id="table-12"/>
     <addwaypoint id="table-23"/>
     <addwaypoint id="parking"/>
@@ -6718,8 +6720,8 @@
     <addwaypoint id="office-2"/>
     <addwaypoint id="toilet-1"/>
     <addwaypoint id="toilet-2"/>
-    <addwaypoint id="kitchen-1"/>
-    <addwaypoint id="kitchen-2"/>
+    <addwaypoint id="corridor-canteen-2"/>
+    <addwaypoint id="corridor-canteen-3"/>
     <addwaypoint id="table-12"/>
     <addwaypoint id="table-23"/>
     <addwaypoint id="parking"/>
@@ -6751,8 +6753,8 @@
     <addwaypoint id="office-2"/>
     <addwaypoint id="toilet-1"/>
     <addwaypoint id="toilet-2"/>
-    <addwaypoint id="kitchen-1"/>
-    <addwaypoint id="kitchen-2"/>
+    <addwaypoint id="corridor-canteen-2"/>
+    <addwaypoint id="corridor-canteen-3"/>
     <addwaypoint id="table-12"/>
     <addwaypoint id="table-23"/>
     <addwaypoint id="parking"/>
@@ -6784,8 +6786,8 @@
     <addwaypoint id="office-2"/>
     <addwaypoint id="toilet-1"/>
     <addwaypoint id="toilet-2"/>
-    <addwaypoint id="kitchen-1"/>
-    <addwaypoint id="kitchen-2"/>
+    <addwaypoint id="corridor-canteen-2"/>
+    <addwaypoint id="corridor-canteen-3"/>
     <addwaypoint id="table-12"/>
     <addwaypoint id="table-23"/>
     <addwaypoint id="parking"/>
@@ -6817,8 +6819,8 @@
     <addwaypoint id="office-2"/>
     <addwaypoint id="toilet-1"/>
     <addwaypoint id="toilet-2"/>
-    <addwaypoint id="kitchen-1"/>
-    <addwaypoint id="kitchen-2"/>
+    <addwaypoint id="corridor-canteen-2"/>
+    <addwaypoint id="corridor-canteen-3"/>
     <addwaypoint id="table-12"/>
     <addwaypoint id="table-23"/>
     <addwaypoint id="parking"/>
@@ -6850,8 +6852,8 @@
     <addwaypoint id="office-2"/>
     <addwaypoint id="toilet-1"/>
     <addwaypoint id="toilet-2"/>
-    <addwaypoint id="kitchen-1"/>
-    <addwaypoint id="kitchen-2"/>
+    <addwaypoint id="corridor-canteen-2"/>
+    <addwaypoint id="corridor-canteen-3"/>
     <addwaypoint id="table-12"/>
     <addwaypoint id="table-23"/>
     <addwaypoint id="parking"/>
@@ -6883,8 +6885,8 @@
     <addwaypoint id="office-2"/>
     <addwaypoint id="toilet-1"/>
     <addwaypoint id="toilet-2"/>
-    <addwaypoint id="kitchen-1"/>
-    <addwaypoint id="kitchen-2"/>
+    <addwaypoint id="corridor-canteen-2"/>
+    <addwaypoint id="corridor-canteen-3"/>
     <addwaypoint id="table-12"/>
     <addwaypoint id="table-23"/>
     <addwaypoint id="parking"/>
@@ -6916,8 +6918,8 @@
     <addwaypoint id="office-2"/>
     <addwaypoint id="toilet-1"/>
     <addwaypoint id="toilet-2"/>
-    <addwaypoint id="kitchen-1"/>
-    <addwaypoint id="kitchen-2"/>
+    <addwaypoint id="corridor-canteen-2"/>
+    <addwaypoint id="corridor-canteen-3"/>
     <addwaypoint id="table-12"/>
     <addwaypoint id="table-23"/>
     <addwaypoint id="parking"/>
@@ -6949,8 +6951,8 @@
     <addwaypoint id="office-2"/>
     <addwaypoint id="toilet-1"/>
     <addwaypoint id="toilet-2"/>
-    <addwaypoint id="kitchen-1"/>
-    <addwaypoint id="kitchen-2"/>
+    <addwaypoint id="corridor-canteen-2"/>
+    <addwaypoint id="corridor-canteen-3"/>
     <addwaypoint id="table-12"/>
     <addwaypoint id="table-23"/>
     <addwaypoint id="parking"/>
@@ -6982,8 +6984,8 @@
     <addwaypoint id="office-2"/>
     <addwaypoint id="toilet-1"/>
     <addwaypoint id="toilet-2"/>
-    <addwaypoint id="kitchen-1"/>
-    <addwaypoint id="kitchen-2"/>
+    <addwaypoint id="corridor-canteen-2"/>
+    <addwaypoint id="corridor-canteen-3"/>
     <addwaypoint id="table-12"/>
     <addwaypoint id="table-23"/>
     <addwaypoint id="parking"/>
@@ -7015,8 +7017,8 @@
     <addwaypoint id="office-2"/>
     <addwaypoint id="toilet-1"/>
     <addwaypoint id="toilet-2"/>
-    <addwaypoint id="kitchen-1"/>
-    <addwaypoint id="kitchen-2"/>
+    <addwaypoint id="corridor-canteen-2"/>
+    <addwaypoint id="corridor-canteen-3"/>
     <addwaypoint id="table-12"/>
     <addwaypoint id="table-23"/>
     <addwaypoint id="parking"/>
@@ -7048,8 +7050,8 @@
     <addwaypoint id="office-2"/>
     <addwaypoint id="toilet-1"/>
     <addwaypoint id="toilet-2"/>
-    <addwaypoint id="kitchen-1"/>
-    <addwaypoint id="kitchen-2"/>
+    <addwaypoint id="corridor-canteen-2"/>
+    <addwaypoint id="corridor-canteen-3"/>
     <addwaypoint id="table-12"/>
     <addwaypoint id="table-23"/>
     <addwaypoint id="parking"/>
@@ -7081,8 +7083,8 @@
     <addwaypoint id="office-2"/>
     <addwaypoint id="toilet-1"/>
     <addwaypoint id="toilet-2"/>
-    <addwaypoint id="kitchen-1"/>
-    <addwaypoint id="kitchen-2"/>
+    <addwaypoint id="corridor-canteen-2"/>
+    <addwaypoint id="corridor-canteen-3"/>
     <addwaypoint id="table-12"/>
     <addwaypoint id="table-23"/>
     <addwaypoint id="parking"/>
@@ -7114,8 +7116,8 @@
     <addwaypoint id="office-2"/>
     <addwaypoint id="toilet-1"/>
     <addwaypoint id="toilet-2"/>
-    <addwaypoint id="kitchen-1"/>
-    <addwaypoint id="kitchen-2"/>
+    <addwaypoint id="corridor-canteen-2"/>
+    <addwaypoint id="corridor-canteen-3"/>
     <addwaypoint id="table-12"/>
     <addwaypoint id="table-23"/>
     <addwaypoint id="parking"/>
@@ -7147,8 +7149,8 @@
     <addwaypoint id="office-2"/>
     <addwaypoint id="toilet-1"/>
     <addwaypoint id="toilet-2"/>
-    <addwaypoint id="kitchen-1"/>
-    <addwaypoint id="kitchen-2"/>
+    <addwaypoint id="corridor-canteen-2"/>
+    <addwaypoint id="corridor-canteen-3"/>
     <addwaypoint id="table-12"/>
     <addwaypoint id="table-23"/>
     <addwaypoint id="parking"/>
@@ -7180,8 +7182,8 @@
     <addwaypoint id="office-2"/>
     <addwaypoint id="toilet-1"/>
     <addwaypoint id="toilet-2"/>
-    <addwaypoint id="kitchen-1"/>
-    <addwaypoint id="kitchen-2"/>
+    <addwaypoint id="corridor-canteen-2"/>
+    <addwaypoint id="corridor-canteen-3"/>
     <addwaypoint id="table-12"/>
     <addwaypoint id="table-23"/>
     <addwaypoint id="parking"/>
@@ -7213,8 +7215,8 @@
     <addwaypoint id="office-2"/>
     <addwaypoint id="toilet-1"/>
     <addwaypoint id="toilet-2"/>
-    <addwaypoint id="kitchen-1"/>
-    <addwaypoint id="kitchen-2"/>
+    <addwaypoint id="corridor-canteen-2"/>
+    <addwaypoint id="corridor-canteen-3"/>
     <addwaypoint id="table-12"/>
     <addwaypoint id="table-23"/>
     <addwaypoint id="parking"/>
@@ -7246,8 +7248,8 @@
     <addwaypoint id="office-2"/>
     <addwaypoint id="toilet-1"/>
     <addwaypoint id="toilet-2"/>
-    <addwaypoint id="kitchen-1"/>
-    <addwaypoint id="kitchen-2"/>
+    <addwaypoint id="corridor-canteen-2"/>
+    <addwaypoint id="corridor-canteen-3"/>
     <addwaypoint id="table-12"/>
     <addwaypoint id="table-23"/>
     <addwaypoint id="parking"/>
@@ -7279,8 +7281,8 @@
     <addwaypoint id="office-2"/>
     <addwaypoint id="toilet-1"/>
     <addwaypoint id="toilet-2"/>
-    <addwaypoint id="kitchen-1"/>
-    <addwaypoint id="kitchen-2"/>
+    <addwaypoint id="corridor-canteen-2"/>
+    <addwaypoint id="corridor-canteen-3"/>
     <addwaypoint id="table-12"/>
     <addwaypoint id="table-23"/>
     <addwaypoint id="parking"/>
@@ -7312,8 +7314,8 @@
     <addwaypoint id="office-2"/>
     <addwaypoint id="toilet-1"/>
     <addwaypoint id="toilet-2"/>
-    <addwaypoint id="kitchen-1"/>
-    <addwaypoint id="kitchen-2"/>
+    <addwaypoint id="corridor-canteen-2"/>
+    <addwaypoint id="corridor-canteen-3"/>
     <addwaypoint id="table-12"/>
     <addwaypoint id="table-23"/>
     <addwaypoint id="parking"/>
@@ -7345,8 +7347,8 @@
     <addwaypoint id="office-2"/>
     <addwaypoint id="toilet-1"/>
     <addwaypoint id="toilet-2"/>
-    <addwaypoint id="kitchen-1"/>
-    <addwaypoint id="kitchen-2"/>
+    <addwaypoint id="corridor-canteen-2"/>
+    <addwaypoint id="corridor-canteen-3"/>
     <addwaypoint id="table-12"/>
     <addwaypoint id="table-23"/>
     <addwaypoint id="parking"/>
@@ -7378,8 +7380,8 @@
     <addwaypoint id="office-2"/>
     <addwaypoint id="toilet-1"/>
     <addwaypoint id="toilet-2"/>
-    <addwaypoint id="kitchen-1"/>
-    <addwaypoint id="kitchen-2"/>
+    <addwaypoint id="corridor-canteen-2"/>
+    <addwaypoint id="corridor-canteen-3"/>
     <addwaypoint id="table-12"/>
     <addwaypoint id="table-23"/>
     <addwaypoint id="parking"/>
@@ -7411,8 +7413,8 @@
     <addwaypoint id="office-2"/>
     <addwaypoint id="toilet-1"/>
     <addwaypoint id="toilet-2"/>
-    <addwaypoint id="kitchen-1"/>
-    <addwaypoint id="kitchen-2"/>
+    <addwaypoint id="corridor-canteen-2"/>
+    <addwaypoint id="corridor-canteen-3"/>
     <addwaypoint id="table-12"/>
     <addwaypoint id="table-23"/>
     <addwaypoint id="parking"/>
@@ -7444,8 +7446,8 @@
     <addwaypoint id="office-2"/>
     <addwaypoint id="toilet-1"/>
     <addwaypoint id="toilet-2"/>
-    <addwaypoint id="kitchen-1"/>
-    <addwaypoint id="kitchen-2"/>
+    <addwaypoint id="corridor-canteen-2"/>
+    <addwaypoint id="corridor-canteen-3"/>
     <addwaypoint id="table-12"/>
     <addwaypoint id="table-23"/>
     <addwaypoint id="parking"/>
@@ -7477,8 +7479,8 @@
     <addwaypoint id="office-2"/>
     <addwaypoint id="toilet-1"/>
     <addwaypoint id="toilet-2"/>
-    <addwaypoint id="kitchen-1"/>
-    <addwaypoint id="kitchen-2"/>
+    <addwaypoint id="corridor-canteen-2"/>
+    <addwaypoint id="corridor-canteen-3"/>
     <addwaypoint id="table-12"/>
     <addwaypoint id="table-23"/>
     <addwaypoint id="parking"/>
@@ -7510,8 +7512,8 @@
     <addwaypoint id="office-2"/>
     <addwaypoint id="toilet-1"/>
     <addwaypoint id="toilet-2"/>
-    <addwaypoint id="kitchen-1"/>
-    <addwaypoint id="kitchen-2"/>
+    <addwaypoint id="corridor-canteen-2"/>
+    <addwaypoint id="corridor-canteen-3"/>
     <addwaypoint id="table-12"/>
     <addwaypoint id="table-23"/>
     <addwaypoint id="parking"/>
@@ -7543,8 +7545,8 @@
     <addwaypoint id="office-2"/>
     <addwaypoint id="toilet-1"/>
     <addwaypoint id="toilet-2"/>
-    <addwaypoint id="kitchen-1"/>
-    <addwaypoint id="kitchen-2"/>
+    <addwaypoint id="corridor-canteen-2"/>
+    <addwaypoint id="corridor-canteen-3"/>
     <addwaypoint id="table-12"/>
     <addwaypoint id="table-23"/>
     <addwaypoint id="parking"/>
@@ -7576,8 +7578,8 @@
     <addwaypoint id="office-2"/>
     <addwaypoint id="toilet-1"/>
     <addwaypoint id="toilet-2"/>
-    <addwaypoint id="kitchen-1"/>
-    <addwaypoint id="kitchen-2"/>
+    <addwaypoint id="corridor-canteen-2"/>
+    <addwaypoint id="corridor-canteen-3"/>
     <addwaypoint id="table-12"/>
     <addwaypoint id="table-23"/>
     <addwaypoint id="parking"/>
@@ -7609,8 +7611,8 @@
     <addwaypoint id="office-2"/>
     <addwaypoint id="toilet-1"/>
     <addwaypoint id="toilet-2"/>
-    <addwaypoint id="kitchen-1"/>
-    <addwaypoint id="kitchen-2"/>
+    <addwaypoint id="corridor-canteen-2"/>
+    <addwaypoint id="corridor-canteen-3"/>
     <addwaypoint id="table-12"/>
     <addwaypoint id="table-23"/>
     <addwaypoint id="parking"/>
@@ -7642,8 +7644,8 @@
     <addwaypoint id="office-2"/>
     <addwaypoint id="toilet-1"/>
     <addwaypoint id="toilet-2"/>
-    <addwaypoint id="kitchen-1"/>
-    <addwaypoint id="kitchen-2"/>
+    <addwaypoint id="corridor-canteen-2"/>
+    <addwaypoint id="corridor-canteen-3"/>
     <addwaypoint id="table-12"/>
     <addwaypoint id="table-23"/>
     <addwaypoint id="parking"/>
@@ -7675,8 +7677,8 @@
     <addwaypoint id="office-2"/>
     <addwaypoint id="toilet-1"/>
     <addwaypoint id="toilet-2"/>
-    <addwaypoint id="kitchen-1"/>
-    <addwaypoint id="kitchen-2"/>
+    <addwaypoint id="corridor-canteen-2"/>
+    <addwaypoint id="corridor-canteen-3"/>
     <addwaypoint id="table-12"/>
     <addwaypoint id="table-23"/>
     <addwaypoint id="parking"/>
@@ -7708,8 +7710,8 @@
     <addwaypoint id="office-2"/>
     <addwaypoint id="toilet-1"/>
     <addwaypoint id="toilet-2"/>
-    <addwaypoint id="kitchen-1"/>
-    <addwaypoint id="kitchen-2"/>
+    <addwaypoint id="corridor-canteen-2"/>
+    <addwaypoint id="corridor-canteen-3"/>
     <addwaypoint id="table-12"/>
     <addwaypoint id="table-23"/>
     <addwaypoint id="parking"/>
@@ -7741,8 +7743,8 @@
     <addwaypoint id="office-2"/>
     <addwaypoint id="toilet-1"/>
     <addwaypoint id="toilet-2"/>
-    <addwaypoint id="kitchen-1"/>
-    <addwaypoint id="kitchen-2"/>
+    <addwaypoint id="corridor-canteen-2"/>
+    <addwaypoint id="corridor-canteen-3"/>
     <addwaypoint id="table-12"/>
     <addwaypoint id="table-23"/>
     <addwaypoint id="parking"/>
@@ -7774,8 +7776,8 @@
     <addwaypoint id="office-2"/>
     <addwaypoint id="toilet-1"/>
     <addwaypoint id="toilet-2"/>
-    <addwaypoint id="kitchen-1"/>
-    <addwaypoint id="kitchen-2"/>
+    <addwaypoint id="corridor-canteen-2"/>
+    <addwaypoint id="corridor-canteen-3"/>
     <addwaypoint id="table-12"/>
     <addwaypoint id="table-23"/>
     <addwaypoint id="parking"/>
@@ -7835,8 +7837,8 @@
       <adddest name="target-7"        p="0" std="0"/>
       <adddest name="table-12"        p="0.025" std="0" />
       <adddest name="table-23"        p="0.025" std="0" />
-      <adddest name="kitchen-1"       p="0.025" std="0" />
-      <adddest name="kitchen-2"       p="0.025" std="0" />
+      <adddest name="corridor-canteen-2"       p="0.025" std="0" />
+      <adddest name="corridor-canteen-3"       p="0.025" std="0" />
     </time>
     <!-- 02h : 9am - 10am -->
     <time name="H2" duration="3600" >
@@ -7869,8 +7871,8 @@
       <adddest name="target-7"        p="0" std="0"/>
       <adddest name="table-12"        p="0.01" std="0" />
       <adddest name="table-23"        p="0.01" std="0" />
-      <adddest name="kitchen-1"       p="0.01" std="0" />
-      <adddest name="kitchen-2"       p="0.01" std="0" />
+      <adddest name="corridor-canteen-2"       p="0.01" std="0" />
+      <adddest name="corridor-canteen-3"       p="0.01" std="0" />
     </time>
     <!-- 03h : 10am - 11am -->
     <time name="H3" duration="3600" >
@@ -7903,8 +7905,8 @@
       <adddest name="target-7"        p="0" std="0"/>
       <adddest name="table-12"        p="0.01" std="0.005" />
       <adddest name="table-23"        p="0.01" std="0.005" />
-      <adddest name="kitchen-1"       p="0.01" std="0.005" />
-      <adddest name="kitchen-2"       p="0.01" std="0.005" />
+      <adddest name="corridor-canteen-2"       p="0.01" std="0.005" />
+      <adddest name="corridor-canteen-3"       p="0.01" std="0.005" />
     </time>
     <!-- 04h : 11am - 12am -->
     <time name="H4" duration="3600" >
@@ -7937,8 +7939,8 @@
       <adddest name="target-7"        p="0" std="0"/>
       <adddest name="table-12"        p="0.01" std="0" />
       <adddest name="table-23"        p="0.01" std="0" />
-      <adddest name="kitchen-1"       p="0.01" std="0" />
-      <adddest name="kitchen-2"       p="0.01" std="0" />
+      <adddest name="corridor-canteen-2"       p="0.01" std="0" />
+      <adddest name="corridor-canteen-3"       p="0.01" std="0" />
     </time>
     <!-- 05h : 12am - 1pm -->
     <time name="H5" duration="3600" >
@@ -7971,8 +7973,8 @@
       <adddest name="target-7"        p="0" std="0"/>
       <adddest name="table-12"        p="0.01" std="0" />
       <adddest name="table-23"        p="0.01" std="0" />
-      <adddest name="kitchen-1"       p="0.01" std="0" />
-      <adddest name="kitchen-2"       p="0.01" std="0" />
+      <adddest name="corridor-canteen-2"       p="0.01" std="0" />
+      <adddest name="corridor-canteen-3"       p="0.01" std="0" />
     </time>
     <!-- 06h : 1pm - 2pm -->
     <time name="H6" duration="3600" >
@@ -8005,8 +8007,8 @@
       <adddest name="toilet-2"        p="0.05" std="0" />
       <adddest name="table-12"        p="0.225" std="0" />
       <adddest name="table-23"        p="0.225" std="0" />
-      <adddest name="kitchen-1"       p="0.225" std="0" />
-      <adddest name="kitchen-2"       p="0.225" std="0" />
+      <adddest name="corridor-canteen-2"       p="0.225" std="0" />
+      <adddest name="corridor-canteen-3"       p="0.225" std="0" />
     </time>
     <!-- 07h : 2pmm - 3pm -->
     <time name="H7" duration="3600" >
@@ -8039,8 +8041,8 @@
       <adddest name="target-7"        p="0" std="0"/>
       <adddest name="table-12"        p="0.01" std="0" />
       <adddest name="table-23"        p="0.01" std="0" />
-      <adddest name="kitchen-1"       p="0.01" std="0" />
-      <adddest name="kitchen-2"       p="0.01" std="0" />
+      <adddest name="corridor-canteen-2"       p="0.01" std="0" />
+      <adddest name="corridor-canteen-3"       p="0.01" std="0" />
     </time>
     <!-- 08h : 3pm - 4pm -->
     <time name="H8" duration="3600" >
@@ -8073,8 +8075,8 @@
       <adddest name="target-7"        p="0" std="0"/>
       <adddest name="table-12"        p="0.01" std="0" />
       <adddest name="table-23"        p="0.01" std="0" />
-      <adddest name="kitchen-1"       p="0.01" std="0" />
-      <adddest name="kitchen-2"       p="0.01" std="0" />
+      <adddest name="corridor-canteen-2"       p="0.01" std="0" />
+      <adddest name="corridor-canteen-3"       p="0.01" std="0" />
     </time>
     <!-- 09h : 4pm - 5pm -->
     <time name="H9" duration="3600" >
@@ -8107,8 +8109,8 @@
       <adddest name="target-7"        p="0" std="0"/>
       <adddest name="table-12"        p="0.01" std="0" />
       <adddest name="table-23"        p="0.01" std="0" />
-      <adddest name="kitchen-1"       p="0.01" std="0" />
-      <adddest name="kitchen-2"       p="0.01" std="0" />
+      <adddest name="corridor-canteen-2"       p="0.01" std="0" />
+      <adddest name="corridor-canteen-3"       p="0.01" std="0" />
     </time>
     <!-- 10h : 5pm - 6pm -->
     <time name="H10" duration="3600" >
@@ -8141,8 +8143,8 @@
       <adddest name="target-7"        p="0" std="0"/>
       <adddest name="table-12"        p="0.01" std="0" />
       <adddest name="table-23"        p="0.01" std="0" />
-      <adddest name="kitchen-1"       p="0.01" std="0" />
-      <adddest name="kitchen-2"       p="0.01" std="0" />
+      <adddest name="corridor-canteen-2"       p="0.01" std="0" />
+      <adddest name="corridor-canteen-3"       p="0.01" std="0" />
     </time>
     <!-- 14h : 6pm - 8am -->
     <time name="off" duration="50400" >
@@ -8175,8 +8177,8 @@
       <adddest name="toilet-2"        p="0" std="0" />
       <adddest name="table-12"        p="0" std="0" />
       <adddest name="table-23"        p="0" std="0" />
-      <adddest name="kitchen-1"       p="0" std="0" />
-      <adddest name="kitchen-2"       p="0" std="0" />
+      <adddest name="corridor-canteen-2"       p="0" std="0" />
+      <adddest name="corridor-canteen-3"       p="0" std="0" />
     </time>
   </schedule>
 </scenario>

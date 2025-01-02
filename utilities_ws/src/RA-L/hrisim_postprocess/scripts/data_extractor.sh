@@ -1,6 +1,6 @@
 #!/bin/bash
 
-bagname="noncausal-test-01012025"
+bagname="noncausal-test-02012025"
 
 for i in {1..11}
 do
@@ -18,7 +18,7 @@ do
     if [ $i -eq 1 ]; then
         start_time=0
     else
-        start_time=$((600 * (i-1) - 20))
+        start_time=$((300 * (i-1) - 20))
         # start_time=$((3600 * (i-1) - 20))
     fi
 
