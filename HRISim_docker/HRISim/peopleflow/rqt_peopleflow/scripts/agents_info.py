@@ -24,7 +24,7 @@ class PFAgentsInfo():
         self.agents = {}
         agents_param = rospy.get_param('/peopleflow/agents', None)
         if agents_param is not None:
-            self.agents = {agent_id: Agent.from_dict(agent_data, SCHEDULE, G, ALLOW_TASK, MAX_TASKTIME) for agent_id, agent_data in agents_param.items()} 
+            self.agents = {agent_id: Agent.from_dict(agent_data, SCHEDULE, G, ALLOW_TASK, MAX_TASKTIME, OBSTACLES) for agent_id, agent_data in agents_param.items()} 
        
     def pub_agents(self):
         self.load_agents()
@@ -61,6 +61,7 @@ if __name__ == '__main__':
     
     SCHEDULE = ros_utils.wait_for_param("/peopleflow/schedule")
     WPS = ros_utils.wait_for_param("/peopleflow/wps")
+    OBSTACLES = ros_utils.wait_for_param("/peopleflow/obstacles")
     ALLOW_TASK = rospy.get_param("/peopleflow_pedsim_bridge/allow_task", False)
     MAX_TASKTIME = int(rospy.get_param("/peopleflow_pedsim_bridge/max_tasktime"))
     g_path = str(rospy.get_param("/peopleflow_pedsim_bridge/g_path"))

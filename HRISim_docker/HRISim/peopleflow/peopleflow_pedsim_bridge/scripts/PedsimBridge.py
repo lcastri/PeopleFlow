@@ -39,9 +39,9 @@ class PedsimBridge():
         agent_id = str(req.agent_id)
         agents_param = rospy.get_param(f'/peopleflow/agents/{agent_id}', None)
         if agents_param is not None:
-            a = Agent.from_dict(agents_param, SCHEDULE, G, ALLOW_TASK, MAX_TASKTIME)
+            a = Agent.from_dict(agents_param, SCHEDULE, G, ALLOW_TASK, MAX_TASKTIME, OBSTACLES)
         else:
-            a = Agent(agent_id, SCHEDULE, G, ALLOW_TASK, MAX_TASKTIME)
+            a = Agent(agent_id, SCHEDULE, G, ALLOW_TASK, MAX_TASKTIME, OBSTACLES)
         a.x = req.origin.x
         a.y = req.origin.y
         a.isStuck = req.is_stuck
@@ -153,6 +153,7 @@ if __name__ == '__main__':
     
     SCHEDULE = ros_utils.wait_for_param("/peopleflow/schedule")
     WPS = ros_utils.wait_for_param("/peopleflow/wps")
+    OBSTACLES = ros_utils.wait_for_param("/peopleflow/obstacles")
     ALLOW_TASK = rospy.get_param("~allow_task", False)
     MAX_TASKTIME = int(rospy.get_param("~max_tasktime"))
     g_path = str(rospy.get_param("~g_path"))

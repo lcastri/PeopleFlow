@@ -1,14 +1,14 @@
 import copy
 import random
 import networkx as nx
-from scipy import stats
 from geometry_msgs.msg import Point
 import numpy as np
+from shapely.geometry import LineString, Polygon
 
 DEFAULT_VALUE = -1000
 
 class Agent:
-    def __init__(self, id, schedule, graph, allowTask, maxTaskTime) -> None:
+    def __init__(self, id, schedule, graph, allowTask, maxTaskTime, obstacles) -> None:
         self.id = id
         self.schedule = schedule
         self.G = graph
@@ -30,18 +30,73 @@ class Agent:
         self.isQuitting = False
         self.isStuck = False
         self.taskDuration = None
+        self.obstacles = obstacles
+          
+               
+    # @property
+    # def closestWP(self):
+    #     tmp_dist = []
+    #     if self.x is not None and self.y is not None:
+    #         pos = nx.get_node_attributes(self.G, 'pos')
+    #         for wp in self.G.nodes:
+    #             d = ((self.x - pos[wp][0]) ** 2 + (self.y - pos[wp][1]) ** 2) ** 0.5
+    #             tmp_dist.append(d)            
+    #         return list(self.G.nodes)[np.argmin(tmp_dist)]
+    #     return None
+    
+    
+    def line_of_sight(self, wp1, wp2):
+        """
+        Function to check if the line between two points intersects any obstacles
+
+        Args:
+            wp1 (tuple): waypoint 1
+            wp2 (tuple): waypoint 2
+            obstacles (list): obstacles list
+
+        Returns:
+            (bool, LineString/None): (False, None) if obstacles hinders the connection between wp1 and wp2. Otherwise, (True, Linestring)
+        """
+        line = LineString([wp1, wp2])
         
+        for obs in self.obstacles:
+            obstacle = Polygon([(self.obstacles[obs]['x1'], self.obstacles[obs]['y1']), 
+                                (self.obstacles[obs]['x2'], self.obstacles[obs]['y1']), 
+                                (self.obstacles[obs]['x2'], self.obstacles[obs]['y2']), 
+                                (self.obstacles[obs]['x1'], self.obstacles[obs]['y2'])])
+            if line.intersects(obstacle):
+                return False
+        return True
+    
+    
     @property
     def closestWP(self):
-        tmp_dist = []
-        if self.x is not None and self.y is not None:
-            pos = nx.get_node_attributes(self.G, 'pos')
-            for wp in self.G.nodes:
-                d = ((self.x - pos[wp][0]) ** 2 + (self.y - pos[wp][1]) ** 2) ** 0.5
-                tmp_dist.append(d)            
-            return list(self.G.nodes)[np.argmin(tmp_dist)]
+        if self.x is None or self.y is None:
+            return None
+        
+        pos = nx.get_node_attributes(self.G, 'pos')
+        temp_pos = (self.x, self.y)
+
+        # Precompute distances only once
+        distances = {wp: ((self.x - pos[wp][0]) ** 2 + (self.y - pos[wp][1]) ** 2) ** 0.5 for wp in self.G.nodes}
+
+        # Sort waypoints by distance, check the closest ones first
+        sorted_wps = sorted(distances.items(), key=lambda item: item[1])
+
+        for wp, dist in sorted_wps:
+            # if dist == 0: return wp
+
+            # Check line-of-sight only for near waypoints
+            wp_coordinates = (pos[wp][0], pos[wp][1])
+
+            # Perform a visibility check
+            is_visible = self.line_of_sight(temp_pos, wp_coordinates)
+
+            if is_visible: return wp
+
         return None
-    
+
+
     @property
     def isFree(self):
         return len(self.path) == 0
@@ -90,9 +145,9 @@ class Agent:
         }
 
     @classmethod
-    def from_dict(cls, data, schedule, graph, allowTask, maxTaskTime):
+    def from_dict(cls, data, schedule, graph, allowTask, maxTaskTime, obstacles):
         """Deserialize a dictionary to an Agent object."""
-        agent = cls(data['id'], schedule, graph, allowTask, maxTaskTime)
+        agent = cls(data['id'], schedule, graph, allowTask, maxTaskTime, obstacles)
         agent.x = data['x'] if data['x'] != DEFAULT_VALUE else None
         agent.y = data['y'] if data['y'] != DEFAULT_VALUE else None
         agent.path = data['path']

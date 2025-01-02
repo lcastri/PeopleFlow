@@ -79,8 +79,18 @@ class ScenarioManager():
             r = float(waypoint.get('r'))
             self.wps[waypoint_id] = {'x': x, 'y': y, 'r': r}
             
+        self.obstacles = {}
+        # Extract obstacle coordinates
+        for obstacle in root.findall("obstacle"):
+            x1 = float(obstacle.get("x1"))
+            y1 = float(obstacle.get("y1"))
+            x2 = float(obstacle.get("x2"))
+            y2 = float(obstacle.get("y2"))
+            self.obstacles[str(len(self.obstacles))] = {"x1": x1, "y1": y1, "x2": x2, "y2": y2}
+            
         rospy.set_param("/peopleflow/schedule", self.schedule)
         rospy.set_param("/peopleflow/wps", self.wps)
+        rospy.set_param("/peopleflow/obstacles", self.obstacles)
 
  
 def pub_time():
