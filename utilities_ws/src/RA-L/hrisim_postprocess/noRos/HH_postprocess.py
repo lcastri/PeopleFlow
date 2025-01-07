@@ -48,7 +48,7 @@ for waypoint in root.findall('waypoint'):
 # Load map information
 INCSV_PATH= os.path.expanduser('utilities_ws/src/RA-L/hrisim_postprocess/csv/HH/shrunk')
 OUTCSV_PATH= os.path.expanduser(f'utilities_ws/src/RA-L/hrisim_postprocess/csv/HH/my_nonoise/')
-BAGNAME= ['noncausal_27122024']
+BAGNAME= ['noncausal-03012025']
 
 static_duration = 5
 dynamic_duration = 4

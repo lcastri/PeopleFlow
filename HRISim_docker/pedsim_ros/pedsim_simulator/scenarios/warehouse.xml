@@ -6112,12 +6112,17 @@
 <waypoint id="office-2"           x="0.4"     y="2.6"  r="1"/>
 <waypoint id="toilet-1"           x="0.5"     y="-0.5" r="1"/>
 <waypoint id="toilet-2"           x="0.5"     y="-3.55" r="1"/>
+<waypoint id="support-5"          x="-1.2"     y="6.4"  r="0.5"/>
+<waypoint id="support-6"          x="-1.2"     y="3.4"  r="0.5"/>
+<waypoint id="support-7"          x="-1.2"     y="0.5" r="0.5"/>
+<waypoint id="support-8"          x="-1"     y="-2.5" r="0.5"/>
 <waypoint id="door-corridor-1"    x="-7.5"  y="6"  r="0.25"/>
 <waypoint id="door-corridor-2"    x="-7.5"  y="0"  r="0.25"/>
 <waypoint id="door-corridor-3"    x="-7.5"  y="-6"  r="0.25"/>
 <waypoint id="table-12"           x="7.2"   y="2.2"   r="2.2"/>
 <waypoint id="table-23"           x="7.1"   y="-2.2"  r="2.2"/>
 <waypoint id="support-0"          x="7.1"   y="-6.5"  r="2.2"/>
+<waypoint id="support-9"          x="2.5"   y="5.95" r="0.5"/>
 <waypoint id="corridor-canteen-1" x="6.5"   y="5.95"  r="0.1"/>
 <waypoint id="corridor-canteen-2" x="3.5"   y="2.2"   r="1.5"/>
 <waypoint id="corridor-canteen-3" x="3.5"   y="-2.2"  r="1.5"/>
@@ -6125,7 +6130,7 @@
 <waypoint id="wa-1-l"             x="-17.7" y="7.5"  r="1.1"/>
 <waypoint id="wa-2-l"             x="-17.7" y="4.5"   r="1.3"/>
 <waypoint id="wa-3-l"             x="-17.7" y="0"   r="1"/>
-<waypoint id="wa-3-cl"             x="-15.5" y="0"   r="1"/>
+<waypoint id="wa-3-cl"            x="-15.5" y="0"   r="1"/>
 <waypoint id="wa-4-l"             x="-17.7" y="-3.5"  r="1.3"/>
 <waypoint id="wa-5-l"             x="-17.7" y="-7"  r="1.1"/>
 <waypoint id="wa-1-c"             x="-13.5"   y="7.5"  r="1.1"/>

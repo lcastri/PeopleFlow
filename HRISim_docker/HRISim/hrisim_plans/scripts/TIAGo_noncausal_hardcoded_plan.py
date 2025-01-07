@@ -86,7 +86,7 @@ def Plan(p):
     while PLAN_ON:
         rospy.logerr("Planning..")
         if GO_TO_CHARGER:
-            finish_task_service(task_id, constants.TaskResult.FAILURE.value)  # 1 for success
+            finish_task_service(task_id, constants.TaskResult.CRITICAL_BATTERY.value)  # 1 for success
             NEXT_GOAL = constants.WP.CHARGING_STATION
             PLAN_ON = True
             QUEUE = nx.astar_path(G, ROBOT_CLOSEST_WP, NEXT_GOAL.value, heuristic=heuristic, weight='weight')

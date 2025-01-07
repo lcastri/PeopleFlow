@@ -4,6 +4,7 @@ import rospy
 from std_msgs.msg import Header
 from robot_msgs.msg import TasksInfo, TaskInfo
 from robot_srvs.srv import NewTask, NewTaskResponse, FinishTask, FinishTaskResponse
+import hrisim_util.constants as constants
 
 class RobotTaskManager():
     def __init__(self):
@@ -32,9 +33,9 @@ class RobotTaskManager():
         
         for task in self.tasks_msg.Tasks:
             # Assume task has a 'status' attribute that indicates success or failure
-            if task.result == 1:
+            if task.result == constants.TaskResult.SUCCESS.value:
                 num_success += 1
-            elif task.result == -1:
+            elif task.result in [constants.TaskResult.FAILURE.value, constants.TaskResult.CRITICAL_BATTERY.value]:
                 num_failure += 1
             
         self.tasks_msg.num_tasks = len(self.tasks_msg.Tasks)
@@ -49,7 +50,7 @@ class RobotTaskManager():
         task.path = req.path
         task.final_destination = task.path[-1]
         task.start_time = rospy.Time.now()
-        task.result = 0  # 0: WIP, 1: SUCCESS, -1: FAILURE
+        task.result = 0
         self.tasks_msg.Tasks.append(task)
         self.tasks_msg.header.stamp = rospy.Time.now()
         rospy.logwarn(f"New task requested: {task.task_id}")
@@ -59,7 +60,7 @@ class RobotTaskManager():
         
         
     def finish_task_cb(self, req):
-        resstr = 'SUCCESS' if req.result == 1 else 'FAILURE'
+        resstr = 'SUCCESS' if req.result == constants.TaskResult.SUCCESS.value else 'FAILURE'
         rospy.logwarn(f"Task {req.task_id} finished with result {resstr}")
         for task in self.tasks_msg.Tasks:
             if task.task_id == req.task_id:

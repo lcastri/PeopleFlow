@@ -136,7 +136,7 @@ def get_subsampling_step(cutoff = 0.5, energy_percentage=0.95, plot = True):
 SF = 10 #Hz
 INDIR = '/home/lcastri/git/PeopleFlow/utilities_ws/src/RA-L/hrisim_postprocess/csv/HH/original'
 OUTDIR = '/home/lcastri/git/PeopleFlow/utilities_ws/src/RA-L/hrisim_postprocess/csv/HH/shrunk'
-BAGNAME= ['noncausal_27122024']
+BAGNAME= ['noncausal-03012025']
 
 R, BW, SSF, ST, STEP = get_subsampling_step(cutoff = 0.25, energy_percentage=0.95, plot = False)
 print(f"Bandwidth fm: {BW:.4f} Hz")
@@ -144,8 +144,9 @@ print(f"Subsampling frequency fs >= 2fm = {2*BW:.4f} Hz")
 print(f"Subsampling time 1 sample every each {ST:.4f} s")
 print(f"Subsampling step {STEP}")
 print("")
+STEP = 50
         
-for bag in ['noncausal_27122024']:
+for bag in BAGNAME:
     print(f"Subsampling {bag}")
     tmp_bag = bag.replace("_", "-")
     for tod in TOD:

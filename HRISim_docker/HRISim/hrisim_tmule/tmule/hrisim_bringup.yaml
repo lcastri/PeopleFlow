@@ -82,7 +82,7 @@ init_cmd: |
   export_default REAL_TIME_UPDATE_RATE "0"
 
   # CausalFlow arguments
-  export_default CIE "CIE_100_HH_v2"
+  export_default CIE "CIE_100_HH_v3"
   export_default PRED_STEP "5"
 
 windows:
@@ -115,7 +115,7 @@ windows:
     tags: ['core']
     panes:
       - 'roslaunch pnp_ros pnp_ros.launch plans_folder:=$PNP_PLANS actions_folder:=$PNP_ACTIONS conditions_folder:=$PNP_CONDITIONS'
-      - 'rosparam set /hrisim/abort_time_threshold $ABORT_TIME_THRESHOLD && roscd hrisim_plans/scripts && python TIAGo_noncausal_hardcoded_plan.py'
+      - 'rosparam set /hrisim/abort_time_threshold $ABORT_TIME_THRESHOLD && roscd hrisim_plans/scripts && python TIAGo_causal_hardcoded_plan.py'
   - name: scenario
     tags: ['exp']
     panes:
@@ -129,7 +129,7 @@ windows:
     tags: ['exp']
     panes:
       - if [[ "$RECORD" == "true" ]]; then rosrun hrisim_recording record.py; fi
-  # - name: prediction
-  #   tags: ['exp']
-  #   panes:
-  #     - 'roslaunch hrisim_prediction_manager prediction_manager.launch CIE:=$CIE pred_step:=$PRED_STEP'
+  - name: prediction
+    tags: ['exp']
+    panes:
+      - 'roslaunch hrisim_prediction_manager prediction_manager.launch CIE:=$CIE pred_step:=$PRED_STEP'

@@ -29,18 +29,19 @@ def plot_grouped_bar(metrics_dict, title, ylabel, figsize=(14, 8), outdir=None):
         plt.show()
 
 INDIR = '/home/lcastri/git/PeopleFlow/utilities_ws/src/RA-L/hrisim_postprocess/csv/HH/original'
-BAGNAMES = ['noncausal-test-02012025']
-# BAGNAMES = ['noncausal_27122024', 'causal_30122024']
+BAGNAMES = ['noncausal-03012025', 'causal-04012025']
 OUTDIR = os.path.join('/home/lcastri/git/PeopleFlow/utilities_ws/src/RA-L/hrisim_postprocess/csv/HH/original', 'comparison', '__'.join(BAGNAMES), 'timesplit')
 os.makedirs(OUTDIR, exist_ok=True)
 
 # Initialize aggregated data structures
-aggregated_metrics = {}
-battery_metrics = {}
-time_metrics = {}
+success_failure_metrics = {}
+mean_time_metrics = {}
+overall_time_metrics = {}
+mean_path_metrics = {}
+mean_battery_metrics = {}
 velocity_metrics = {}
-distance_metrics = {}
-human_related_metrics = {}
+collision_metrics = {}
+clearance_metrics = {}
 space_compliance_metrics = {}
 
 # Load metrics for each bag
@@ -52,51 +53,57 @@ for tod in TOD:
         
         METRICS = METRICS[tod.value]
             
-        aggregated_metrics[bagname] = {
+        # EFFICIENCY 
+        success_failure_metrics[bagname] = {
+            "N. Tasks": METRICS['task_count'],
             "Overall Success": METRICS['overall_success'],
-            "Overall Failure": METRICS['overall_failure']
+            "Overall Failure": METRICS['overall_failure'],
+            "Overall Failure (People)": METRICS['overall_failure_people'],
+            "Overall Failure (Critical Battery)": METRICS['overall_failure_critical_battery']
         }
-        
-        # battery_metrics[bagname] = {
-        #     "Mean Battery Charging Time (s)": METRICS['mean_battery_charging_time'],
-        #     "Mean Battery Level at Start Charging (%)": METRICS['mean_battery_at_start_charging'],
-        # }
-
-        time_metrics[bagname] = {
+        mean_time_metrics[bagname] = {
             "Mean Stalled Time (s)": METRICS['mean_stalled_time'],
             "Mean Time to Goal (s)": METRICS['mean_time_to_reach_goal'],
+            "Mean Wasted Time (s)": METRICS['mean_wasted_time_to_reach_goal'],
+        }
+        overall_time_metrics[bagname] = {
+            "Overall Stalled Time (s)": METRICS['overall_stalled_time'],
+            "Overall Time to Goal (s)": METRICS['overall_time_to_reach_goal'],
+            "Overall Wasted Time (s)": METRICS['overall_wasted_time_to_reach_goal'],
+        }
+        mean_path_metrics[bagname] = {
             "Mean Path Length (m)": METRICS['mean_path_length'],
             "Mean Travelled Distance (m)": METRICS['mean_travelled_distance'],
+            "Mean Wasted Travelled Distance (m)": METRICS['mean_wasted_travelled_distance'],
         }
-
+        mean_battery_metrics[bagname] = {
+            "Mean Planned Battery Consumption (%)": METRICS['mean_planned_battery_consumption'],
+            "Mean Battery Consumption (%)": METRICS['mean_battery_consumption'],
+            "Mean Wasted Battery Consumption (%)": METRICS['mean_wasted_battery_consumption'],
+        }
         velocity_metrics[bagname] = {
             "Mean Min Velocity (m/s)": METRICS['mean_min_velocity'],
             "Mean Avg Velocity (m/s)": METRICS['mean_average_velocity'],
             "Mean Max Velocity (m/s)": METRICS['mean_max_velocity'],
         }
-
-        distance_metrics[bagname] = {
+        
+        # SAFETY 
+        collision_metrics[bagname] = {
+            "Human Collisions": METRICS['overall_human_collision'],
+            "Robot Fallen": METRICS['overall_robot_fallen'],
+        }
+        clearance_metrics[bagname] = {
             "Mean Min Clearing Distance (m)": METRICS['mean_min_clearing_distance'],
             "Mean Avg Clearing Distance (m)": METRICS['mean_average_clearing_distance'],
             "Mean Max Clearing Distance (m)": METRICS['mean_max_clearing_distance'],
         }
 
-        human_related_metrics[bagname] = {
-            "Human Collisions": METRICS['overall_human_collision'],
-            "Mean Min Distance to Humans (m)": METRICS['mean_min_distance_to_humans'],
-        }
-
-        space_compliance_metrics[bagname] = {
-            "Mean Intimate Space Compliance": METRICS['mean_space_compliance']['intimate'],
-            "Mean Personal Space Compliance": METRICS['mean_space_compliance']['personal'],
-            "Mean Social Space Compliance": METRICS['mean_space_compliance']['social'],
-            "Mean Public Space Compliance": METRICS['mean_space_compliance']['public'],
-        }
-
-    #   Plot all metrics
-    plot_grouped_bar(aggregated_metrics, f"{tod.value.capitalize()} -- Overall Aggregated Metrics", "Count", outdir=OUTDIR)
-    plot_grouped_bar(time_metrics, f"{tod.value.capitalize()} -- Time-Related Metrics", "s / m", outdir=OUTDIR)
+    # Plot all metrics
+    plot_grouped_bar(success_failure_metrics, f"{tod.value.capitalize()} -- Success Failure Metrics", "Count", outdir=OUTDIR)
+    plot_grouped_bar(mean_time_metrics, f"{tod.value.capitalize()} -- (Mean) Time Metrics", "s", outdir=OUTDIR)
+    plot_grouped_bar(overall_time_metrics, f"{tod.value.capitalize()} -- (Overall) Time Metrics", "s", outdir=OUTDIR)
+    plot_grouped_bar(mean_path_metrics, f"{tod.value.capitalize()} -- Path Metrics", "m", outdir=OUTDIR)
+    plot_grouped_bar(mean_battery_metrics, f"{tod.value.capitalize()} -- Battery Metrics", "%", outdir=OUTDIR)
     plot_grouped_bar(velocity_metrics, f"{tod.value.capitalize()} -- Velocity Metrics", "m/s", outdir=OUTDIR)
-    plot_grouped_bar(distance_metrics, f"{tod.value.capitalize()} -- Distance Metrics", "m", outdir=OUTDIR)
-    plot_grouped_bar(human_related_metrics, f"{tod.value.capitalize()} -- Human Distance Metrics", "Count", outdir=OUTDIR)
-    plot_grouped_bar(space_compliance_metrics, f"{tod.value.capitalize()} -- Space Compliance Metrics", "Percentage", outdir=OUTDIR)
+    plot_grouped_bar(collision_metrics, f"{tod.value.capitalize()} -- Collision Metrics", "Count", outdir=OUTDIR)
+    plot_grouped_bar(clearance_metrics, f"{tod.value.capitalize()} -- Clearance Metrics", "m", outdir=OUTDIR)

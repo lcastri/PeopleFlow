@@ -53,10 +53,67 @@ def compute_stalled_time(df):
     return stalled_time
 
 def compute_travelled_distance(task_df):
-    """Compute the actual distance traveled by the robot."""
-    coords = task_df[['R_X', 'R_Y']].to_numpy()
-    distances = np.sqrt(np.sum(np.diff(coords, axis=0)**2, axis=1))
-    return np.sum(distances)
+    """Compute the actual distance travelled by the robot."""
+    distance = 0
+    for i in range(1, len(task_df)):
+        distance += math.sqrt((task_df['R_X'].iloc[i] - task_df['R_X'].iloc[i-1])**2 + (task_df['R_Y'].iloc[i] - task_df['R_Y'].iloc[i-1])**2)
+    return distance
+
+
+def compute_planned_battery_consumption(dist):
+    time_to_goal = math.ceil(dist/ROBOT_MAX_VEL)
+    return time_to_goal * (Ks + Kd * ROBOT_MAX_VEL)
+
+
+def compute_actual_battery_consumption(task_df):
+    battery = task_df['R_B'].to_numpy()
+    return battery[0] - battery[-1]
+
+def compute_human_collision(df):
+    """
+    Calculate the number of unique human collisions.
+    A collision is counted only when a human enters the robot's base diameter and then exits.
+
+    Parameters:
+        df (pd.DataFrame): DataFrame containing robot and human positions over time.
+
+    Returns:
+        int: Total number of unique collisions with humans.
+    """
+    robot_coords = df[['R_X', 'R_Y']].to_numpy()
+    collision_count = 0
+    
+    # Track collision state for each human
+    human_collision_states = {}
+
+    # Identify human coordinate columns dynamically
+    for col in df.columns:
+        if col.startswith('a') and col.endswith('_X'):
+            human_id = col[:-2]  # Extract human identifier (e.g., 'a1', 'a2')
+            human_collision_states[human_id] = False  # Initialize collision state
+
+    # Iterate over time steps
+    for _, row in df.iterrows():
+        r_x, r_y = row['R_X'], row['R_Y']
+
+        for col in df.columns:
+            if col.startswith('a') and col.endswith('_X'):
+                human_id = col[:-2]  # Extract human identifier
+                h_x, h_y = row[col], row[col.replace('_X', '_Y')]
+
+                # Calculate distance
+                distance = np.sqrt((r_x - h_x)**2 + (r_y - h_y)**2)
+
+                # Check for collision entry
+                if distance < (ROBOT_BASE_DIAMETER/2) and not human_collision_states[human_id]:
+                    collision_count += 1
+                    human_collision_states[human_id] = True  # Human enters collision zone
+
+                # Check for collision exit
+                elif distance >= (ROBOT_BASE_DIAMETER/2):
+                    human_collision_states[human_id] = False  # Human exits collision zone
+
+    return collision_count
 
 def compute_sc_for_zones(df):
     """
@@ -100,9 +157,16 @@ def compute_sc_for_zones(df):
 
 
 INDIR = '/home/lcastri/git/PeopleFlow/utilities_ws/src/RA-L/hrisim_postprocess/csv/HH/original'
-BAGNAME= 'noncausal-test-02012025'
+BAGNAME= 'causal-04012025'
 SCENARIO = 'warehouse'
 WPS_COORD = readScenario()
+
+static_duration = 5
+dynamic_duration = 4
+ROBOT_MAX_VEL = 0.5
+ROBOT_BASE_DIAMETER = 0.54
+Ks = 100 / (static_duration * 3600)
+Kd = (100 / (dynamic_duration * 3600) - Ks)/ROBOT_MAX_VEL
 
 STALLED_THRESHOLD = 0.05
 PROXEMIC_THRESHOLDS =  {'intimate': 0.5, 
@@ -116,7 +180,6 @@ with open(os.path.join(INDIR, BAGNAME, 'tasks.json')) as json_file:
 METRICS_ALL = {}
 tasks_to_continue = {}  # Dictionary to store tasks that continue to the next DF
 
-# for tod in [TOD.H1, TOD.H2, TOD.H3, TOD.H4, TOD.H5, TOD.H6, TOD.H7, TOD.H8]:
 for tod in TOD:
     DF = pd.read_csv(os.path.join(INDIR, f"{BAGNAME}", f"{BAGNAME}_{tod.value}.csv"))
     r = get_initrow(DF)
@@ -124,23 +187,27 @@ for tod in TOD:
     DF.reset_index(drop=True, inplace=True)
     
     DF['Task_ID'] = DF['T']
-    TASK_IDs = [int(task_id) for task_id in DF['Task_ID'].unique()]
-    METRICS = {task_id: {
-        'success': None,
-        'human_collision': None,
-        'stalled_time': None,
-        'time_to_reach_goal': None,
-        'path_length': None,
-        'travelled_distance': None,
-        'min_velocity': None,
-        'max_velocity': None,
-        'average_velocity': None,
-        'min_clearing_distance': None,
-        'max_clearing_distance': None,
-        'average_clearing_distance': None,
-        'min_distance_to_humans': None,
-        'space_compliance': None
-    } for task_id in TASK_IDs}
+    TASK_IDs = [int(task_id) for task_id in DF['Task_ID'].unique() if task_id != -1]
+    METRICS = {task_id: {'result': None,
+                        'path_length': None,
+                        'planned_battery_consumption': None,
+                        'time_to_reach_goal': None,
+                        'travelled_distance': None,
+                        'battery_consumption': None,
+                        'wasted_time_to_reach_goal': None,
+                        'wasted_travelled_distance': None, 
+                        'wasted_battery_consumption': None,
+                        'robot_falled': None,
+                        'human_collision': None,
+                        'stalled_time': None,
+                        'min_velocity': None,
+                        'max_velocity': None,
+                        'average_velocity': None,
+                        'min_clearing_distance': None,
+                        'max_clearing_distance': None,
+                        'average_clearing_distance': None,
+                        'min_distance_to_humans': None,
+                        'space_compliance': None} for task_id in TASK_IDs}
 
     # Iterate over unique tasks
     for task_id in TASK_IDs:
@@ -172,8 +239,24 @@ for tod in TOD:
             )
             for wp_idx in range(len(TASKS[str(task_id)]['path'])-1)
         ])
-        TRAVELLED_DISTANCE = compute_travelled_distance(task_df)
-
+        PLANNED_BATTERY_CONSUMPTION = compute_planned_battery_consumption(PATH_LENGTH)
+        if SUCCESS == 1:
+            TIME_TO_GOAL = TASKS[str(task_id)]['end'] - TASKS[str(task_id)]['start']
+            TRAVELLED_DISTANCE = compute_travelled_distance(task_df)
+            BATTERY_CONSUMPTION = compute_actual_battery_consumption(task_df)
+            WASTED_TIME_TO_GOAL = 0
+            WASTED_TRAVELLED_DISTANCE = 0
+            WASTED_BATTERY_CONSUMPTION = 0
+        else:
+            TIME_TO_GOAL = 0
+            TRAVELLED_DISTANCE = 0
+            BATTERY_CONSUMPTION = 0
+            WASTED_TIME_TO_GOAL = TASKS[str(task_id)]['end'] - TASKS[str(task_id)]['start']
+            WASTED_TRAVELLED_DISTANCE = compute_travelled_distance(task_df)
+            WASTED_BATTERY_CONSUMPTION = compute_actual_battery_consumption(task_df)
+        STALLED_TIME = compute_stalled_time(task_df)
+        ROBOT_FALLEN = task_df['R_HC'].sum()
+        HUMAN_COLLISION = compute_human_collision(task_df)
         MIN_VELOCITY = task_df['R_V'].min()
         MAX_VELOCITY = task_df['R_V'].max()
         AVERAGE_VELOCITY = task_df['R_V'].mean()
@@ -183,12 +266,18 @@ for tod in TOD:
         MIN_DISTANCE_TO_HUMANS = compute_min_h_distance(task_df)
         SPACE_COMPLIANCE = compute_sc_for_zones(task_df)
     
-        METRICS[task_id]['success'] = SUCCESS
+        METRICS[task_id]['result'] = SUCCESS
+        METRICS[task_id]['path_length'] = float(PATH_LENGTH)
+        METRICS[task_id]['planned_battery_consumption'] = float(PLANNED_BATTERY_CONSUMPTION)
+        METRICS[task_id]['time_to_reach_goal'] = float(TIME_TO_GOAL)
+        METRICS[task_id]['travelled_distance'] = float(TRAVELLED_DISTANCE)
+        METRICS[task_id]['battery_consumption'] = float(BATTERY_CONSUMPTION)
+        METRICS[task_id]['wasted_time_to_reach_goal'] = float(WASTED_TIME_TO_GOAL)
+        METRICS[task_id]['wasted_travelled_distance'] = float(WASTED_TRAVELLED_DISTANCE)
+        METRICS[task_id]['wasted_battery_consumption'] = float(WASTED_BATTERY_CONSUMPTION)
+        METRICS[task_id]['robot_fallen'] = int(ROBOT_FALLEN)
         METRICS[task_id]['human_collision'] = int(HUMAN_COLLISION)
         METRICS[task_id]['stalled_time'] = float(STALLED_TIME)
-        METRICS[task_id]['time_to_reach_goal'] = float(TIME_TO_GOAL)
-        METRICS[task_id]['path_length'] = float(PATH_LENGTH)
-        METRICS[task_id]['travelled_distance'] = float(TRAVELLED_DISTANCE)
         METRICS[task_id]['min_velocity'] = float(MIN_VELOCITY)
         METRICS[task_id]['max_velocity'] = float(MAX_VELOCITY)
         METRICS[task_id]['average_velocity'] = float(AVERAGE_VELOCITY)
@@ -198,24 +287,44 @@ for tod in TOD:
         METRICS[task_id]['min_distance_to_humans'] = float(MIN_DISTANCE_TO_HUMANS)
         METRICS[task_id]['space_compliance'] = SPACE_COMPLIANCE
     
-    tmp_keys = copy.deepcopy(list(METRICS.keys()))
-    METRICS['overall_success'] = sum([1 if METRICS[task]['success'] == 1 else 0 for task in tmp_keys])
-    METRICS['overall_failure'] = sum([1 if METRICS[task]['success'] == -1 else 0 for task in tmp_keys])
-    METRICS['overall_human_collision'] = sum([METRICS[task]['human_collision'] for task in tmp_keys])
-    METRICS['mean_stalled_time'] = float(np.mean([METRICS[task]['stalled_time'] for task in tmp_keys]))
-    METRICS['mean_time_to_reach_goal'] = float(np.mean([METRICS[task]['time_to_reach_goal'] for task in tmp_keys]))
-    METRICS['mean_path_length'] = float(np.mean([METRICS[task]['path_length'] for task in tmp_keys]))
-    METRICS['mean_travelled_distance'] = float(np.mean([METRICS[task]['travelled_distance'] for task in tmp_keys]))
-    METRICS['mean_min_velocity'] = float(np.mean([METRICS[task]['min_velocity'] for task in tmp_keys]))
-    METRICS['mean_max_velocity'] = float(np.mean([METRICS[task]['max_velocity'] for task in tmp_keys]))
-    METRICS['mean_average_velocity'] = float(np.mean([METRICS[task]['average_velocity'] for task in tmp_keys]))
-    METRICS['mean_min_clearing_distance'] = float(np.mean([METRICS[task]['min_clearing_distance'] for task in tmp_keys]))
-    METRICS['mean_max_clearing_distance'] = float(np.mean([METRICS[task]['max_clearing_distance'] for task in tmp_keys]))
-    METRICS['mean_average_clearing_distance'] = float(np.mean([METRICS[task]['average_clearing_distance'] for task in tmp_keys]))
-    METRICS['mean_min_distance_to_humans'] = float(np.mean([METRICS[task]['min_distance_to_humans'] for task in tmp_keys]))
+    tmp_tasks = copy.deepcopy(list(METRICS.keys()))
+    METRICS['task_count'] = len(tmp_tasks)
+    METRICS['overall_success'] = sum([1 if METRICS[task]['result'] == 1 else 0 for task in tmp_tasks])
+    METRICS['overall_failure_people'] = sum([1 if METRICS[task]['result'] == -1 else 0 for task in tmp_tasks])
+    METRICS['overall_failure_critical_battery'] = sum([1 if METRICS[task]['result'] == -2 else 0 for task in tmp_tasks])
+    METRICS['overall_failure'] = METRICS['overall_failure_people'] + METRICS['overall_failure_critical_battery']
+
+    METRICS['mean_path_length'] = float(np.mean([METRICS[task]['path_length'] for task in tmp_tasks]))
+    METRICS['mean_planned_battery_consumption'] = float(np.mean([METRICS[task]['planned_battery_consumption'] for task in tmp_tasks]))
+
+    METRICS['overall_time_to_reach_goal'] = float(np.sum([METRICS[task]['time_to_reach_goal'] for task in tmp_tasks]))
+    METRICS['overall_travelled_distance'] = float(np.sum([METRICS[task]['travelled_distance'] for task in tmp_tasks]))
+    METRICS['overall_battery_consumption'] = float(np.sum([METRICS[task]['battery_consumption'] for task in tmp_tasks]))
+    METRICS['mean_time_to_reach_goal'] = float(np.sum([METRICS[task]['time_to_reach_goal'] for task in tmp_tasks])/METRICS['overall_success'])
+    METRICS['mean_travelled_distance'] = float(np.sum([METRICS[task]['travelled_distance'] for task in tmp_tasks])/METRICS['overall_success'])
+    METRICS['mean_battery_consumption'] = float(np.sum([METRICS[task]['battery_consumption'] for task in tmp_tasks])/METRICS['overall_success'])
+
+    METRICS['overall_wasted_time_to_reach_goal'] = float(np.sum([METRICS[task]['wasted_time_to_reach_goal'] for task in tmp_tasks]))
+    METRICS['overall_wasted_travelled_distance'] = float(np.sum([METRICS[task]['wasted_travelled_distance'] for task in tmp_tasks]))
+    METRICS['overall_wasted_battery_consumption'] = float(np.sum([METRICS[task]['wasted_battery_consumption'] for task in tmp_tasks]))
+    METRICS['mean_wasted_time_to_reach_goal'] = float(np.sum([METRICS[task]['wasted_time_to_reach_goal'] for task in tmp_tasks])/METRICS['overall_failure'])
+    METRICS['mean_wasted_travelled_distance'] = float(np.sum([METRICS[task]['wasted_travelled_distance'] for task in tmp_tasks])/METRICS['overall_failure'])
+    METRICS['mean_wasted_battery_consumption'] = float(np.sum([METRICS[task]['wasted_battery_consumption'] for task in tmp_tasks])/METRICS['overall_failure'])
+
+    METRICS['overall_robot_fallen'] = sum([METRICS[task]['robot_fallen'] for task in tmp_tasks])
+    METRICS['overall_human_collision'] = sum([METRICS[task]['human_collision'] for task in tmp_tasks])
+    METRICS['overall_stalled_time'] = float(np.sum([METRICS[task]['stalled_time'] for task in tmp_tasks]))
+    METRICS['mean_stalled_time'] = float(np.mean([METRICS[task]['stalled_time'] for task in tmp_tasks]))
+    METRICS['mean_min_velocity'] = float(np.mean([METRICS[task]['min_velocity'] for task in tmp_tasks]))
+    METRICS['mean_max_velocity'] = float(np.mean([METRICS[task]['max_velocity'] for task in tmp_tasks]))
+    METRICS['mean_average_velocity'] = float(np.mean([METRICS[task]['average_velocity'] for task in tmp_tasks]))
+    METRICS['mean_min_clearing_distance'] = float(np.mean([METRICS[task]['min_clearing_distance'] for task in tmp_tasks]))
+    METRICS['mean_max_clearing_distance'] = float(np.mean([METRICS[task]['max_clearing_distance'] for task in tmp_tasks]))
+    METRICS['mean_average_clearing_distance'] = float(np.mean([METRICS[task]['average_clearing_distance'] for task in tmp_tasks]))
+    METRICS['mean_min_distance_to_humans'] = float(np.mean([METRICS[task]['min_distance_to_humans'] for task in tmp_tasks]))
     METRICS['mean_space_compliance'] = {proxemic: None for proxemic in PROXEMIC_THRESHOLDS.keys()}
     for proxemic in PROXEMIC_THRESHOLDS.keys():
-        METRICS['mean_space_compliance'][proxemic] = float(np.mean([METRICS[task]['space_compliance'][proxemic] for task in tmp_keys]))
+        METRICS['mean_space_compliance'][proxemic] = float(np.mean([METRICS[task]['space_compliance'][proxemic] for task in tmp_tasks]))
 
     METRICS_ALL[tod.value] = copy.deepcopy(METRICS)
 

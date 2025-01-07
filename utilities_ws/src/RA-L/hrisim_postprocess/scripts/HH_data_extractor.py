@@ -173,7 +173,7 @@ class DataManager():
             self.tasks[task.task_id].result = task.result
             self.tasks[task.task_id].ending = task.end_time.to_sec()
             
-        self.robot.task = tasks[-1].task_id if len(tasks) else -1
+        self.robot.task = tasks[-1].task_id if len(tasks) and not self.robot.is_charging else -1
         
         self.n_tasks = msg.num_tasks
         self.n_success = msg.num_success

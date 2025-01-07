@@ -25,6 +25,7 @@ from peopleflow_msgs.msg import Time as pT
 from std_srvs.srv import Trigger
 from robot_srvs.srv import NewTask, NewTaskResponse, FinishTask, FinishTaskResponse
 from functools import partial
+from std_srvs.srv import Empty  # Import the Empty service
 
 
 BATTERY_CRITICAL_LEVEL = 20
@@ -206,7 +207,7 @@ def get_next_goal():
                 return None, None, False
                        
             
-def check_BAC(risk_map, queue, heuristic,robot_speed = 0.5):
+def check_BAC(risk_map, queue, heuristic, robot_speed = 0.5):
     for wp in queue:
         if wp == constants.WP.CHARGING_STATION.value and wp not in risk_map: continue
         time_to_reach_wp = ros_utils.get_time_to_wp(G_original, ROBOT_CLOSEST_WP, wp, heuristic, robot_speed)
@@ -225,25 +226,7 @@ def check_BAC(risk_map, queue, heuristic,robot_speed = 0.5):
             return True
         
     return False
-# def check_BAC(risk_map, queue, robot_speed = 0.5):
-#     for wp in queue:
-#         if wp == constants.WP.CHARGING_STATION.value and wp not in risk_map: continue
-#         time_to_reach_wp = ros_utils.get_time_to_wp(G_original, ROBOT_CLOSEST_WP, wp, shortest_heuristic, robot_speed)
-#         time_to_reach_charger = ros_utils.get_time_to_wp(G_original, wp, constants.WP.CHARGING_STATION.value, shortest_heuristic, robot_speed)
-#         battery_consumption = time_to_reach_charger * (STATIC_CONSUMPTION + K * robot_speed)
-        
-#         wp_BAC_idx = math.ceil(time_to_reach_wp / PRED_STEP)
-#         wp_BAC_idx = min(len(risk_map[wp]['BAC']) - 1, wp_BAC_idx)
-#         wp_BAC = risk_map[wp]['BAC'][wp_BAC_idx] - battery_consumption
-#         if wp_BAC >= BATTERY_CRITICAL_LEVEL:
-#             rospy.logwarn(f"{wp} ttwp: {wp_BAC_idx} BWP: {risk_map[wp]['BAC'][wp_BAC_idx]} BTC: {battery_consumption}.")
-#             rospy.logwarn(f"{wp} BAC: {wp_BAC}. Critical? False")
-#         else:
-#             rospy.logerr(f"{wp} ttwp: {wp_BAC_idx} BWP: {risk_map[wp]['BAC'][wp_BAC_idx]} BTC: {battery_consumption}.")
-#             rospy.logerr(f"{wp} BAC: {wp_BAC}. Critical? True")
-#             return True
-        
-#     return False
+
         
 def Plan(p):
     while not ros_utils.wait_for_param("/pnp_ros/ready"):
@@ -254,6 +237,7 @@ def Plan(p):
     ros_utils.wait_for_param("/hrisim/prediction_ready")
     rospy.set_param('/hrisim/robot_busy', False)
     PLAN_ON = True
+    TASK_ON = False
     rospy.set_param("/peopleflow/robot_plan_on", PLAN_ON)
     
     # Service proxies for get_risk_map, NewTask and FinishTask
@@ -262,11 +246,12 @@ def Plan(p):
     rospy.wait_for_service('/hrisim/finish_task')
     new_task_service = rospy.ServiceProxy('/hrisim/new_task', NewTask)
     finish_task_service = rospy.ServiceProxy('/hrisim/finish_task', FinishTask)
-    
+    shutdown_service = rospy.ServiceProxy('/hrisim/shutdown', Empty)
+
     while PLAN_ON:               
         if GO_TO_CHARGER:
-            finish_task_service(task_id, constants.TaskResult.FAILURE.value)  # -1 for success
-            rospy.loginfo(f"FinishTask service called for task ID {task_id} with success.")  
+            if TASK_ON:
+                finish_task_service(task_id, constants.TaskResult.CRITICAL_BATTERY.value)  
             NEXT_GOAL = constants.WP.CHARGING_STATION
             PLAN_ON = True
             QUEUE = nx.astar_path(G, ROBOT_CLOSEST_WP, NEXT_GOAL.value, heuristic=shortest_heuristic, weight='weight')
@@ -304,6 +289,7 @@ def Plan(p):
             if GO_TO_CHARGER: continue
             
             task_id = new_task_service(NEXT_GOAL, QUEUE).task_id
+            TASK_ON = True
         
         #! Here the goal is taken from the queue
         if not rospy.get_param('/hrisim/robot_busy') and len(QUEUE) > 0:
@@ -318,15 +304,16 @@ def Plan(p):
             if GOAL_STATUS == -1:
                 rospy.logerr("Goal failed!")
                 QUEUE = []
-                finish_task_service(task_id, constants.TaskResult.FAILURE.value)  # 1 for success
+                finish_task_service(task_id, constants.TaskResult.FAILURE.value)
+                TASK_ON = False
                 continue
             rospy.set_param('/hrisim/goal_status', 0)
             
             if len(QUEUE) == 0: 
-                finish_task_service(task_id, constants.TaskResult.SUCCESS.value)  # 1 for success
-
-        rospy.set_param('/hrisim/robot_task', TASK.value)
+                finish_task_service(task_id, constants.TaskResult.SUCCESS.value)
+                TASK_ON = False
     rospy.set_param("/peopleflow/robot_plan_on", PLAN_ON)
+    shutdown_service()             
 
                                    
 def cb_battery(msg):

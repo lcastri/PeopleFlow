@@ -3,6 +3,7 @@ from enum import Enum
 class TaskResult(Enum):
     SUCCESS = 1
     FAILURE = -1
+    CRITICAL_BATTERY = -2
 
 class Task(Enum):
     DELIVERY = "delivery"
@@ -57,6 +58,10 @@ class WP(Enum):
     OFFICE_1= "office-1"
     OFFICE_2= "office-2"
     TOILET_1= "toilet-1"
+    SUPPORT_5= "support-5"   
+    SUPPORT_6= "support-6"   
+    SUPPORT_7= "support-7"   
+    SUPPORT_8= "support-8"   
     TOILET_2= "toilet-2"
     DOOR_CORRIDOR_1= "door-corridor-1"
     DOOR_CORRIDOR_2= "door-corridor-2"
@@ -64,6 +69,7 @@ class WP(Enum):
     TABLE_12= "table-12"           
     TABLE_23= "table-23"           
     SUPPORT_0= "support-0"           
+    SUPPORT_9= "support-9"           
     CORRIDOR_CANTEEN_1= "corridor-canteen-1"
     CORRIDOR_CANTEEN_2= "corridor-canteen-2"
     CORRIDOR_CANTEEN_3= "corridor-canteen-3"
