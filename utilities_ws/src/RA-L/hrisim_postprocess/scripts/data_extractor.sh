@@ -1,6 +1,6 @@
 #!/bin/bash
 
-bagname="causal-04012025"
+bagname="causal-07012025"
 
 for i in {1..11}
 do

@@ -238,6 +238,7 @@ def Plan(p):
     rospy.set_param('/hrisim/robot_busy', False)
     PLAN_ON = True
     TASK_ON = False
+    no_prediction = False
     rospy.set_param("/peopleflow/robot_plan_on", PLAN_ON)
     
     # Service proxies for get_risk_map, NewTask and FinishTask
@@ -271,7 +272,10 @@ def Plan(p):
             if isinstance(NEXT_GOAL, constants.WP): NEXT_GOAL = NEXT_GOAL.value
             rospy.logerr(f"New goal defined: {NEXT_GOAL}")
             
-            RISK_MAP = get_prediction(p)
+            if not no_prediction:
+                RISK_MAP = get_prediction(p)
+            if rospy.get_param('/peopleflow/timeday') == constants.TOD.OFF.value and not no_prediction:
+                no_prediction = True
             
             # Compute the maximum values
             max_travel, max_pd_cost = compute_max_values(G, RISK_MAP)

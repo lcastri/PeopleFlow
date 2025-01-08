@@ -1,6 +1,6 @@
 import os
 import pandas as pd
-from utils import *
+from metrics.utils import *
 
 
 INDIR = '/home/lcastri/git/PeopleFlow/utilities_ws/src/RA-L/hrisim_postprocess/csv/TOD/my_nonoise'

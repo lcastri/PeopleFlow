@@ -5,7 +5,7 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import matplotlib.animation as animation
 import matplotlib.image as mpimg
-from utils import TOD
+from metrics.utils import TOD
 import yaml
 import os
 from PIL import Image

@@ -3,7 +3,7 @@ import os
 import pickle
 import numpy as np
 import pandas as pd
-from utils import *
+from metrics.utils import *
 import networkx as nx
 import xml.etree.ElementTree as ET
 
