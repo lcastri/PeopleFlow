@@ -118,7 +118,7 @@ def compute_human_collision(df, robot_diameter):
     return collision_count
 
 
-def compute_sc_for_zones(df, proxemics_threshold):
+def compute_hall_count(df, proxemics_threshold):
     """
     Compute the Personal Space Compliance (PSC) metric for multiple humans across proxemic zones.
 
@@ -130,33 +130,41 @@ def compute_sc_for_zones(df, proxemics_threshold):
     Returns:
         dict: PSC scores for each proxemic zone.
     """
-    def penalty_function(distance, threshold):
-        """Calculate the penalty for a given distance."""
-        return 0 if distance >= threshold else 1 - (distance / threshold)
-
     # Identify human columns dynamically
     human_columns = [(col, col.replace('_X', '_Y')) for col in df.columns if col.startswith('a') and col.endswith('_X')]
 
     # Initialize a dictionary for PSC scores by zone
-    zone_compliance = {zone: [] for zone in proxemics_threshold.keys()}
+    hall_count = {zone: 0 for zone in proxemics_threshold.keys()}
 
-    for _, row in df.iterrows():
-        # Robot position
-        r_x, r_y = row['R_X'], row['R_Y']
+    robot_coords = df[['R_X', 'R_Y']].to_numpy()
+    for ai_x_col, ai_y_col in human_columns:
+        human_coords = df[[ai_x_col, ai_y_col]].to_numpy()
 
-        for ai_x_col, ai_y_col in human_columns:
-            # Human position
-            h_x, h_y = row[ai_x_col], row[ai_y_col]
+        # Calculate the Euclidean distance between robot and human
+        distances = np.sqrt(np.sum((robot_coords - human_coords)**2, axis=1))
 
-            # Calculate the Euclidean distance between robot and human
-            distance = np.sqrt((r_x - h_x)**2 + (r_y - h_y)**2)
+        # Determine which zone the interaction falls into and add penalties
+        for zone, (lower, upper) in proxemics_threshold.items():
+            if zone == 'no-interaction':
+                hall_count[zone] += np.sum(distances > lower)
+            else:
+                hall_count[zone] += np.sum((lower < distances) & (distances <= upper))
 
-            # Determine which zone the interaction falls into and add penalties
-            for zone, threshold in proxemics_threshold.items():
-                zone_compliance[zone].append(penalty_function(distance, threshold))
+    return hall_count
 
-    # Compute the average PSC for each proxemic zone
-    return {zone: float(1 - np.mean(penalties)) for zone, penalties in zone_compliance.items()}
+
+# Function to convert numpy types to Python native types
+def make_serializable(obj):
+    if isinstance(obj, (np.int64, np.int32, np.integer)):
+        return int(obj)
+    elif isinstance(obj, (np.float64, np.float32, np.floating)):
+        return float(obj)
+    elif isinstance(obj, dict):
+        return {key: make_serializable(value) for key, value in obj.items()}
+    elif isinstance(obj, list):
+        return [make_serializable(value) for value in obj]
+    else:
+        return obj
 
 
 def plot_grouped_bar(bagnames, metrics_dict, title, ylabel, figsize=(14, 8), outdir=None):
@@ -288,7 +296,7 @@ def plot_efficiency(metrics_list, titles, ylabel, xTickLabel, figsize=(20, 12), 
             output_path = os.path.join(outdir, f"{tod}-Efficiency.png")
         else:
             output_path = os.path.join(outdir, f"Efficiency.png")
-            plt.savefig(output_path, dpi=300, bbox_inches="tight")
+        plt.savefig(output_path, dpi=300, bbox_inches="tight")
     else:
         plt.show()
         
@@ -365,9 +373,9 @@ def plot_grouped_stacked_bars(trends, time_labels, metric_name, ylabel, bar_widt
     plt.xticks(x_positions, time_labels, fontsize=10)
     plt.xlabel("Time Splits", fontsize=12)
     plt.ylabel(ylabel, fontsize=12)
-    plt.title(f"{metric_name} Trends", fontsize=14)
+    plt.title(f"{metric_name} Trend", fontsize=14)
     # Move the legend to the bottom
-    plt.legend(loc='upper center', bbox_to_anchor=(0.5, -0.1), ncol=3, fontsize=10)
+    plt.legend(loc='upper center', bbox_to_anchor=(0.5, -0.1), ncol=len(components), fontsize=10)
     plt.tight_layout()
     plt.grid(axis='y', linestyle='--', alpha=0.5)
     if percentage: plt.ylim(0, 101)

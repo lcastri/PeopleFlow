@@ -1,8 +1,8 @@
 #!/bin/bash
 
-bagname="causal-07012025"
+bagname="causal-08012025"
 
-for i in {1..11}
+for i in {10..11}
 do
     if [ $i -eq 1 ]; then
         load_goal=false

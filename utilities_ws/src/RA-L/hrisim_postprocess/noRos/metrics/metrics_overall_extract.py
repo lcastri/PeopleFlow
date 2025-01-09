@@ -5,11 +5,13 @@ import numpy as np
 import pandas as pd
 from utils import *
 from metrics_utils import *
+from tqdm import tqdm
 
 
 INDIR = '/home/lcastri/git/PeopleFlow/utilities_ws/src/RA-L/hrisim_postprocess/csv/HH/original'
 # BAGNAME= ['noncausal-03012025', 'causal-04012025']
-BAGNAME= ['causal-07012025']
+# BAGNAME= ['noncausal-03012025', 'causal-08012025']
+BAGNAME= ['causal-08012025']
 SCENARIO = 'warehouse'
 WPS_COORD = readScenario(SCENARIO)
 
@@ -22,13 +24,15 @@ Ks = 100 / (static_duration * 3600)
 Kd = (100 / (dynamic_duration * 3600) - Ks)/ROBOT_MAX_VEL
 
 STALLED_THRESHOLD = 0.05
-PROXEMIC_THRESHOLDS =  {'intimate': 0.5, 
-                        'personal': 1.2, 
-                        'social': 3.6, 
-                        'public': 7.6}
+PROXEMIC_THRESHOLDS =  {
+                        'no-interaction': (7.6, -1),
+                        'public': (3.6, 7.6),
+                        'social': (1.2, 3.6), 
+                        'personal': (0.5, 1.2), 
+                        'intimate': (0, 0.5), 
+                        }
 
 for bag in BAGNAME:
-    print(f"analysing {bag}")
     with open(os.path.join(INDIR, bag, 'tasks.json')) as json_file:
         TASKS = json.load(json_file)
 
@@ -66,7 +70,7 @@ for bag in BAGNAME:
                         'min_distance_to_humans': None,
                         'space_compliance': None} for task_id in TASK_IDs}
     # Iterate over unique tasks
-    for task_id in TASK_IDs:
+    for task_id in tqdm(TASK_IDs, desc=f"analysing {bag}"):
         if TASKS[str(task_id)]['end'] == 0: 
             del METRICS[task_id]
             continue
@@ -107,7 +111,7 @@ for bag in BAGNAME:
         MAX_CLEARING_DISTANCE = task_df['R_CD'].max()
         AVERAGE_CLEARING_DISTANCE = task_df['R_CD'].mean()
         MIN_DISTANCE_TO_HUMANS = compute_min_h_distance(task_df)
-        SPACE_COMPLIANCE = compute_sc_for_zones(task_df, PROXEMIC_THRESHOLDS)
+        SPACE_COMPLIANCE = compute_hall_count(task_df, PROXEMIC_THRESHOLDS)
     
         
         METRICS[task_id]['result'] = SUCCESS
@@ -200,11 +204,14 @@ for bag in BAGNAME:
     METRICS['mean_max_clearing_distance'] = float(np.mean([METRICS[task]['max_clearing_distance'] for task in tmp_tasks]))
     METRICS['mean_average_clearing_distance'] = float(np.mean([METRICS[task]['average_clearing_distance'] for task in tmp_tasks]))
     METRICS['mean_min_distance_to_humans'] = float(np.mean([METRICS[task]['min_distance_to_humans'] for task in tmp_tasks]))
+    METRICS['overall_space_compliance'] = {proxemic: None for proxemic in PROXEMIC_THRESHOLDS.keys()}
     METRICS['mean_space_compliance'] = {proxemic: None for proxemic in PROXEMIC_THRESHOLDS.keys()}
     METRICS['mean_battery_charging_time'] = float(AVERAGE_CHARGING_TIME)
     METRICS['mean_battery_at_start_charging'] = float(AVERAGE_BATTERY_LEVEL)
     for proxemic in PROXEMIC_THRESHOLDS.keys():
+        METRICS['overall_space_compliance'][proxemic] = float(np.sum([METRICS[task]['space_compliance'][proxemic] for task in tmp_tasks]))
         METRICS['mean_space_compliance'][proxemic] = float(np.mean([METRICS[task]['space_compliance'][proxemic] for task in tmp_tasks]))
 
+    json_to_save = make_serializable(METRICS)
     with open(os.path.join(INDIR, f"{bag}", "metrics.json"), 'w') as json_file:
-        json.dump(METRICS, json_file)
+        json.dump(json_to_save, json_file)

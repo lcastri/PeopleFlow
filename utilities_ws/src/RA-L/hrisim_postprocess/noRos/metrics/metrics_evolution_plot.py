@@ -5,8 +5,8 @@ from utils import *
 
 
 INDIR = '/home/lcastri/git/PeopleFlow/utilities_ws/src/RA-L/hrisim_postprocess/csv/HH/original'
-BAGNAMES = ['noncausal-03012025', 'causal-07012025']
-CATEGORIES = {'noncausal-03012025': 'Non-Causal', 'causal-07012025': 'Causal'}
+BAGNAMES = ['noncausal-03012025', 'causal-08012025']
+CATEGORIES = {'noncausal-03012025': 'Non-Causal', 'causal-08012025': 'Causal'}
 OUTDIR = os.path.join('/home/lcastri/git/PeopleFlow/utilities_ws/src/RA-L/hrisim_postprocess/results', 'comparison', '__'.join(BAGNAMES), 'trends')
 os.makedirs(OUTDIR, exist_ok=True)
 
@@ -34,7 +34,14 @@ battery_trends = {CATEGORIES[bag]: {"Planned Battery Usage": {"value": [], "colo
 velocity_trends = {CATEGORIES[bag]: {"Avg Velocity": {"value": [], "color": "tab:blue"}} for bag in BAGNAMES}
 collision_trends = {CATEGORIES[bag]: {"Human Collisions": {"value": [], "color": "tab:blue"}} for bag in BAGNAMES}
 clearance_trends = {CATEGORIES[bag]: {"Avg Clearing Distance": {"value": [], "color": "tab:blue"}} for bag in BAGNAMES}
-
+proxemics_trends = {
+    CATEGORIES[bag]: {
+    "Public": {"value": [], "color": "tab:green"},
+    "Social": {"value": [], "color": "tab:blue"},
+    "Personal": {"value": [], "color": "tab:orange"},
+    "Intimate": {"value": [], "color": "tab:red"},
+    } for bag in BAGNAMES
+}
 # Load metrics for each bag
 for tod in TOD:
     for bag in BAGNAMES:
@@ -66,7 +73,12 @@ for tod in TOD:
         # SAFETY
         collision_trends[CATEGORIES[bag]]["Human Collisions"]["value"].append(METRICS['overall_human_collision'] + METRICS['overall_robot_fallen'])
         clearance_trends[CATEGORIES[bag]]["Avg Clearing Distance"]["value"].append(METRICS['mean_average_clearing_distance'])
-
+        
+        denominator = METRICS['overall_space_compliance']['public'] + METRICS['overall_space_compliance']['social'] + METRICS['overall_space_compliance']['personal'] + METRICS['overall_space_compliance']['intimate']
+        proxemics_trends[CATEGORIES[bag]]["Public"]["value"].append(METRICS['overall_space_compliance']['public']*100/denominator if denominator > 0 else 0)
+        proxemics_trends[CATEGORIES[bag]]["Social"]["value"].append(METRICS['overall_space_compliance']['social']*100/denominator if denominator > 0 else 0)
+        proxemics_trends[CATEGORIES[bag]]["Personal"]["value"].append(METRICS['overall_space_compliance']['personal']*100/denominator if denominator > 0 else 0)
+        proxemics_trends[CATEGORIES[bag]]["Intimate"]["value"].append(METRICS['overall_space_compliance']['intimate']*100/denominator if denominator > 0 else 0)
 
 time_labels = [tod.value for tod in TOD]
 
@@ -77,3 +89,4 @@ plot_grouped_stacked_bars(battery_trends, time_labels, "Battery Usage", "Percent
 plot_grouped_stacked_bars(velocity_trends, time_labels, "Velocity", "m/s", label_bar_pos=0.01, percentage=False, outdir=OUTDIR)
 plot_grouped_stacked_bars(collision_trends, time_labels, "Collision", "Count", label_bar_pos=0.5, percentage=False, outdir=OUTDIR)
 plot_grouped_stacked_bars(clearance_trends, time_labels, "Clearance Distance to Obstacles", "m", label_bar_pos=0.025, percentage=False, outdir=OUTDIR)
+plot_grouped_stacked_bars(proxemics_trends, time_labels, "Proxemics", "Percentage (%)", outdir=OUTDIR)

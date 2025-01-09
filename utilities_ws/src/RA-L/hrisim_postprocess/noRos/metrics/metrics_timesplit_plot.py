@@ -4,8 +4,8 @@ from utils import *
 from metrics_utils import *
 
 INDIR = '/home/lcastri/git/PeopleFlow/utilities_ws/src/RA-L/hrisim_postprocess/csv/HH/original'
-BAGNAMES = ['noncausal-03012025', 'causal-07012025']
-CATEGORIES = {'noncausal-03012025': 'Non-Causal', 'causal-07012025': 'Causal'}
+BAGNAMES = ['noncausal-03012025', 'causal-08012025']
+CATEGORIES = {'noncausal-03012025': 'Non-Causal', 'causal-08012025': 'Causal'}
 OUTDIR = os.path.join('/home/lcastri/git/PeopleFlow/utilities_ws/src/RA-L/hrisim_postprocess/results', 'comparison', '__'.join(BAGNAMES), 'timesplit')
 os.makedirs(OUTDIR, exist_ok=True)
 
@@ -17,6 +17,7 @@ battery_metrics = {}
 velocity_metrics = {}
 collision_metrics = {}
 clearance_metrics = {}
+proxemics_metrics = {}
 
 # Load metrics for each bag
 for tod in TOD:
@@ -74,6 +75,17 @@ for tod in TOD:
             "Avg Clearing Distance": {"value": METRICS['mean_average_clearing_distance'], 
                                       "color": "tab:blue"},
         }
+        denominator = METRICS['overall_space_compliance']['public'] + METRICS['overall_space_compliance']['social'] + METRICS['overall_space_compliance']['personal'] + METRICS['overall_space_compliance']['intimate']
+        proxemics_metrics[bagname] = {
+            "Public Proxemics": {"value": METRICS['overall_space_compliance']['public']*100/denominator if denominator > 0 else 0, 
+                                "color": "tab:green"},
+            "Social Proxemics": {"value": METRICS['overall_space_compliance']['social']*100/denominator if denominator > 0 else 0, 
+                                "color": "tab:blue"},
+            "Personal Proxemics": {"value": METRICS['overall_space_compliance']['personal']*100/denominator if denominator > 0 else 0, 
+                                "color": "tab:orange"},
+            "Intimate Proxemics": {"value": METRICS['overall_space_compliance']['intimate']*100/denominator if denominator > 0 else 0, 
+                                "color": "tab:red"},
+        }
 
     # Plot all metrics
     plot_stacked_bar(success_failure_metrics, "Success-Failure", "%", CATEGORIES, yticks=range(0, 105, 10), tod=tod.value, outdir=OUTDIR)
@@ -83,6 +95,7 @@ for tod in TOD:
     plot_stacked_bar(velocity_metrics, "Velocity", "m/s", CATEGORIES, figsize=(8, 4), tod=tod.value, outdir=OUTDIR)
     plot_stacked_bar(collision_metrics, "Collision", "Count", CATEGORIES, figsize=(8, 4), tod=tod.value, outdir=OUTDIR)
     plot_stacked_bar(clearance_metrics, "Clearance Distance to Obstacles", "m", CATEGORIES, figsize=(8, 4), tod=tod.value, outdir=OUTDIR)
+    plot_stacked_bar(proxemics_metrics, "Proxemics", "%", CATEGORIES, figsize=(8, 4), tod=tod.value, outdir=OUTDIR)
 
     metrics_list = [
         success_failure_metrics,
