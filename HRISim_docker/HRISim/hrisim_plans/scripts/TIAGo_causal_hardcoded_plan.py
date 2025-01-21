@@ -3,7 +3,7 @@ import os
 import pickle
 import sys
 import copy
-
+import json
 import numpy as np
 import rospy
 try:
@@ -23,25 +23,29 @@ import hrisim_util.constants as constants
 import networkx as nx
 from peopleflow_msgs.msg import Time as pT
 from std_srvs.srv import Trigger
-from robot_srvs.srv import NewTask, NewTaskResponse, FinishTask, FinishTaskResponse
+from robot_srvs.srv import NewTask, NewTaskResponse, FinishTask, FinishTaskResponse, SetBattery, SetBatteryResponse
 from functools import partial
 from std_srvs.srv import Empty  # Import the Empty service
+import argparse
 
+from gazebo_msgs.srv import SetModelState
+from gazebo_msgs.msg import ModelState
+from geometry_msgs.msg import PoseWithCovarianceStamped
 
 BATTERY_CRITICAL_LEVEL = 20
 WORKING_TOP_TARGETS = [constants.WP.TARGET_1.value, constants.WP.TARGET_2.value, constants.WP.TARGET_3.value]
 WORKING_BOTTOM_TARGETS = [constants.WP.TARGET_4.value, constants.WP.TARGET_5.value, constants.WP.TARGET_6.value]
 LUNCH_TARGETS = [constants.WP.ENTRANCE.value, constants.WP.TARGET_7.value]
 
-def send_goal(p, next_dest, nextnext_dest=None):
+def send_goal(p, next_dest, nextnext_dest=None, time_threshold=-1):
     pos = nx.get_node_attributes(G, 'pos')
     x, y = pos[next_dest]
     if nextnext_dest is not None:
         x2, y2 = pos[nextnext_dest]
         angle = math.atan2(y2-y, x2-x)
-        coords = [x, y, angle, TIME_THRESHOLD]
+        coords = [x, y, angle, time_threshold]
     else:
-        coords = [x, y, 0, TIME_THRESHOLD]
+        coords = [x, y, 0, time_threshold]
     p.exec_action('goto', "_".join([str(coord) for coord in coords]))
     
     
@@ -188,23 +192,28 @@ def update_G_weights(risk_map, g, max_travel, max_pd_cost, robot_speed=0.5):
     return g
 
 
-def get_next_goal():    
-    if not rospy.get_param('/robot_battery/is_charging') and not rospy.get_param('/hrisim/robot_busy'):                                        
-        if rospy.get_param('/peopleflow/timeday') in [constants.TOD.H1.value, constants.TOD.H2.value, constants.TOD.H3.value, 
-                                                      constants.TOD.H4.value, constants.TOD.H5.value, constants.TOD.H7.value, 
-                                                      constants.TOD.H8.value, constants.TOD.H9.value, constants.TOD.H10.value]:
-            return TASK_LIST[constants.Task.DELIVERY.value].pop(0), constants.Task.DELIVERY, True
-                    
-        elif rospy.get_param('/peopleflow/timeday') in [constants.TOD.H6.value]:
-            return TASK_LIST['LUNCH'].pop(0), constants.Task.DELIVERY, True
-                    
-        elif rospy.get_param('/peopleflow/timeday') in [constants.TOD.OFF.value]:
-            if len(TASK_LIST[constants.Task.CLEANING.value]) > 0:
-                rospy.logwarn("It's off time, going to clean the shop.")
-                return TASK_LIST[constants.Task.CLEANING.value].pop(0), constants.Task.CLEANING, True
-            else:
-                rospy.logwarn("No cleaning tasks left, shutting down the planning.")
-                return None, None, False
+def get_next_goal():
+    global TASK_LIST
+
+    if not rospy.get_param('/robot_battery/is_charging') and not rospy.get_param('/hrisim/robot_busy'):
+        
+        tod = rospy.get_param('/peopleflow/timeday')                                   
+        if len(TASK_LIST[tod]) > 0:
+            if tod in [constants.TOD.H1.value, constants.TOD.H2.value, constants.TOD.H3.value, 
+                    constants.TOD.H4.value, constants.TOD.H5.value, constants.TOD.H7.value, 
+                    constants.TOD.H8.value, constants.TOD.H9.value, constants.TOD.H10.value]:
+                return TASK_LIST[tod][0], constants.Task.DELIVERY, True
+                        
+            elif rospy.get_param('/peopleflow/timeday') in [constants.TOD.H6.value]:
+                return TASK_LIST[tod][0], constants.Task.DELIVERY, True
+                        
+            elif rospy.get_param('/peopleflow/timeday') in [constants.TOD.OFF.value]:
+                if len(TASK_LIST[tod]) > 0:
+                    rospy.logwarn("It's off time, going to clean the shop.")
+                    return TASK_LIST[tod][0], constants.Task.CLEANING, True
+        else:
+            rospy.logwarn("No tasks left, shutting down the planning.")
+            return None, None, False
                        
             
 def check_BAC(risk_map, queue, heuristic, robot_speed = 0.5):
@@ -227,44 +236,103 @@ def check_BAC(risk_map, queue, heuristic, robot_speed = 0.5):
         
     return False
 
+def set_battery(b):
+    try:
+        response = set_battery_level(b)
+        if response.success:
+            rospy.loginfo("Battery successfully set to 100%.")
+        else:
+            rospy.logwarn("Failed to set battery level.")
+    except rospy.ServiceException as e:
+        rospy.logerr(f"Service call to set_battery_level failed: {e}")
+        
+        
+def set_robot_pos(dest):
+    global ROBOT_CLOSEST_WP
+    rospy.wait_for_service('/gazebo/set_model_state')
+    try:
+        pos = nx.get_node_attributes(G, 'pos')
+        x, y = pos[dest]
+        yaw = 0
+        
+        set_model_state = rospy.ServiceProxy('/gazebo/set_model_state', SetModelState)
+        state_msg = ModelState()
+        state_msg.model_name = 'tiago'
+
+        # Set the robot's position and orientation from input
+        state_msg.pose.position.x = float(x)
+        state_msg.pose.position.y = float(y)
+        state_msg.pose.position.z = 0
+        state_msg.pose.orientation.z = math.sin(float(yaw)/2)
+        state_msg.pose.orientation.w = math.cos(float(yaw)/2)
+        state_msg.reference_frame = 'world'
+        set_model_state(state_msg)
+
+        # Publish the pose to /initialpose
+        pose_msg = PoseWithCovarianceStamped()
+        pose_msg.header.stamp = rospy.Time.now()
+        pose_msg.header.frame_id = 'world'
+        pose_msg.pose.pose = state_msg.pose
+
+        # Optional: Set the covariance to indicate confidence in this estimate
+        pose_msg.pose.covariance[0] = 0.25  # x covariance
+        pose_msg.pose.covariance[7] = 0.25  # y covariance
+        pose_msg.pose.covariance[35] = 0.0685  # yaw covariance (approx. 5 degrees)
+
+        initial_pose_pub.publish(pose_msg)
+        ROBOT_CLOSEST_WP = dest
+        rospy.sleep(2)
+        rospy.logwarn(f"Robot position and orientation set: {dest}!")
+
+    except rospy.ServiceException as e:
+        rospy.logerr("Service call failed: %s" % e)   
         
 def Plan(p):
     while not ros_utils.wait_for_param("/pnp_ros/ready"):
         rospy.sleep(0.1)
         
-    global NEXT_GOAL, QUEUE, GO_TO_CHARGER, G, RISK_MAP
-    ros_utils.wait_for_param("/peopleflow/timeday")
-    ros_utils.wait_for_param("/hrisim/prediction_ready")
-    rospy.set_param('/hrisim/robot_busy', False)
-    PLAN_ON = True
-    TASK_ON = False
-    no_prediction = False
-    rospy.set_param("/peopleflow/robot_plan_on", PLAN_ON)
-    
+    global NEXT_GOAL, QUEUE, GO_TO_CHARGER, G, RISK_MAP, TASK_LIST, set_battery_level
     # Service proxies for get_risk_map, NewTask and FinishTask
     rospy.wait_for_service('/get_risk_map')
     rospy.wait_for_service('/hrisim/new_task')
     rospy.wait_for_service('/hrisim/finish_task')
+    rospy.wait_for_service('/hrisim/shutdown')
+    rospy.wait_for_service('/hrisim/set_battery_level')
+
     new_task_service = rospy.ServiceProxy('/hrisim/new_task', NewTask)
     finish_task_service = rospy.ServiceProxy('/hrisim/finish_task', FinishTask)
     shutdown_service = rospy.ServiceProxy('/hrisim/shutdown', Empty)
+    set_battery_level = rospy.ServiceProxy('/hrisim/set_battery_level', SetBattery)
+    ros_utils.wait_for_param("/hrisim/prediction_ready")
+    
+    while ros_utils.wait_for_param("/peopleflow/timeday") != INIT_TIME: 
+        rospy.sleep(0.1)    
+    set_battery(INIT_BATTERY)
+    
+    rospy.set_param('/hrisim/robot_busy', False)
+    no_prediction = False
+    PLAN_ON = True
+    TASK_ON = False
+    GO_TO_CHARGER = False
 
     while PLAN_ON:               
         if GO_TO_CHARGER:
             if TASK_ON:
-                finish_task_service(task_id, constants.TaskResult.CRITICAL_BATTERY.value)  
-            NEXT_GOAL = constants.WP.CHARGING_STATION
-            PLAN_ON = True
-            QUEUE = nx.astar_path(G, ROBOT_CLOSEST_WP, NEXT_GOAL.value, heuristic=shortest_heuristic, weight='weight')
-            while QUEUE:
-                current_wp = QUEUE.pop(0)
-                next_wp = QUEUE[0] if QUEUE else None
-                send_goal(p, current_wp, next_wp)
-            GO_TO_CHARGER = False
+                rospy.logerr(f"Task {task_id} fail for critical battery")
+                finish_task_service(task_id, constants.TaskResult.CRITICAL_BATTERY.value)
+                TASK_ON = False
+                rospy.logwarn("Cancelling all goals..")
+                client = actionlib.SimpleActionClient('/move_base', MoveBaseAction)
+                client.wait_for_server()
+                client.cancel_all_goals()
+                p.action_cmd('goto', "", 'interrupt')
+                while rospy.get_param('/hrisim/robot_busy'): rospy.sleep(0.1)
+        
+                set_robot_pos(NEXT_GOAL)
+                QUEUE = []
             rospy.set_param('/robot_battery/is_charging', True)
-            rospy.logwarn("Battery charging..")
-            NEXT_GOAL = None
-            TASK = constants.Task.CHARGING
+            set_battery(100)
+            GO_TO_CHARGER = False
             
         elif not rospy.get_param('/robot_battery/is_charging') and not GO_TO_CHARGER and len(QUEUE) == 0:
             NEXT_GOAL, TASK, PLAN_ON = get_next_goal()
@@ -292,6 +360,7 @@ def Plan(p):
             GO_TO_CHARGER = check_BAC(RISK_MAP, QUEUE, causal_heuristic_predefined)
             if GO_TO_CHARGER: continue
             
+            TASK_LIST[rospy.get_param('/peopleflow/timeday')].pop(0)
             task_id = new_task_service(NEXT_GOAL, QUEUE).task_id
             TASK_ON = True
         
@@ -300,39 +369,33 @@ def Plan(p):
             next_sub_goal = QUEUE.pop(0)
             rospy.logwarn(f"Planning next goal: {next_sub_goal}")
             nextnext_sub_goal = QUEUE[0] if len(QUEUE) > 0 else None
-            if nextnext_sub_goal is None and TASK is constants.Task.CLEANING: 
-                nextnext_sub_goal = TASK_LIST[constants.Task.CLEANING.value][0] if len(TASK_LIST[constants.Task.CLEANING.value]) > 0 else None
-
-            send_goal(p, next_sub_goal, nextnext_sub_goal)
+            if nextnext_sub_goal is None and TASK is constants.Task.CLEANING:
+                tod = rospy.get_param('/peopleflow/timeday')                                   
+                nextnext_sub_goal = TASK_LIST[tod][0] if len(TASK_LIST[tod]) > 0 else None
+            
+            send_goal(p, next_sub_goal, nextnext_sub_goal, TIME_THRESHOLD)
             GOAL_STATUS = rospy.get_param('/hrisim/goal_status')
             if GOAL_STATUS == -1:
                 rospy.logerr("Goal failed!")
-                QUEUE = []
                 finish_task_service(task_id, constants.TaskResult.FAILURE.value)
                 TASK_ON = False
+                set_robot_pos(NEXT_GOAL)
+                QUEUE = []
                 continue
             rospy.set_param('/hrisim/goal_status', 0)
             
             if len(QUEUE) == 0: 
                 finish_task_service(task_id, constants.TaskResult.SUCCESS.value)
                 TASK_ON = False
-    rospy.set_param("/peopleflow/robot_plan_on", PLAN_ON)
-    shutdown_service()             
-
+                
+    with open('battery_level.txt', 'w') as file:
+        file.write(f"Battery Level: {BATTERY_LEVEL}\n")
+    shutdown_service()
                                    
 def cb_battery(msg):
-    global BATTERY_LEVEL, QUEUE, NEXT_GOAL, GO_TO_CHARGER
-    
+    global BATTERY_LEVEL, GO_TO_CHARGER
     BATTERY_LEVEL = float(msg.level.data)
-    if not GO_TO_CHARGER and not rospy.get_param('/robot_battery/is_charging') and BATTERY_LEVEL <= BATTERY_CRITICAL_LEVEL:
-        rospy.logwarn("Cancelling all goals..")
-        client = actionlib.SimpleActionClient('/move_base', MoveBaseAction)
-        client.wait_for_server()
-        client.cancel_all_goals()
-        p.action_cmd('goto', "", 'interrupt')
-        while rospy.get_param('/hrisim/robot_busy'): rospy.sleep(0.1)
-        NEXT_GOAL = None
-        QUEUE = []
+    if not GO_TO_CHARGER and not rospy.get_param('/robot_battery/is_charging') and BATTERY_LEVEL <= 20:        
         GO_TO_CHARGER = True
         
     elif BATTERY_LEVEL == 100 and rospy.get_param('/robot_battery/is_charging'):
@@ -354,12 +417,13 @@ if __name__ == "__main__":
     PRED_STEP = 5
     K_D = 1
     K_PD = 10
-    
+    global TASK_LIST
+
     p = PNPCmd()
         
-    TLISTPATH = '/root/ros_ws/src/HRISim/hrisim_plans/hardcoded/task_list.pkl'
-    with open(TLISTPATH, 'rb') as f:
-        TASK_LIST = pickle.load(f)
+    TLISTPATH = '/root/ros_ws/src/HRISim/hrisim_plans/hardcoded/task_list.json'
+    with open(TLISTPATH, 'r') as f:
+        TASK_LIST = json.load(f)
     
     g_path = ros_utils.wait_for_param("/peopleflow_pedsim_bridge/g_path")
     with open(g_path, 'rb') as f:
@@ -368,11 +432,20 @@ if __name__ == "__main__":
         G_original = copy.deepcopy(G)
     rospy.Subscriber("/hrisim/robot_battery", BatteryStatus, cb_battery)
     rospy.Subscriber("/hrisim/robot_closest_wp", String, cb_robot_closest_wp)
+    initial_pose_pub = rospy.Publisher("/initialpose", PoseWithCovarianceStamped, queue_size=10)
 
     STATIC_CONSUMPTION = rospy.get_param("/robot_battery/static_consumption")
     K = rospy.get_param("/robot_battery/dynamic_consumption")
     TIME_THRESHOLD = ros_utils.wait_for_param("/hrisim/abort_time_threshold")
 
+    parser = argparse.ArgumentParser(description='Initialize robot parameters.')
+    parser.add_argument('--init_time', type=str, required=True, help='Initial time to start the plan.')
+    parser.add_argument('--init_battery', type=float, required=True, help='Initial battery level.')
+
+    args = parser.parse_args()
+    INIT_TIME = args.init_time
+    INIT_BATTERY = args.init_battery
+    
     p.begin()
 
     Plan(p)

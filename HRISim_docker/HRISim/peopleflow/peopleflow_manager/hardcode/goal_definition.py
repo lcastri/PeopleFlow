@@ -82,8 +82,10 @@ if __name__ == "__main__":
     
     for agent in AGENTS:
         AGENTS[agent]['tasks'] = {tod: {"destinations":[], "durations":[]} for tod in SCHEDULE}
-        AGENTS[agent]['startTime'] = random.randint(20, SCHEDULE[constants.TOD.H1.value].duration - 30)
-        AGENTS[agent]['exitTime'] = int(sum([SCHEDULE[t].duration for t in SCHEDULE if t in [e.value for e in constants.TOD if e != constants.TOD.H10 and e != constants.TOD.OFF]]) + AGENTS[agent]['startTime'])
+        # AGENTS[agent]['startTime'] = random.randint(20, 3600 - 30)
+        AGENTS[agent]['startTime'] = random.randint(0, SCHEDULE[constants.TOD.H1.value].duration - 30)
+        AGENTS[agent]['exitTime'] = int(sum([SCHEDULE[t].duration for t in SCHEDULE if t in [e.value for e in constants.TOD if e != constants.TOD.H10 and e != constants.TOD.OFF]]) + random.randint(0, 1800))
+        # AGENTS[agent]['exitTime'] = int(sum([SCHEDULE[t].duration for t in SCHEDULE if t in [e.value for e in constants.TOD if e != constants.TOD.H10 and e != constants.TOD.OFF]]) + AGENTS[agent]['startTime'])
         print(f"Agent {agent}: startTime {AGENTS[agent]['startTime']} exitTime {AGENTS[agent]['exitTime']}")
                    
         for tod in SCHEDULE:

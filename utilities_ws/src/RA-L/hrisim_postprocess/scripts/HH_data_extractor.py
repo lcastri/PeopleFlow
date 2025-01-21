@@ -23,19 +23,18 @@ from utils import *
 
 NODE_NAME = 'hrisim_postprocess'
 NODE_RATE = 10 #Hz
-GOAL_REACHED_THRES = 0.2
 NOGOAL = -1000
 
 
 class Robot():
-    def __init__(self, x, y, gx, gy) -> None:
-        self.x = x
-        self.y = y
-        self.yaw = 0
+    def __init__(self) -> None:
+        self.x = NOGOAL
+        self.y = NOGOAL
+        self.yaw = NOGOAL
         self.v = 0
-        self.gx = gx
-        self.gy = gy
-        self.battery_level = 0
+        self.gx = NOGOAL
+        self.gy = NOGOAL
+        self.battery_level = NOGOAL
         self.is_charging = 0
         self.closest_wp = ''
         self.clearing_distance = 0
@@ -49,7 +48,8 @@ class Agent():
         self.y = 0
         self.yaw = 0
         self.v = 0 
-           
+        
+        
 class Task():
     def __init__(self, id, starting, path, destination) -> None:
         self.id = id
@@ -59,20 +59,19 @@ class Task():
         self.ending = 0
         self.result = 0      
 
-
 class DataManager():
     """
     Class handling data
     """
     
-    def __init__(self, x = 0, y = 0, gx = NOGOAL, gy = NOGOAL):
+    def __init__(self):
         """
         Class constructor. Init publishers and subscribers
         """
     
         self.last_clock_time = time.time()
         self.rostime = 0
-        self.robot = Robot(x, y, gx, gy)
+        self.robot = Robot()
         self.agents = {}
         self.tasks = {}
         self.n_tasks = 0
@@ -180,12 +179,8 @@ class DataManager():
         self.n_failure = msg.num_failure
         
         
-        
-def shutdown_callback(data_rows, filename, csv_path, goal_path, data):   
+def shutdown_callback(data_rows, filename, csv_path, data):   
     rospy.logwarn("Shutting down and saving data.")
-    
-    goal_data = {'x': data.robot.x, 'y': data.robot.y,
-                 'gx': data.robot.gx, 'gy': data.robot.gy}
     
     tasks = {id: {'start': task.starting, 
                   'end': task.ending, 
@@ -195,28 +190,19 @@ def shutdown_callback(data_rows, filename, csv_path, goal_path, data):
     tasks['n_tasks'] = data.n_tasks
     tasks['n_success'] = data.n_success
     tasks['n_failure'] = data.n_failure
-
-    # Save the goal data into a JSON file
-    with open(goal_path, 'w') as json_file:
-        json.dump(goal_data, json_file)
-    rospy.loginfo(f"Saved goal coordinates to {goal_path}")
     
-    with open(os.path.join(csv_path, 'tasks.json'), 'w') as json_file:
+    with open(os.path.join(csv_path, f'tasks-{TIMEOFTHEDAY}.json'), 'w') as json_file:
         json.dump(tasks, json_file)
     rospy.loginfo(f"Saved tasks {csv_path}")
-    
-    save_data_to_csv(data_rows, filename, csv_path)
-           
-
-def save_data_to_csv(data_rows, filename, csv_path):   
+         
     rospy.logwarn("Saving data into CSV files..")
     
     # Generating Task Result Column
     df = pd.DataFrame(data_rows)
         
-    df.to_csv(f"{csv_path}/{filename}_{TIMEOFTHEDAY}.csv", index=False)
+    df.to_csv(f"{csv_path}/{filename}.csv", index=False)
     del df
-    rospy.logwarn(f"Saved {filename}_{TIMEOFTHEDAY}.csv")
+    rospy.logwarn(f"Saved {filename}.csv")
     
 
 def readScenario():
@@ -250,92 +236,61 @@ if __name__ == '__main__':
     rate = rospy.Rate(NODE_RATE)
     
     BAGNAME = rospy.get_param('~bagname')
+    TIMEOFTHEDAY = BAGNAME.split('-')[-1]
+    rospy.loginfo(f"Processing {BAGNAME}")
     NODE_PATH = rospy.get_param('~node_path')
     scn = rospy.get_param('~scenario')
     SCENARIO = os.path.join(NODE_PATH, 'scenarios', f'{scn}.xml')
-    CSV_PATH = os.path.join(NODE_PATH, 'csv', 'HH','original', BAGNAME)
+    CSV_PATH = os.path.join(NODE_PATH, 'csv', 'HH','original', '-'.join(BAGNAME.split('-')[:-1]))
     os.makedirs(CSV_PATH, exist_ok=True)
-    LOADGOAL = rospy.get_param('~load_goal')
-    TIMEOFTHEDAY = rospy.get_param('~time_of_the_day')
-    GOAL_PATH = os.path.join(NODE_PATH, 'csv', "goal.json")
     
     # Map waypoints
     WPS_INFO = readScenario()
-            
-    if LOADGOAL:
-        if os.path.exists(GOAL_PATH):
-            with open(GOAL_PATH, 'r') as json_file:
-                G = json.load(json_file)
-            rospy.logwarn(f"Loaded goal coordinates from {GOAL_PATH}")
-        else:
-            G = {'x': 0, 'y': 0, 'gx': NOGOAL, 'gy': NOGOAL}
-    else:
-        G = {'x': 0, 'y': 0, 'gx': NOGOAL, 'gy': NOGOAL}
     
-    data_handler = DataManager(x = G['x'], y = G['y'], gx = G['gx'], gy = G['gy'])
+    data_handler = DataManager()
     
-    # Initialize variables to track timeOfDay
-    recording = False
     data_rows = []  # List to store collected data for each segment
     
     # Register the shutdown callback
-    rospy.on_shutdown(lambda: shutdown_callback(data_rows, BAGNAME, CSV_PATH, GOAL_PATH, data_handler))
+    rospy.on_shutdown(lambda: shutdown_callback(data_rows, BAGNAME, CSV_PATH, data_handler))
     
     while not rospy.is_shutdown():
 
-        if data_handler.timeOfDay == '': continue
-
-        # Start recording when timeOfDay matches the specified time
-        if not recording and value2key(TODS, data_handler.timeOfDay) == TIMEOFTHEDAY:
-            rospy.logwarn(f"Started recording at {TIMEOFTHEDAY}")
-            recording = True
-
-        # Stop recording and trigger shutdown when timeOfDay changes
-        if recording and (value2key(TODS, data_handler.timeOfDay) != TIMEOFTHEDAY):
-            if data_handler.timeOfDay == 'none':
-                rospy.logwarn("Rosbag ended!, triggering shutdown")
-            else:
-                rospy.logwarn(f"Time of day changed from {TIMEOFTHEDAY} to {value2key(TODS, data_handler.timeOfDay)}, triggering shutdown")
-            rospy.signal_shutdown("Time of day changed or rosbag finished.")
-
-        if recording:
-
-            # Collect data for the current time step
-            data_row = {
-                'ros_time': data_handler.rostime,
-                'pf_elapsed_time': data_handler.elapsed,
-                'TOD': data_handler.timeOfDay,
-                'R_X': data_handler.robot.x,
-                'R_Y': data_handler.robot.y,
-                'R_YAW': data_handler.robot.yaw,
-                'R_V': data_handler.robot.v,
-                'G_X': data_handler.robot.gx,
-                'G_Y': data_handler.robot.gy,
-                'R_B': data_handler.robot.battery_level,
-                'B_S': 1 if data_handler.robot.is_charging else 0,
-                'R_CD': data_handler.robot.clearing_distance,
-                'R_HC': data_handler.robot.H_collision,
-                'T': data_handler.robot.task,
-            }
-            
-            data_handler.robot.H_collision = 0
+        if data_handler.timeOfDay == '' or (value2key(TODS, data_handler.timeOfDay) != TIMEOFTHEDAY): continue
+        
+        # Collect data for the current time step
+        data_row = {
+            'ros_time': data_handler.rostime,
+            'pf_elapsed_time': data_handler.elapsed,
+            'TOD': data_handler.timeOfDay,
+            'R_X': data_handler.robot.x,
+            'R_Y': data_handler.robot.y,
+            'R_V': data_handler.robot.v,
+            'G_X': data_handler.robot.gx,
+            'G_Y': data_handler.robot.gy,
+            'R_B': data_handler.robot.battery_level,
+            'B_S': 1 if data_handler.robot.is_charging else 0,
+            'R_CD': data_handler.robot.clearing_distance,
+            'R_HC': data_handler.robot.H_collision,
+            'T': data_handler.robot.task,
+        }
+        
+        data_handler.robot.H_collision = 0
                                             
-            # Collect agents' data
-            for agent_id, agent in data_handler.agents.items():
-                data_row[f'a{agent_id}_X'] = agent.x
-                data_row[f'a{agent_id}_Y'] = agent.y
-                data_row[f'a{agent_id}_YAW'] = agent.yaw
-                data_row[f'a{agent_id}_V'] = agent.v
+        # Collect agents' data
+        for agent_id, agent in data_handler.agents.items():
+            data_row[f'a{agent_id}_X'] = agent.x
+            data_row[f'a{agent_id}_Y'] = agent.y
 
-            # Collect WP' data
-            for wp_id in data_handler.WPs.keys():
-                data_row[f'{wp_id}_NP'] = data_handler.WPs[wp_id]
-            for wp_id in data_handler.PDs.keys():
-                data_row[f'{wp_id}_PD'] = data_handler.PDs[wp_id]
-            for wp_id in data_handler.BACs.keys():
-                data_row[f'{wp_id}_BAC'] = data_handler.BACs[wp_id]
+        # Collect WP' data
+        for wp_id in data_handler.WPs.keys():
+            data_row[f'{wp_id}_NP'] = data_handler.WPs[wp_id]
+        for wp_id in data_handler.PDs.keys():
+            data_row[f'{wp_id}_PD'] = data_handler.PDs[wp_id]
+        for wp_id in data_handler.BACs.keys():
+            data_row[f'{wp_id}_BAC'] = data_handler.BACs[wp_id]
 
-            # Append the row to the list
-            data_rows.append(data_row)
+        # Append the row to the list
+        data_rows.append(data_row)
 
         rate.sleep()

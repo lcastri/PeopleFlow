@@ -1,9 +1,7 @@
 #!/usr/bin/env python
 
 from math import sqrt
-import random
 
-import numpy as np
 import rospy
 from nav_msgs.msg import Odometry
 from geometry_msgs.msg import Vector3Stamped
@@ -11,7 +9,8 @@ from tf2_geometry_msgs import do_transform_vector3
 from tf2_ros import Buffer, TransformListener
 from robot_msgs.msg import BatteryStatus
 import hrisim_util.ros_utils as ros_utils
-        
+from robot_srvs.srv import SetBattery, SetBatteryResponse
+
 class SimBatteryManager():
     def __init__(self, init_level, static_duration, dynamic_duration, charging_time):
         self.lastT = None
@@ -30,7 +29,8 @@ class SimBatteryManager():
 
         self.vel = 0
         rospy.Subscriber('/mobile_base_controller/odom', Odometry, self.cb_vel)
-        
+        rospy.Service('/hrisim/set_battery_level', SetBattery, self.set_battery_level_cb)
+
         self.tf_buffer = Buffer()
         self.tf_listener = TransformListener(self.tf_buffer)
          
@@ -76,7 +76,16 @@ class SimBatteryManager():
         if self.battery_level > 100:
             self.battery_level = 100  # Cap at 100%
 
-    
+    def set_battery_level_cb(self, req):
+        if 0 <= req.battery_level <= 100:  # Ensure the level is valid
+            self.battery_level = req.battery_level
+            rospy.loginfo(f"Battery level set to {self.battery_level}")
+            return SetBatteryResponse(success=True)
+        else:
+            rospy.logwarn("Invalid battery level. Must be between 0 and 100.")
+            return SetBatteryResponse(success=False)
+        
+            
 if __name__ == '__main__':
     rospy.init_node('robot_battery')
     rate = rospy.Rate(1)

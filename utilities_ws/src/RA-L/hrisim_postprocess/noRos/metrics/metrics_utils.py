@@ -73,54 +73,50 @@ def compute_actual_battery_consumption(task_df):
 
 def compute_human_collision(df, robot_diameter):
     """
-    Calculate the number of unique human collisions.
-    A collision is counted only when a human enters the robot's base diameter and then exits.
+    Calculate the number of unique human collisions using vectorized operations with NumPy.
+    A collision is counted when a human enters the robot's base diameter and then exits.
 
     Parameters:
         df (pd.DataFrame): DataFrame containing robot and human positions over time.
+        robot_diameter (float): Diameter of the robot base.
 
     Returns:
         int: Total number of unique collisions with humans.
     """
-    robot_coords = df[['R_X', 'R_Y']].to_numpy()
-    collision_count = 0
+    # Convert the robot's coordinates to NumPy arrays
+    r_x = df['R_X'].values
+    r_y = df['R_Y'].values
+
+    # Extract human columns dynamically
+    human_x_cols = [col for col in df.columns if col.startswith('a') and col.endswith('_X')]
+    human_y_cols = [col.replace('_X', '_Y') for col in human_x_cols]
     
-    # Track collision state for each human
-    human_collision_states = {}
+    collision_count = 0
+    radius = robot_diameter / 2
+    
+    # Iterate over human coordinate columns in pairs (x, y)
+    for h_x_col, h_y_col in zip(human_x_cols, human_y_cols):
+        h_x = df[h_x_col].values
+        h_y = df[h_y_col].values
 
-    # Identify human coordinate columns dynamically
-    for col in df.columns:
-        if col.startswith('a') and col.endswith('_X'):
-            human_id = col[:-2]  # Extract human identifier (e.g., 'a1', 'a2')
-            human_collision_states[human_id] = False  # Initialize collision state
+        # Compute the distance matrix using vectorized NumPy operations
+        distances = np.sqrt((r_x - h_x)**2 + (r_y - h_y)**2)
 
-    # Iterate over time steps
-    for _, row in df.iterrows():
-        r_x, r_y = row['R_X'], row['R_Y']
+        # Determine collision state (True for collision, False otherwise)
+        collisions = distances < radius
 
-        for col in df.columns:
-            if col.startswith('a') and col.endswith('_X'):
-                human_id = col[:-2]  # Extract human identifier
-                h_x, h_y = row[col], row[col.replace('_X', '_Y')]
-
-                # Calculate distance
-                distance = np.sqrt((r_x - h_x)**2 + (r_y - h_y)**2)
-
-                # Check for collision entry
-                if distance < (robot_diameter/2) and not human_collision_states[human_id]:
-                    collision_count += 1
-                    human_collision_states[human_id] = True  # Human enters collision zone
-
-                # Check for collision exit
-                elif distance >= (robot_diameter/2):
-                    human_collision_states[human_id] = False  # Human exits collision zone
+        # Detect transitions into and out of collision state
+        transitions = np.diff(collisions.astype(int))
+        collision_entries = np.sum(transitions == 1)  # Count entries into the collision zone
+        collision_count += collision_entries
 
     return collision_count
 
 
 def compute_hall_count(df, proxemics_threshold):
     """
-    Compute the Personal Space Compliance (PSC) metric for multiple humans across proxemic zones.
+    Compute the Personal Space Compliance (PSC) metric for multiple humans across proxemic zones
+    and save distances for each agent for further analysis.
 
     Parameters:
         df (pd.DataFrame): DataFrame containing robot and human positions over time.
@@ -128,7 +124,7 @@ def compute_hall_count(df, proxemics_threshold):
             [intimate, personal, social, public]
 
     Returns:
-        dict: PSC scores for each proxemic zone.
+        tuple: A dictionary of PSC scores for each proxemic zone and a dictionary of distances for each agent.
     """
     # Identify human columns dynamically
     human_columns = [(col, col.replace('_X', '_Y')) for col in df.columns if col.startswith('a') and col.endswith('_X')]
@@ -136,12 +132,16 @@ def compute_hall_count(df, proxemics_threshold):
     # Initialize a dictionary for PSC scores by zone
     hall_count = {zone: 0 for zone in proxemics_threshold.keys()}
 
+    # Initialize a dictionary to store distances for each agent
+    agent_distances = {col: [] for col, _ in human_columns}
+
     robot_coords = df[['R_X', 'R_Y']].to_numpy()
     for ai_x_col, ai_y_col in human_columns:
         human_coords = df[[ai_x_col, ai_y_col]].to_numpy()
 
         # Calculate the Euclidean distance between robot and human
         distances = np.sqrt(np.sum((robot_coords - human_coords)**2, axis=1))
+        agent_distances[ai_x_col] = distances.tolist()  # Save distances for each agent
 
         # Determine which zone the interaction falls into and add penalties
         for zone, (lower, upper) in proxemics_threshold.items():
@@ -150,7 +150,7 @@ def compute_hall_count(df, proxemics_threshold):
             else:
                 hall_count[zone] += np.sum((lower < distances) & (distances <= upper))
 
-    return hall_count
+    return hall_count, agent_distances
 
 
 # Function to convert numpy types to Python native types
@@ -191,48 +191,132 @@ def plot_grouped_bar(bagnames, metrics_dict, title, ylabel, figsize=(14, 8), out
         plt.show()
         
         
-def plot_stacked_bar(metrics_dict, title, ylabel, xTickLabel, bar_width=0.2, offset = 0.01, yticks = None, figsize=(14, 9), tod = None, outdir=None):
+# def plot_stacked_bar(metrics_dict, title, ylabel, xTickLabel, bar_width=0.1, offset = 0.01, yticks = None, figsize=(8, 6), tod = None, outdir=None):
+#     # Categories and components
+#     categories = list(metrics_dict.keys())
+#     components = list(metrics_dict[categories[0]].keys())
+
+#     # Extracting values
+#     values = {component: [metrics_dict[cat][component]["value"] for cat in categories] for component in components}
+#     percs = {component: [metrics_dict[cat][component]["%"] for cat in categories] for component in components}
+#     colors = {component: [metrics_dict[cat][component]["color"] for cat in categories] for component in components}
+
+#     # Create the bar chart
+#     x = [(bar_width + offset) * i for i in range(len(categories))]  # the label locations
+
+#     # Initialize bottom for stacking
+#     bottom = np.zeros(len(categories))
+
+#     # Plot each component
+#     fig, ax = plt.subplots(figsize=figsize)
+#     for component, value in values.items():
+#         bars = plt.bar(x, value, bar_width, label=component, bottom=bottom, color=colors[component])
+#         bottom += np.array(value)
+#         # Annotate each bar segment with its percentage value
+#         for bar in bars:
+#             height = bar.get_height()
+#             if height > 0:
+#                 ax.text(bar.get_x() + bar.get_width() / 2, bar.get_height() / 2 + bar.get_y(),
+#                         f'{percs[component][bars.index(bar)]:.2f}%', ha='center', va='center', fontsize=10, color='black')
+                
+#     # Adjust x-axis and other labels
+#     plt.xticks(x, [xTickLabel[cat] for cat in categories], fontsize=12)
+#     if yticks is not None: plt.yticks(yticks, fontsize=12)
+#     plt.ylabel(ylabel, fontsize=14)
+#     plt.title(f"{tod} -- {title}" if tod is not None else title, fontsize=16)
+#     plt.ylim(0, max(bottom) * 1.1)
+    
+#     # Move legend below the chart
+#     plt.legend(loc='upper center', bbox_to_anchor=(0.5, -0.05), fancybox=True, shadow=False, ncol=len(components))
+
+#     # Add grid for clarity
+#     plt.grid(axis='y', linestyle='--', alpha=0.5)
+
+#     # Display or save the plot
+#     if outdir is not None:
+#         plt.savefig(os.path.join(outdir, f"{tod}-{title}.png" if tod is not None else f"{title}.png"), dpi=300, bbox_inches='tight')
+#     else:
+#         plt.show()
+def plot_stacked_bar(metrics_dict, title, ylabel, xTickLabel, bar_width=0.1, offset=0.01, figsize=(10, 8), showSubclass = False, tod = None, outdir=None):
     # Categories and components
     categories = list(metrics_dict.keys())
     components = list(metrics_dict[categories[0]].keys())
 
-    # Extracting values
+    # Extracting values and colors for stacked bars
     values = {component: [metrics_dict[cat][component]["value"] for cat in categories] for component in components}
+    percs = {component: [metrics_dict[cat][component]["%"] for cat in categories] for component in components}
     colors = {component: [metrics_dict[cat][component]["color"] for cat in categories] for component in components}
+    total_values = [metrics_dict[cat][components[0]]["100%"] for cat in categories]  # Overall total for each category
 
-    # Create the bar chart
-    x = [(bar_width + offset) * i for i in range(len(categories))]  # the label locations
+    # Additional components
+    if showSubclass:
+        separated_values = {categories[i]: [values[component][i] for component in components] for i in range(len(categories))}
+        separated_colors = {categories[i]: [colors[component][i] for component in components] for i in range(len(categories))}
 
-    # Initialize bottom for stacking
-    bottom = np.zeros(len(categories))
-
-    # Plot each component
-    plt.figure(figsize=figsize)
-    for component, value in values.items():
-        plt.bar(x, value, bar_width, label=component, bottom=bottom, color=colors[component])
-        bottom += np.array(value)
-
-    # Adjust x-axis and other labels
-    plt.xticks(x, [xTickLabel[cat] for cat in categories], fontsize=12)
-    if yticks is not None: plt.yticks(yticks, fontsize=12)  # y ticks every 10
-    plt.ylabel(ylabel, fontsize=14)
-    if tod is not None:
-        plt.title(f"{tod} -- {title}", fontsize=16)
+    # Define the bar positions
+    x_separated = []
+    x_ticks = []
+    x_stacked = []
+    if showSubclass:
+        for tick in range(len(categories)):
+            tmp_x_stacked = tick/2
+            x_stacked.append(tmp_x_stacked)
+            pbar = tmp_x_stacked
+            for sp in separated_values[categories[tick]]:
+                x_separated.append(pbar + bar_width + offset)
+                pbar = pbar + bar_width + offset
+            x_ticks.append(tmp_x_stacked + (pbar - tmp_x_stacked)/2)
     else:
-        plt.title(title, fontsize=16)
-        
-    # Move legend below the chart
-    plt.legend(loc='upper center', bbox_to_anchor=(0.5, -0.05), fancybox=True, shadow=False, ncol=len(components))
+        x_stacked = [i*(bar_width + offset) for i in range(len(categories))]
+        x_ticks = x_stacked
+    fig, ax = plt.subplots(figsize=figsize)
 
-    # Add grid for clarity
-    plt.grid(axis='y', linestyle='--', alpha=0.5)
+    # Plot the stacked bars
+    bottom = np.zeros(len(categories))
+    for component in components:
+        bars = ax.bar(x_stacked, values[component], bar_width, label=component, bottom=bottom, color=colors[component])
+        bottom += np.array(values[component])
+        # Add percentage annotation for stacked bars
+        for i, bar in enumerate(bars):
+            height = bar.get_height()
+            if height > 0:
+                if showSubclass:
+                    ax.text(bar.get_x() + bar.get_width() / 2, bar.get_y() + height / 2,
+                            f"{percs[component][i]:.1f}%", ha='center', va='center', fontsize=10)
+                else:
+                    ax.text(bar.get_x() + bar.get_width() / 2, bar.get_y() + height / 2,
+                            f"{values[component][i]:.2f} ({percs[component][i]:.1f}%)", ha='center', va='center', fontsize=10)
+    # Add absolute annotation for stacked bars
+    for i, bar in enumerate(bars):
+        ax.text(bar.get_x() + bar.get_width() / 2, total_values[i] + 1,
+                f"{total_values[i]:.1f}", ha='center', va='bottom', fontsize=10)
+                
 
-    # Display or save the plot
+    if showSubclass:
+        # Plot total bars
+        tmp_separated_values = [sp for c in categories for sp in separated_values[c]]
+        tmp_separated_separated_colors = [sp for c in categories for sp in separated_colors[c]]
+        total_bars = ax.bar(x_separated, tmp_separated_values, bar_width, color=tmp_separated_separated_colors)
+        for i, bar in enumerate(total_bars):
+            if tmp_separated_values[i] != 0:
+                ax.text(bar.get_x() + bar.get_width() / 2, bar.get_height() + 1,
+                        f"{tmp_separated_values[i]:.1f}", ha='center', va='bottom', fontsize=10)
+
+    # Configure x-axis and labels
+    ax.set_xticks(x_ticks)
+    ax.set_xticklabels([xTickLabel[cat] for cat in categories], fontsize=12)
+    ax.set_ylabel(ylabel, fontsize=14)
+    ax.set_ylim(0, max(bottom) * 1.05)
+    ax.set_title(f"{tod} -- {title}" if tod is not None else title, fontsize=16)
+
+    # Add grid and legend
+    ax.grid(axis='y', linestyle='--', alpha=0.6)
+    ax.legend(loc='upper center', bbox_to_anchor=(0.5, -0.05), ncol=len(components), fontsize=12)
+
+    # Adjust layout and save/display
+    fig.tight_layout()
     if outdir is not None:
-        if tod is not None:
-            plt.savefig(os.path.join(outdir, f"{tod}-{title}.png"), dpi=300, bbox_inches='tight')
-        else:
-            plt.savefig(os.path.join(outdir, f"{title}.png"), dpi=300, bbox_inches='tight')
+        plt.savefig(f"{outdir}/{f'{tod}-{title}' if tod is not None else f'{title}'}.png", dpi=300, bbox_inches="tight")
     else:
         plt.show()
         
@@ -248,6 +332,7 @@ def plot_efficiency(metrics_list, titles, ylabel, xTickLabel, figsize=(20, 12), 
 
         # Extract values and colors
         values = {component: [metrics[cat][component]["value"] for cat in categories] for component in components}
+        percs = {component: [metrics[cat][component]["%"] for cat in categories] for component in components}
         colors = {component: [metrics[cat][component]["color"] for cat in categories] for component in components}
 
         # Define label positions
@@ -268,7 +353,7 @@ def plot_efficiency(metrics_list, titles, ylabel, xTickLabel, figsize=(20, 12), 
                 height = bar.get_height()
                 if height > 0:
                     ax.text(bar.get_x() + bar.get_width() / 2, bar.get_height() / 2 + bar.get_y(),
-                            f'{height:.2f}%', ha='center', va='center', fontsize=10, color='black')
+                            f'{percs[component][bars.index(bar)]:.2f}%', ha='center', va='center', fontsize=10, color='black')
 
         # Set x-axis labels
         ax.set_xticks(x)
@@ -277,8 +362,7 @@ def plot_efficiency(metrics_list, titles, ylabel, xTickLabel, figsize=(20, 12), 
 
         # Add grid for clarity
         ax.grid(axis='y', linestyle='--', alpha=0.5)
-        ax.legend(fontsize=14, loc='upper center', bbox_to_anchor=(0.5, -0.05), ncol=1)
-        ax.set_ylim(0, 105)
+        ax.legend(fontsize=14, loc='upper center', bbox_to_anchor=(0.5, -0.05), ncol=len(components))
         
     # Set common y-axis and title
     fig.supylabel(ylabel, fontsize=16)
@@ -323,7 +407,73 @@ def plot_trend(metric_trends, time_labels, title, ylabel, outdir = None):
         plt.show()
         
         
-def plot_grouped_stacked_bars(trends, time_labels, metric_name, ylabel, bar_width=0.1, group_offset=0.125, label_bar_pos = 2, percentage=True, outdir=None):
+def plot_stacked_bars_over_time(trends, time_labels, metric_name, ylabel, bar_width=0.1, group_offset=0.125, label_bar_pos = 2, outdir=None):
+    categories = list(trends.keys())  # E.g., ["Non-Causal", "Causal"]
+    components = list(trends[categories[0]].keys())  # Metric components, e.g., ["N. Success", "N. Failure"]
+
+    num_time_splits = len(time_labels)
+    num_categories = len(categories)
+    bar_width = bar_width / num_categories  # Width of bars inside one group
+    # x_positions = np.arange(num_time_splits)  # Base x-axis positions for time splits
+    x_positions = [group_offset * i for i in range(num_time_splits)]
+    
+    plt.figure(figsize=(12, 6))
+    bar_offsets = np.linspace(-bar_width / 2, bar_width / 2, num_categories)  # Smaller space between bars in the same group
+
+    # Loop through each category (e.g., Non-Causal/Causal)
+    for i, category in enumerate(categories):
+        bottom = np.zeros(len(time_labels))  # For stacking bars
+        for component in components:
+            values = np.array(trends[category][component]["value"])  # Trend values across time splits
+            percs = np.array(trends[category][component]["%"])  # Trend values across time splits
+            color = trends[category][component]["color"]  # Color for this component
+            bars = plt.bar(
+                x_positions + bar_offsets[i],  # Adjust for grouped categories and the offset between bars
+                values,
+                width=bar_width,
+                bottom=bottom,
+                label=f"{component}" if i == 0 else "",  # Only add label for the first bar in the group
+                color=color,
+                edgecolor='black',  # Tight black border around each bar
+                linewidth=0.5  # Thin border
+            )
+            
+                
+            bottom += values  # Update stacking height
+        # Adding text annotations at the bottom of each bar
+        for j, rect in enumerate(bars):
+            # Position text at the bottom of each bar (for the stacking, add half the bar's height)
+            plt.text(
+                rect.get_x() + rect.get_width() / 2,  # X position (center of the bar)
+                label_bar_pos,  # Y position (fixed position at the bottom of the plot)
+                f'{category}',  # Text value, formatting to 2 decimal places
+                ha='center',  # Center alignment horizontally
+                va='bottom',  # Center alignment vertically
+                fontsize=9,  # Adjust font size as needed
+                color='black',  # Color of the text
+                rotation=90
+            )
+
+    # Set labels, title, and legend
+    plt.xticks(x_positions, time_labels, fontsize=10)
+    plt.xlabel("Time Splits", fontsize=12)
+    plt.ylabel(ylabel, fontsize=12)
+    plt.title(f"{metric_name} Trend", fontsize=14)
+    # Move the legend to the bottom
+    plt.legend(loc='upper center', bbox_to_anchor=(0.5, -0.1), ncol=len(components), fontsize=10)
+    plt.tight_layout()
+    plt.grid(axis='y', linestyle='--', alpha=0.5)
+    plt.ylim(0, max(bottom) * 1.05)
+
+    # Save or display the plot
+    if outdir is not None:
+        output_path = os.path.join(outdir, f"{metric_name.replace(' ', '_')}_trend.png")
+        plt.savefig(output_path, dpi=300, bbox_inches="tight")
+    else:
+        plt.show()
+        
+        
+def plot_bars_over_time(trends, time_labels, metric_name, ylabel, bar_width=0.1, group_offset=0.125, label_bar_pos = 2, percentage=True, outdir=None):
     categories = list(trends.keys())  # E.g., ["Non-Causal", "Causal"]
     components = list(trends[categories[0]].keys())  # Metric components, e.g., ["N. Success", "N. Failure"]
 
