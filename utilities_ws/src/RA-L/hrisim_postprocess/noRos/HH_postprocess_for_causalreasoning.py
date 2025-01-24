@@ -94,6 +94,7 @@ dynamic_duration = 4
 charging_time = 2
 ROBOT_MAX_VEL = 0.5
 INFLATION_RADIUS = 0.55
+ALPHA = 0.8
 Ks = 100 / (static_duration * 3600)
 Kd = (100 / (dynamic_duration * 3600) - Ks)/ROBOT_MAX_VEL
 Kobs = 0.1
@@ -116,7 +117,7 @@ for bag in BAGNAME:
         RX = DF['R_X'].to_numpy()  # Robot's X position
         RY = DF['R_Y'].to_numpy()  # Robot's Y position
         RV = DF['R_V'].values 
-        if ADD_NOISE: RV += np.random.normal(0, 0.1, n_rows)
+        if ADD_NOISE: RV += np.random.normal(0, 0.11, n_rows)
         
         RB = np.zeros(n_rows)
         BACs = {wp: np.zeros(n_rows) for wp in wps}
@@ -139,14 +140,13 @@ for bag in BAGNAME:
         EC = np.where(charge_status, energy_charged, -energy_used)
         
         RB[1:] = RB[0] + np.cumsum(EC[1:])
-        if ADD_NOISE: RB += np.random.uniform(-0.052, 0.052, n_rows)
-        # if ADD_NOISE: RB += np.random.uniform(-0.052, 0.052, n_rows)
+        if ADD_NOISE: RB += np.random.uniform(-0.051, 0.051, n_rows)
         RB = np.clip(RB, 0, 100)  # Ensure battery level remains between 0 and 100
         
         # Compute BACs for each waypoint
         # Dynamically extract agent positions
         agent_columns = [col for col in DF.columns if '_X' in col and 'a' in col]
-        num_agents = 50
+        num_agents = 20
 
         # Initialize the agents array (t, n, 2)
         agents = np.full((len(DF), num_agents, 2), np.nan)  # Fill with NaN for missing values
@@ -157,9 +157,18 @@ for bag in BAGNAME:
             agents[:, i - 1, 1] = DF[f'a{i}_Y'].to_numpy()  # Y-coordinates
         OBS = is_in_danger(np.stack((RX, RY), axis=1), obstacles, agents, INFLATION_RADIUS)
         for wp in wps:
-            BACs[wp][1:] = np.maximum(0, RB[1:] - get_battery_consumption(wp, WP.CHARGING_STATION.value) - Kobs * OBS[1:])
-            if ADD_NOISE: BACs[wp] += np.random.uniform(-0.04, 0.04, n_rows)
+            # Compute base BAC values
+            base_bac = RB[1:] - get_battery_consumption(wp, WP.CHARGING_STATION.value) - Kobs * OBS[1:]
+            smoothed_bac = np.zeros_like(base_bac)
+            smoothed_bac[0] = BACs[wp][0]  # Initialize with the first value
+            
+            # Apply exponential smoothing
+            for t in range(1, len(base_bac)):
+                smoothed_bac[t] = ALPHA * base_bac[t] + (1 - ALPHA) * smoothed_bac[t - 1] + (1 if ADD_NOISE else 0) * np.random.uniform(-0.4, 0.4)
 
+            BACs[wp][1:] = smoothed_bac
+            BACs[wp] = np.clip(np.round(BACs[wp], 2), 0, 100)  # Ensure BAC remains between 0 and 100 with 2 decimal precision
+            # BACs[wp] = np.clip(BACs[wp].astype(int), 0, 100)  # Ensure BAC remains between 0 and 100
         # Add computed values to DF
         DF['R_V'] = RV
         DF['R_B'] = RB
