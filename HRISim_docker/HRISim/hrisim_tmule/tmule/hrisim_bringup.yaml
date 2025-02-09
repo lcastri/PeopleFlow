@@ -31,9 +31,10 @@ init_cmd: |
   export_default TIAGO_R "0.0"
   export_default TIAGO_P "0.0"
   export_default TIAGO_Y "0"
-  export_default INIT_BATTERY "98.25"
+  export_default INIT_BATTERY "100"
   export_default STATIC_DURATION "5"
   export_default DYNAMIC_DURATION "4"
+  export_default LOAD_FACTOR "5"
   export_default CHARGING_TIME "2"
   export_default ABORT_TIME_THRESHOLD "45"
 
@@ -105,11 +106,11 @@ windows:
     panes:
       - 'roslaunch tiago_2dnav_gazebo navigation.launch public_sim:=true global_planner:=$GLOBAL_PLANNER local_planner:=$LOCAL_PLANNER localization:=$LOCALIZATION config_base_path:=$CONFIG_BASE_PATH map:=$MAP'
       - 'rosrun robot_twist_mux mytwist_mux.py'
-      - 'roslaunch robot_battery sim_battery.launch init_battery:=$INIT_BATTERY static_duration:=$STATIC_DURATION dynamic_duration:=$DYNAMIC_DURATION charging_time:=$CHARGING_TIME'
+      - 'roslaunch robot_battery sim_battery.launch init_battery:=$INIT_BATTERY static_duration:=$STATIC_DURATION dynamic_duration:=$DYNAMIC_DURATION charging_time:=$CHARGING_TIME load_factor:=$LOAD_FACTOR'
       - 'rosrun robot_recovery standUp.py'
       - 'rosrun robot_recovery localiseMe.py'
       - 'rosrun robot_info robot_closestWP.py'
-      - 'rosrun robot_battery BatteryAtTheCharger.py'
+      - 'rosrun robot_battery ExpectedLifetime.py'
       - 'roslaunch robot_clearing_distance clearing_distance.launch'
       - 'rosrun robot_task TaskInfoManager.py'
   - name: planning

@@ -171,7 +171,7 @@ for bag in BAGNAME:
             # BACs[wp] = np.clip(BACs[wp].astype(int), 0, 100)  # Ensure BAC remains between 0 and 100
         # Add computed values to DF
         DF['R_V'] = RV
-        DF['R_B'] = RB
+        DF['R_B'] = np.round(RB, 2)
         for wp, bac_array in BACs.items():
             DF[f'{wp}_BAC'] = bac_array
         DF[f'OBS'] = OBS
