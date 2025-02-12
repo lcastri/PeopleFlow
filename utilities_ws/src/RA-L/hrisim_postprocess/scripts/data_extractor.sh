@@ -1,8 +1,8 @@
 #!/bin/bash
 
-bagname="causal-08012025"
+bagname="noncausal-11022025"
 
-for i in {1..11}
+for i in {1..10}
 do
     if [ $i -eq 1 ]; then
         load_goal=false
@@ -18,7 +18,8 @@ do
     if [ $i -eq 1 ]; then
         start_time=0
     else
-        start_time=$((3600 * (i-1) - 20))
+        start_time=$((600 * (i-1) - 20))
+        # start_time=$((3600 * (i-1) - 20))
     fi
 
     roslaunch hrisim_postprocess HH_bringup.launch bagname:=$bagname time_of_the_day:=$time_of_the_day start_time:=$start_time load_goal:=$load_goal

@@ -41,13 +41,12 @@ class ClearingDistanceNode:
 
             # Load the map image
             map_image = cv2.imread(image_path, cv2.IMREAD_GRAYSCALE)
-            rospy.logerr(f"image_path: {image_path}")
             if map_image is None:
                 rospy.logerr(f"Failed to load map image from {image_path}")
                 rospy.signal_shutdown("Could not load map image")
                 return None, None, None
             else:
-                rospy.logerr(f"Loaded map image, shape: {map_image.shape}, dtype: {map_image.dtype}")
+                rospy.loginfo(f"Loaded map image, shape: {map_image.shape}, dtype: {map_image.dtype}")
 
             # Convert the map to binary
             binary_map = (map_image == 0).astype(np.uint8) 

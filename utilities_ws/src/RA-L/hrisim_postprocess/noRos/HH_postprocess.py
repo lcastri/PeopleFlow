@@ -8,7 +8,7 @@ import networkx as nx
 import xml.etree.ElementTree as ET
 
 
-def get_battery_consumption(wp_origin, wp_dest):
+def get_battery_consumption(wp_origin, wp_dest, load):
     pos = nx.get_node_attributes(G, 'pos')
     path = nx.astar_path(G, wp_origin, wp_dest, heuristic=heuristic, weight='weight')
     distanceToCharger = 0
@@ -16,9 +16,23 @@ def get_battery_consumption(wp_origin, wp_dest):
         (x1, y1) = pos[path[wp_idx-1]]
         (x2, y2) = pos[path[wp_idx]]
         distanceToCharger += math.sqrt((x1 - x2)**2 + (y1 - y2)**2)
-    time_to_goal = math.ceil(distanceToCharger/ROBOT_MAX_VEL)
-    return time_to_goal * (static_consumption + K * ROBOT_MAX_VEL)
-
+    if load: 
+        time_to_goal = math.ceil(distanceToCharger/LOAD_ROBOT_MAX_VEL)
+        return time_to_goal * (K_l_s + K_l_d * LOAD_ROBOT_MAX_VEL)
+    else:
+        time_to_goal = math.ceil(distanceToCharger/NOLOAD_ROBOT_MAX_VEL)
+        return time_to_goal * (K_nl_s + K_nl_d * NOLOAD_ROBOT_MAX_VEL)
+    
+    
+def get_distance(wp_origin, wp_dest):
+    pos = nx.get_node_attributes(G, 'pos')
+    path = nx.astar_path(G, wp_origin, wp_dest, heuristic=heuristic, weight='weight')
+    distanceToCharger = 0
+    for wp_idx in range(1, len(path)):
+        (x1, y1) = pos[path[wp_idx-1]]
+        (x2, y2) = pos[path[wp_idx]]
+        distanceToCharger += math.sqrt((x1 - x2)**2 + (y1 - y2)**2)
+    return distanceToCharger
 
 def heuristic(a, b):
     pos = nx.get_node_attributes(G, 'pos')
@@ -48,15 +62,20 @@ for waypoint in root.findall('waypoint'):
 # Load map information
 INCSV_PATH= os.path.expanduser('utilities_ws/src/RA-L/hrisim_postprocess/csv/HH/shrunk')
 OUTCSV_PATH= os.path.expanduser(f'utilities_ws/src/RA-L/hrisim_postprocess/csv/HH/my_nonoise/')
-BAGNAME= ['noncausal-03012025']
+BAGNAME= ['noncausal-11022025']
 
 static_duration = 5
 dynamic_duration = 4
 charging_time = 2
-ROBOT_MAX_VEL = 0.5
-static_consumption = 100 / (static_duration * 3600)
-K = (100 / (dynamic_duration * 3600) - static_consumption)/ROBOT_MAX_VEL
+LOAD_FACTOR = 5
+NOLOAD_ROBOT_MAX_VEL = 0.5
+LOAD_ROBOT_MAX_VEL = 0.3
+K_nl_s = 100 / (static_duration * 3600)
+K_nl_d = (100 / (dynamic_duration * 3600) - K_nl_s)/(NOLOAD_ROBOT_MAX_VEL)
+K_l_s = K_nl_s * LOAD_FACTOR
+K_l_d = K_nl_d * LOAD_FACTOR
 charge_rate = 100 / (charging_time * 3600)
+
 with open('/home/lcastri/git/PeopleFlow/HRISim_docker/HRISim/peopleflow/peopleflow_manager/res/warehouse/graph.pkl', 'rb') as f:
     G = pickle.load(f)
 
@@ -69,21 +88,42 @@ for bag in BAGNAME:
         DF = pd.read_csv(os.path.join(INCSV_PATH, f"{bag}", tod.value, "static", f"{tmp_bag}_{tod.value}.csv"))
         n_rows = len(DF)
         
-        
-        BACs = {wp: np.zeros(n_rows) for wp in wps}
+        EC = np.full_like(DF['R_V'], 0)
 
-        # Initial battery levels
-        RB = DF['R_B']
-        for wp in wps:
-            BACs[wp][0] = DF.iloc[0][f'{wp}_BAC']
-        
+        dt = np.diff(DF['pf_elapsed_time']).tolist()
+        dt.insert(5, 0)
+        dt = np.array(dt)
+        EC = np.where(DF["L"] == 0, 
+                      dt * (K_nl_s + K_nl_d * DF['R_V']), 
+                      dt * (K_l_s + K_l_d * DF['R_V']))
+                    
+        RB = DF['R_B'][0] - pd.Series(EC.cumsum()).shift(1).fillna(0)       
                
-        for wp in wps:
-            BACs[wp][1:] = np.maximum(0, RB[1:] - get_battery_consumption(wp, 'charging-station'))
+        # ELTs = {wp: np.zeros(n_rows) for wp in wps}
+        # for wp in wps:
+        #     for i in range(n_rows):
+        #         if DF['L'][i] == 0:
+        #             ELTs[wp][i] = np.maximum(0, RB[i] - get_battery_consumption(wp, 'charging-station', False))
+        #         else:
+        #             ELTs[wp][i] = np.maximum(0, RB[i] - get_battery_consumption(wp, 'charging-station', True))
+        L = DF['L'].to_numpy()
+        RB_array = np.array(RB)
+
+        # Precompute battery consumption values for both cases
+        battery_consumption_false = {wp: get_battery_consumption(wp, 'charging-station', False) for wp in wps}
+        battery_consumption_true = {wp: get_battery_consumption(wp, 'charging-station', True) for wp in wps}
+
+        # Use NumPy operations to compute ELTs
+        ELTs = {
+            wp: np.maximum(0, RB_array - np.where(L == 0, battery_consumption_false[wp], battery_consumption_true[wp]))
+            for wp in wps
+        }
 
         # Add computed values to DF
-        for wp, bac_array in BACs.items():
-            DF[f'{wp}_BAC'] = bac_array
+        DF['R_B'] = RB
+        DF['EC'] = EC
+        for wp, elt_array in ELTs.items():
+            DF[f'{wp}_ELT'] = elt_array
         
         # Create output directory if it doesn't exist
         out_path = os.path.join(OUTCSV_PATH, f'{bag}', f'{tod.value}')
@@ -97,6 +137,7 @@ for bag in BAGNAME:
             if wp in [WP.PARKING, WP.CHARGING_STATION]: continue 
         
             WPDF = pd.read_csv(os.path.join(INCSV_PATH, f"{bag}", tod.value, "static", f"{tmp_bag}_{tod.value}_{wp.value}.csv"))
-            WPDF["BAC"] = BACs[wp.value]
-            
+            WPDF["ELT"] = ELTs[wp.value]
+            WPDF['EC'] = EC
+
             WPDF.to_csv(os.path.join(out_path, f"{tmp_bag}_{tod.value}_{wp.value}.csv"), index=False)

@@ -136,14 +136,14 @@ def get_subsampling_step(cutoff = 0.5, energy_percentage=0.95, plot = True):
 SF = 10 #Hz
 INDIR = '/home/lcastri/git/PeopleFlow/utilities_ws/src/RA-L/hrisim_postprocess/csv/HH/original'
 OUTDIR = '/home/lcastri/git/PeopleFlow/utilities_ws/src/RA-L/hrisim_postprocess/csv/HH/shrunk'
-BAGNAME= ['noncausal-03012025']
+BAGNAME= ['noncausal-11022025']
 
-R, BW, SSF, ST, STEP = get_subsampling_step(cutoff = 0.25, energy_percentage=0.95, plot = False)
-print(f"Bandwidth fm: {BW:.4f} Hz")
-print(f"Subsampling frequency fs >= 2fm = {2*BW:.4f} Hz")
-print(f"Subsampling time 1 sample every each {ST:.4f} s")
-print(f"Subsampling step {STEP}")
-print("")
+# R, BW, SSF, ST, STEP = get_subsampling_step(cutoff = 0.25, energy_percentage=0.95, plot = False)
+# print(f"Bandwidth fm: {BW:.4f} Hz")
+# print(f"Subsampling frequency fs >= 2fm = {2*BW:.4f} Hz")
+# print(f"Subsampling time 1 sample every each {ST:.4f} s")
+# print(f"Subsampling step {STEP}")
+# print("")
 STEP = 50
         
 for bag in BAGNAME:
@@ -161,13 +161,15 @@ for bag in BAGNAME:
         
                 
         # Save WP-specific DataFrames
-        general_columns_name = ['pf_elapsed_time', 'TOD', 'T', 'R_V',  'R_B', 'B_S', 'R_X', 'R_Y', 'G_X', 'G_Y']
+        general_columns_name = ['pf_elapsed_time', 'TOD', 'T', 'R_V',  'R_B', 'C_S', 'R_X', 'R_Y', 'G_X', 'G_Y', 'L']
         for wp in WP:
             if wp == WP.PARKING or wp == WP.CHARGING_STATION: continue
-            WPDF = copy.deepcopy(df.d[general_columns_name + [f"{wp.value}_NP", f"{wp.value}_PD", f"{wp.value}_BAC"]])
+            WPDF = copy.deepcopy(df.d[general_columns_name + [f"{wp.value}_NP", f"{wp.value}_PD", f"{wp.value}_ELT"]])
                 
             # Rename the WP-specific columns
-            WPDF = WPDF.rename(columns={f"{wp.value}_NP": "NP", f"{wp.value}_PD": "PD", f"{wp.value}_BAC": "BAC"})
+            WPDF = WPDF.rename(columns={f"{wp.value}_NP": "NP", 
+                                        f"{wp.value}_PD": "PD", 
+                                        f"{wp.value}_ELT": "ELT"})
                 
             # Add the constant column "wp" with the value wp_id
             WPDF["WP"] = WPS[wp.value]

@@ -10,11 +10,10 @@ from peopleflow_msgs.msg import WPPeopleCounters, Time as pT
 from tiago_battery.msg import BatteryStatus
 from move_base_msgs.msg import MoveBaseActionGoal
 from nav_msgs.msg import Odometry
-from std_msgs.msg import String, Float32, Int32
+from std_msgs.msg import String, Float32, Int32, Bool
 from rosgraph_msgs.msg import Clock
 import hrisim_util.ros_utils as ros_utils
-from robot_msgs.msg import BatteryAtChargers, TasksInfo, TaskInfo
-from shapely.geometry import Point
+from robot_msgs.msg import ExpectedLifetimes, TasksInfo, TaskInfo
 import xml.etree.ElementTree as ET
 import json
 import time
@@ -41,6 +40,7 @@ class Robot():
         self.clearing_distance = 0
         self.H_collision = 0
         self.task = -1
+        self.load = 0
             
         
 class Agent():
@@ -80,7 +80,7 @@ class DataManager():
         self.n_failure = 0
         
         self.WPs = {}
-        self.BACs = {}
+        self.ELTs = {}
         self.PDs = {}
 
         self.peopleAtWork = 0
@@ -98,11 +98,12 @@ class DataManager():
         rospy.Subscriber("/peopleflow/time", pT, self.cb_time)
         rospy.Subscriber("/pedsim_simulator/simulated_agents", AgentStates, self.cb_agents)
         rospy.Subscriber("/hrisim/robot_battery", BatteryStatus, self.cb_robot_battery)
-        rospy.Subscriber("/hrisim/robot_bac", BatteryAtChargers, self.cb_robot_bac)
+        rospy.Subscriber("/hrisim/robot_elt", ExpectedLifetimes, self.cb_robot_elt)
         rospy.Subscriber("/hrisim/robot_closest_wp", String, self.cb_robot_closest_wp)
         rospy.Subscriber("/hrisim/robot_clearing_distance", Float32, self.cb_robot_clearing_distance)
         rospy.Subscriber("/hrisim/robot_human_collision", Int32, self.cb_robot_human_collision)
         rospy.Subscriber("/hrisim/robot_tasks_info", TasksInfo, self.cb_robot_tasks)  
+        rospy.Subscriber("/hrisim/robot_load", Bool, self.cb_robot_load)  
                    
             
     def cb_clock(self, clock: Clock):
@@ -148,9 +149,9 @@ class DataManager():
         self.robot.is_charging = b.is_charging.data
                
         
-    def cb_robot_bac(self, bacs: BatteryAtChargers):
-        for bac in bacs.BACs:
-            self.BACs[bac.WP_id.data] = bac.BAC.data
+    def cb_robot_elt(self, bacs: ExpectedLifetimes):
+        for elt in bacs.ELTs:
+            self.ELTs[elt.WP_id.data] = elt.ELT.data
                     
         
     def cb_robot_closest_wp(self, wp: String):
@@ -179,6 +180,9 @@ class DataManager():
         self.n_success = msg.num_success
         self.n_failure = msg.num_failure
         
+        
+    def cb_robot_load(self, msg: Bool):
+        self.robot.load = 1 if msg.data else 0
         
         
 def shutdown_callback(data_rows, filename, csv_path, goal_path, data):   
@@ -312,10 +316,11 @@ if __name__ == '__main__':
                 'G_X': data_handler.robot.gx,
                 'G_Y': data_handler.robot.gy,
                 'R_B': data_handler.robot.battery_level,
-                'B_S': 1 if data_handler.robot.is_charging else 0,
+                'C_S': 1 if data_handler.robot.is_charging else 0,
                 'R_CD': data_handler.robot.clearing_distance,
                 'R_HC': data_handler.robot.H_collision,
                 'T': data_handler.robot.task,
+                'L': data_handler.robot.load,
             }
             
             data_handler.robot.H_collision = 0
@@ -332,8 +337,8 @@ if __name__ == '__main__':
                 data_row[f'{wp_id}_NP'] = data_handler.WPs[wp_id]
             for wp_id in data_handler.PDs.keys():
                 data_row[f'{wp_id}_PD'] = data_handler.PDs[wp_id]
-            for wp_id in data_handler.BACs.keys():
-                data_row[f'{wp_id}_BAC'] = data_handler.BACs[wp_id]
+            for wp_id in data_handler.ELTs.keys():
+                data_row[f'{wp_id}_ELT'] = data_handler.ELTs[wp_id]
 
             # Append the row to the list
             data_rows.append(data_row)

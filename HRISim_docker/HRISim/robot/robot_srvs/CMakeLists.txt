@@ -13,6 +13,7 @@ add_service_files(
   FILES
   NewTask.srv
   FinishTask.srv
+  SetBattery.srv
 )
 
 ## Generate added messages and services

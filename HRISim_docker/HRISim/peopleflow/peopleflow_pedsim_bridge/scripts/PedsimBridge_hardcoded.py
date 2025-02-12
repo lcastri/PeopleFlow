@@ -175,7 +175,7 @@ if __name__ == '__main__':
 
         G.remove_node(constants.WP.CHARGING_STATION.value)
         
-    agentsplan_path = '/root/ros_ws/src/HRISim/peopleflow/peopleflow_manager/hardcode/agent_task_list.pkl'
+    agentsplan_path = '/root/ros_ws/src/HRISim/peopleflow/peopleflow_manager/hardcoded/agent_task_list.pkl'
     with open(agentsplan_path, 'rb') as f:
         AGENTSPLAN = pickle.load(f)
         

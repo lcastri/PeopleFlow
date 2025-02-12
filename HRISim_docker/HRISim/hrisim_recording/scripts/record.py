@@ -18,10 +18,11 @@ TOPICS = [
     "/peopleflow/time",
     "/hrisim/robot_battery",
     "/hrisim/robot_closest_wp",
-    "/hrisim/robot_bac",
+    "/hrisim/robot_elt",
     "/hrisim/robot_tasks_info",
     "/hrisim/robot_human_collision",
-    "/hrisim/robot_clearing_distance"
+    "/hrisim/robot_clearing_distance",
+    "/hrisim/robot_load"
 ]
    
 if __name__ == '__main__':
