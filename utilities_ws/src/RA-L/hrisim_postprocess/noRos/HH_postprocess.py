@@ -62,14 +62,14 @@ for waypoint in root.findall('waypoint'):
 # Load map information
 INCSV_PATH= os.path.expanduser('utilities_ws/src/RA-L/hrisim_postprocess/csv/HH/shrunk')
 OUTCSV_PATH= os.path.expanduser(f'utilities_ws/src/RA-L/hrisim_postprocess/csv/HH/my_nonoise/')
-BAGNAME= ['noncausal-11022025']
+BAGNAME= ['test-19022025']
 
 static_duration = 5
 dynamic_duration = 4
 charging_time = 2
 LOAD_FACTOR = 5
-NOLOAD_ROBOT_MAX_VEL = 0.5
-LOAD_ROBOT_MAX_VEL = 0.3
+NOLOAD_ROBOT_MAX_VEL = 0.75
+LOAD_ROBOT_MAX_VEL = 0.25
 K_nl_s = 100 / (static_duration * 3600)
 K_nl_d = (100 / (dynamic_duration * 3600) - K_nl_s)/(NOLOAD_ROBOT_MAX_VEL)
 K_l_s = K_nl_s * LOAD_FACTOR
@@ -91,7 +91,7 @@ for bag in BAGNAME:
         EC = np.full_like(DF['R_V'], 0)
 
         dt = np.diff(DF['pf_elapsed_time']).tolist()
-        dt.insert(5, 0)
+        dt.insert(0, 5.0)
         dt = np.array(dt)
         EC = np.where(DF["L"] == 0, 
                       dt * (K_nl_s + K_nl_d * DF['R_V']), 

@@ -126,10 +126,10 @@ windows:
       - 'rosrun rqt_peopleflow agents_info.py'
       - 'rosrun peopleflow_counter PeopleCounter.py'
       - 'rosrun peopleflow_graph_visualisation GraphVisualisation.py'
-  # - name: data
-  #   tags: ['exp']
-  #   panes:
-  #     - if [[ "$RECORD" == "true" ]]; then rosrun hrisim_recording record.py; fi
+  - name: data
+    tags: ['exp']
+    panes:
+      - if [[ "$RECORD" == "true" ]]; then rosrun hrisim_recording record.py; fi
   # - name: prediction
   #   tags: ['exp']
   #   panes:

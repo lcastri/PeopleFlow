@@ -1,8 +1,9 @@
 #!/bin/bash
 
-bagname="noncausal-11022025"
+bagname="test-19022025"
+# bagname="noncausal-16022025"
 
-for i in {1..10}
+for i in {1..11}
 do
     if [ $i -eq 1 ]; then
         load_goal=false
@@ -18,7 +19,7 @@ do
     if [ $i -eq 1 ]; then
         start_time=0
     else
-        start_time=$((600 * (i-1) - 20))
+        start_time=$((300 * (i-1) - 20))
         # start_time=$((3600 * (i-1) - 20))
     fi
 

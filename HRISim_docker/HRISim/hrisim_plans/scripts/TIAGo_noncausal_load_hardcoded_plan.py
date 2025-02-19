@@ -75,11 +75,13 @@ def set_Load(load):
 
     if load:
         rospy.set_param("/hrisim/robot_load", True)
-        client.update_configuration({"max_vel_x": 0.25})
+        client.update_configuration({"max_vel_x": 0.5})
+        # client.update_configuration({"max_vel_x": 0.25})
 
     else:
         rospy.set_param("/hrisim/robot_load", False)
         client.update_configuration({"max_vel_x": 0.75})
+        # client.update_configuration({"max_vel_x": 0.75})
     
     rospy.loginfo("Setting load: " + str(load))
     pub_load.publish(load)
