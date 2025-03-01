@@ -28,9 +28,6 @@ from gazebo_msgs.srv import SetModelState
 from gazebo_msgs.msg import ModelState
 from geometry_msgs.msg import PoseWithCovarianceStamped
 
-WORKING_TOP_TARGETS = [constants.WP.TARGET_1.value, constants.WP.TARGET_2.value, constants.WP.TARGET_3.value]
-WORKING_BOTTOM_TARGETS = [constants.WP.TARGET_4.value, constants.WP.TARGET_5.value, constants.WP.TARGET_6.value]
-LUNCH_TARGETS = [constants.WP.ENTRANCE.value, constants.WP.TARGET_7.value]
 
 def send_goal(p, next_dest, nextnext_dest=None, time_threshold=-1):
     pos = nx.get_node_attributes(G, 'pos')
@@ -204,8 +201,6 @@ def Plan(p):
                 finish_task_service(task_id, constants.TaskResult.SUCCESS.value)
                 TASK_ON = False
     
-    with open('battery_level.txt', 'w') as file:
-        file.write(f"Battery Level: {BATTERY_LEVEL}\n")
     shutdown_service()
 
                                    
