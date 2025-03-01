@@ -105,7 +105,7 @@ def get_bandwidth(df, sampling_rate, cutoff, energy_percentage, plot):
 
 def get_initrow(df):
     for r in range(len(df)):
-        if (df.iloc[r]["G_X"] != -1000 and df.iloc[r]["G_Y"] != -1000 and df.iloc[r].notnull().all()):
+        if (df.iloc[r]["G_X"] != -1000 and df.iloc[r]["G_Y"] != -1000 and df.iloc[r]["R_B"] != 0 and df.iloc[r].notnull().all()):
             return r
         
         
@@ -136,7 +136,8 @@ def get_subsampling_step(cutoff = 0.5, energy_percentage=0.95, plot = True):
 SF = 10 #Hz
 INDIR = '/home/lcastri/git/PeopleFlow/utilities_ws/src/RA-L/hrisim_postprocess/csv/HH/original'
 OUTDIR = '/home/lcastri/git/PeopleFlow/utilities_ws/src/RA-L/hrisim_postprocess/csv/HH/shrunk'
-BAGNAME= ['test-19022025']
+# BAGNAME= ['test-obs-01', 'test-obs-02', 'test-obs-04', 'test-obs-05']
+BAGNAME= ['noncausal-28022025']
 
 # R, BW, SSF, ST, STEP = get_subsampling_step(cutoff = 0.25, energy_percentage=0.95, plot = False)
 # print(f"Bandwidth fm: {BW:.4f} Hz")
@@ -152,7 +153,10 @@ for bag in BAGNAME:
     for tod in TOD:
         print(f"- {tod.value}.csv")
         DF = pd.read_csv(os.path.join(INDIR, f"{bag}", f"{bag}_{tod.value}.csv"))
-        DF.dropna(inplace=True)
+        r = get_initrow(DF)
+        # DF.dropna(inplace=True)
+        # DF.reset_index(drop=True, inplace=True)
+        DF = pd.DataFrame(DF.values[r:,:], columns=DF.columns)
         DF.reset_index(drop=True, inplace=True)
         df = Data(DF, vars = DF.columns, subsampling=Static(STEP))
         output_dir = os.path.join(OUTDIR, f"{bag}", tod.value, "static")
@@ -161,15 +165,18 @@ for bag in BAGNAME:
         
                 
         # Save WP-specific DataFrames
-        general_columns_name = ['pf_elapsed_time', 'TOD', 'T', 'R_V',  'R_B', 'C_S', 'R_X', 'R_Y', 'G_X', 'G_Y', 'L']
+        general_columns_name = ['pf_elapsed_time', 'TOD', 'T', 'R_V',  'R_B', 'C_S', 'R_X', 'R_Y', 'G_X', 'G_Y', 'OBS']
         for wp in WP:
             if wp == WP.PARKING or wp == WP.CHARGING_STATION: continue
-            WPDF = copy.deepcopy(df.d[general_columns_name + [f"{wp.value}_NP", f"{wp.value}_PD", f"{wp.value}_ELT"]])
+            WPDF = copy.deepcopy(df.d[general_columns_name + [f"{wp.value}_NP", f"{wp.value}_PD"]])
+            # WPDF = copy.deepcopy(df.d[general_columns_name + [f"{wp.value}_NP", f"{wp.value}_PD", f"{wp.value}_ELT"]])
                 
             # Rename the WP-specific columns
             WPDF = WPDF.rename(columns={f"{wp.value}_NP": "NP", 
-                                        f"{wp.value}_PD": "PD", 
-                                        f"{wp.value}_ELT": "ELT"})
+                                        f"{wp.value}_PD": "PD"})
+            # WPDF = WPDF.rename(columns={f"{wp.value}_NP": "NP", 
+            #                             f"{wp.value}_PD": "PD", 
+            #                             f"{wp.value}_ELT": "ELT"})
                 
             # Add the constant column "wp" with the value wp_id
             WPDF["WP"] = WPS[wp.value]

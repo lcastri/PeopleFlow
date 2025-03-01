@@ -1,6 +1,7 @@
 import math
 import os
 import pickle
+import random
 import sys
 import rospy
 try:
@@ -21,23 +22,29 @@ import networkx as nx
 from peopleflow_msgs.msg import Time as pT
 from robot_srvs.srv import NewTask, NewTaskResponse, FinishTask, FinishTaskResponse
 from std_srvs.srv import Empty  # Import the Empty service
+from nav_msgs.msg import Odometry
 
-
-WORKING_TOP_TARGETS = [constants.WP.TARGET_1.value, constants.WP.TARGET_2.value, constants.WP.TARGET_3.value]
-WORKING_BOTTOM_TARGETS = [constants.WP.TARGET_4.value, constants.WP.TARGET_5.value, constants.WP.TARGET_6.value]
-LUNCH_TARGETS = [constants.WP.ENTRANCE.value, constants.WP.TARGET_7.value]
-
-
-def send_goal(p, next_dest, nextnext_dest=None):
+# def send_goal(p, next_dest, nextnext_dest=None, first=False):
+#     pos = nx.get_node_attributes(G, 'pos')
+#     x, y = pos[next_dest]
+#     if nextnext_dest is not None:
+#         x2, y2 = pos[nextnext_dest]
+#         angle = math.atan2(y2-y, x2-x)
+#         inputs = [x, y, angle, TIME_THRESHOLD, 0]
+#     else:
+#         inputs = [x, y, 0, TIME_THRESHOLD, 0]
+#     p.exec_action('gotoobs', "_".join([str(input) for input in inputs]))
+def send_goal(p, next_dest, nextnext_dest=None, first=False):
+    global OBS_SPAWNED_TIME
     pos = nx.get_node_attributes(G, 'pos')
     x, y = pos[next_dest]
     if nextnext_dest is not None:
         x2, y2 = pos[nextnext_dest]
         angle = math.atan2(y2-y, x2-x)
-        coords = [x, y, angle, TIME_THRESHOLD]
+        inputs = [x, y, angle, TIME_THRESHOLD, 1 if not first and not rospy.get_param('/hrisim/robot_obs', False) else 0]
     else:
-        coords = [x, y, 0, TIME_THRESHOLD]
-    p.exec_action('goto', "_".join([str(coord) for coord in coords]))
+        inputs = [x, y, 0, TIME_THRESHOLD, 0]
+    p.exec_action('gotoobs', "_".join([str(input) for input in inputs]))
     
     
 def heuristic(a, b):
@@ -70,7 +77,7 @@ def Plan(p):
     while not ros_utils.wait_for_param("/pnp_ros/ready"):
         rospy.sleep(0.1)
         
-    global NEXT_GOAL, QUEUE, GO_TO_CHARGER
+    global NEXT_GOAL, QUEUE, GO_TO_CHARGER, dynobs_remove_service, dynobs_timer_service
     ros_utils.wait_for_param("/peopleflow/timeday")
     rospy.set_param('/hrisim/robot_busy', False)
     PLAN_ON = True
@@ -82,6 +89,8 @@ def Plan(p):
     new_task_service = rospy.ServiceProxy('/hrisim/new_task', NewTask)
     finish_task_service = rospy.ServiceProxy('/hrisim/finish_task', FinishTask)
     shutdown_service = rospy.ServiceProxy('/hrisim/shutdown', Empty)
+    dynobs_remove_service = rospy.ServiceProxy('/hrisim/obstacles/remove', Empty)
+    dynobs_timer_service = rospy.ServiceProxy('/hrisim/obstacles/timer/off', Empty)
     
     while PLAN_ON:
         rospy.logerr("Planning..")
@@ -105,6 +114,7 @@ def Plan(p):
             NEXT_GOAL, TASK, PLAN_ON = get_next_goal()
             if NEXT_GOAL is None: continue
             QUEUE = nx.astar_path(G, ROBOT_CLOSEST_WP, NEXT_GOAL, heuristic=heuristic, weight='weight')
+            firstgoal = QUEUE[0]
             rospy.logwarn(f"{QUEUE}")
             task_id = new_task_service(NEXT_GOAL, QUEUE).task_id
 
@@ -117,7 +127,8 @@ def Plan(p):
             if nextnext_sub_goal is None and TASK is constants.Task.CLEANING: 
                 nextnext_sub_goal = TASK_LIST[constants.Task.CLEANING.value][0] if len(TASK_LIST[constants.Task.CLEANING.value]) > 0 else None
             
-            send_goal(p, next_sub_goal, nextnext_sub_goal)
+            send_goal(p, next_sub_goal, nextnext_sub_goal, next_sub_goal == firstgoal)
+                
             GOAL_STATUS = rospy.get_param('/hrisim/goal_status')
             if GOAL_STATUS == -1:
                 rospy.logerr("Goal failed!")
@@ -141,7 +152,7 @@ def cb_battery(msg):
         client = actionlib.SimpleActionClient('/move_base', MoveBaseAction)
         client.wait_for_server()
         client.cancel_all_goals()
-        p.action_cmd('goto', "", 'interrupt')
+        p.action_cmd('gotoobs', "", 'interrupt')
         while rospy.get_param('/hrisim/robot_busy'): rospy.sleep(0.1)
         NEXT_GOAL = None
         QUEUE = []
@@ -157,13 +168,24 @@ def cb_robot_closest_wp(wp: String):
     ROBOT_CLOSEST_WP = wp.data
     
     
-if __name__ == "__main__":  
+def cb_odom(odom: Odometry):
+    global OBS_SPAWNED_TIME
+    v = abs(odom.twist.twist.linear.x)
+    if (rospy.get_param('/hrisim/robot_obs', False) and v >= 0.5):
+        dynobs_remove_service()
+        rospy.set_param('/hrisim/robot_obs', False)
+        dynobs_timer_service()
+    
+    
+if __name__ == "__main__":
     BATTERY_LEVEL = None
     ROBOT_CLOSEST_WP = None
     NEXT_GOAL = None
     GO_TO_CHARGER = False
+    OBS_SPAWNED_TIME = None
     QUEUE = []
-    
+    rospy.set_param('/hrisim/robot_obs', False)
+
     p = PNPCmd()
     
     TLISTPATH = '/root/ros_ws/src/HRISim/hrisim_plans/hardcoded/task_list.pkl'
@@ -176,6 +198,7 @@ if __name__ == "__main__":
         G.remove_node("parking")
     rospy.Subscriber("/hrisim/robot_battery", BatteryStatus, cb_battery)
     rospy.Subscriber("/hrisim/robot_closest_wp", String, cb_robot_closest_wp)
+    rospy.Subscriber("/mobile_base_controller/odom", Odometry, cb_odom)
 
     TIME_THRESHOLD = ros_utils.wait_for_param("/hrisim/abort_time_threshold")
     
