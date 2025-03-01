@@ -7812,7 +7812,7 @@
   
   <schedule>
     <!-- Time resolution: seconds -->
-    <time name="H1" duration="10800" >
+    <time name="H1" duration="18000" >
       <adddest name="parking"         p="0.05" std="0" />
       <adddest name="office-1"        p="0.025" std="0" />
       <adddest name="office-2"        p="0.025" std="0" />

@@ -8077,7 +8077,7 @@
       <adddest name="corridor-canteen-2"       p="0.01" std="0" />
       <adddest name="corridor-canteen-3"       p="0.01" std="0" />
     </time>
-    <time name="H9" duration="10800" >
+    <time name="H9" duration="18000" >
       <adddest name="parking"         p="0" std="0" />
       <adddest name="office-1"        p="0.05" std="0" />
       <adddest name="office-2"        p="0.05" std="0" />
