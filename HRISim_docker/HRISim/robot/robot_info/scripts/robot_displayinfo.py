@@ -76,7 +76,7 @@ def create_overlay_text():
     text_task.line_width = 2
     if TASKS is not None:
         intro_str = f"Task {TASKS[0]}/{int(rospy.get_param('/hrisim/tasks/total', 0))}:"
-        tasks_detail_str = f"- Pending: {TASKS[0] - (TASKS[1]+TASKS[2])}\n- Success: {TASKS[1]}/{int(TASKS[0])-1}\n- Failure: {TASKS[2]}/{int(TASKS[0])-1}" if TASKS is not None else 'none'
+        tasks_detail_str = f"- Pending: {TASKS[0] - (TASKS[1]+TASKS[2])}/{int(TASKS[0])}\n- Success: {TASKS[1]}/{int(TASKS[0])}\n- Failure: {TASKS[2]}/{int(TASKS[0])}" if TASKS is not None else 'none'
         overlay_str = '\n'.join([intro_str, tasks_detail_str])
     else:
         overlay_str = "Task none"

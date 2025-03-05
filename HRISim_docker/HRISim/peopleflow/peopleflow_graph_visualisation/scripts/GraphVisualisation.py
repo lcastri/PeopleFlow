@@ -3,7 +3,7 @@
 import rospy
 from visualization_msgs.msg import Marker, MarkerArray
 from geometry_msgs.msg import Point
-from std_srvs.srv import Trigger, TriggerResponse
+from std_srvs.srv import Empty, EmptyResponse
 import hrisim_util.ros_utils as ros_utils
 
 
@@ -33,6 +33,7 @@ def visualize_graph_from_rosparam(request):
         
         # Normalize weight and determine color
         normalized_weight = (edge['weight'] - min_weight) / weight_range
+    
         edge_marker.color.r = normalized_weight  # Red increases with weight
         edge_marker.color.g = 1.0 - normalized_weight  # Green decreases with weight
         edge_marker.color.b = 0.0  # Blue remains constant
@@ -64,13 +65,14 @@ def visualize_graph_from_rosparam(request):
         weight_marker.pose.position.z = 0.1  # Slightly above the plane
         
         # Text content
-        weight_marker.text = f"{normalized_weight:.2f}"  # Format weight to two decimal places
+        # weight_marker.text = f"{edge['weight']:.2f}"  # Format weight to two decimal places
+        weight_marker.text = f"W: {edge['weight']:.2f}\n- D: {edge['D_cost']:.2f}\n- PD: {edge['PD_cost']:.2f}\n- BC: {edge['BC_cost']:.2f}"
         markers.markers.append(weight_marker)
 
     
     marker_pub.publish(markers)
     rospy.loginfo("Graph visualization updated")
-    return TriggerResponse(success=True, message="Graph visualization updated successfully.")
+    return EmptyResponse()
 
 
 
@@ -78,6 +80,6 @@ if __name__ == "__main__":
     rospy.init_node('graph_visualization_service')
     marker_pub = rospy.Publisher('/graph_visualization', MarkerArray, queue_size=10)
 
-    rospy.Service('update_graph_visualization', Trigger, visualize_graph_from_rosparam)
+    rospy.Service('/graph/weights/update', Empty, visualize_graph_from_rosparam)
     rospy.loginfo("Graph visualization service started")
     rospy.spin()

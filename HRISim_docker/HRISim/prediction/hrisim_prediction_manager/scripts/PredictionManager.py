@@ -1,11 +1,8 @@
 #!/usr/bin/env python
 
 import math
-import os
 import pickle
-import time
 import numpy as np
-import pandas as pd
 import rospy
 import hrisim_util.ros_utils as ros_utils
 import hrisim_util.constants as constants
@@ -13,12 +10,13 @@ from hrisim_prediction_srvs.srv import GetRiskMap, GetRiskMapResponse
 from geometry_msgs.msg import PoseWithCovarianceStamped
 from nav_msgs.msg import Odometry
 from peopleflow_msgs.msg import WPPeopleCounters, Time as pT
-from robot_msgs.msg import BatteryStatus, BatteryAtChargers
+from robot_msgs.msg import BatteryStatus
 from std_msgs.msg import String
-from causalflow.basics.constants import *
-from causalflow.causal_reasoning.CausalInferenceEngine import CausalInferenceEngine
-from collections import deque
 import networkx as nx
+import pyAgrum
+import pyAgrum.causal as pyc
+from enum import Enum
+
 
 class Robot():
     def __init__(self) -> None:
@@ -31,12 +29,41 @@ class Robot():
         self.closest_wp = ''
         self.task_result = 0
         
+        
+class TOD(Enum):
+    H1 = "H1"
+    H2 = "H2"
+    H3 = "H3"
+    H4 = "H4"
+    H5 = "H5"
+    H6 = "H6"
+    H7 = "H7"
+    H8 = "H8"
+    H9 = "H9"
+    H10 = "H10"
+    OFF = "off"
+        
 
 def heuristic(a, b):
     pos = nx.get_node_attributes(G, 'pos')
     (x1, y1) = pos[a]
     (x2, y2) = pos[b]
     return ((x1 - x2) ** 2 + (y1 - y2) ** 2) ** 0.5
+
+
+def get_info(D, auditDict, var):
+    if auditDict[var]['method'] == 'NoDiscretization':
+        edges = auditDict[var]['values']
+        midpoints = auditDict[var]['values']
+        return 'NoDiscretization', edges, midpoints
+    elif 'param' in auditDict[var] and isinstance(auditDict[var]['param'], list):
+        edges = auditDict[var]['param']
+        midpoints = [(edges[i] + edges[i+1]) / 2.0 for i in range(len(edges)-1)]
+        return auditDict[var]['param'], edges, midpoints
+    quantiles = np.linspace(0, 100, auditDict[var]['param'] + 1 if 'param' in auditDict[var] else auditDict[var]['nbBins'] + 1)
+    edges = np.percentile(D[var].values, quantiles)
+    midpoints = [(edges[i] + edges[i+1]) / 2.0 for i in range(len(edges)-1)]
+    return quantiles, edges, midpoints
        
 
 class PredictionManager:
@@ -47,7 +74,7 @@ class PredictionManager:
         self.robot = Robot()
 
         self.WPs = {}
-        self.BACs = {}
+        self.ELTs = {}
         self.PDs = {}
 
         self.TOD = ''        
@@ -60,21 +87,34 @@ class PredictionManager:
         rospy.Subscriber("/peopleflow/counter", WPPeopleCounters, self.cb_people_counter)
         rospy.Subscriber("/peopleflow/time", pT, self.cb_time)
         rospy.Subscriber("/hrisim/robot_battery", BatteryStatus, self.cb_robot_battery)
-        rospy.Subscriber("/hrisim/robot_bac", BatteryAtChargers, self.cb_robot_bac)
         rospy.Subscriber("/hrisim/robot_closest_wp", String, self.cb_robot_closest_wp)
         
-        self.CIE = CausalInferenceEngine.load(CIEDIR)
-        self.DAG = self.CIE.DAG['complete']
-        self.MAX_LAG = self.DAG.max_lag
-        
-        dag = self.CIE.remove_intVarParents(self.DAG, 'R_V')
-        self.calculation_order = list(nx.topological_sort(self.CIE.DAG2NX(dag)))
+        AUDITs = pickle.load(open(f"{CIEDIR}/AUDITs.pkl", "rb"))
+        Ds = pickle.load(open(f"{CIEDIR}/Ds.pkl", "rb"))
+        self.CIE = {}
+        for wp in WPS_COORD.keys():
+            if wp in ['parking', 'charging-station']: continue
+            bn = pyAgrum.loadBN(f"{CIEDIR}/CIE_{wp}.bifxml")
+            cm = pyc.CausalModel(bn)
+            self.CIE[wp] = {'audit': AUDITs[wp], 'd': Ds[wp], 'bn': bn, 'cm': cm}
             
-        self.observations = deque(maxlen=self.MAX_LAG + 1)  # Store up to MAX_LAG + 1 steps (current and previous)
-        self.service = None
+        quantiles_RV, edges_RV, midpoints_RV = get_info(Ds['target-3'], AUDITs['target-3'], "RVt") # target-3 has been chosen as random wp
+        quantiles_EC, edges_EC, midpoints_EC = get_info(Ds['target-3'], AUDITs['target-3'], "ECt") # target-3 has been chosen as random wp
+        self.RV_info = {'quantiles': quantiles_RV, 'edges': edges_RV, 'midpoints': midpoints_RV}
+        self.EC_info = {'quantiles': quantiles_EC, 'edges': edges_EC, 'midpoints': midpoints_EC}
+               
+        self.TTWP = self.get_ttwp()
+        self.ARCs = []
+        for arc in self.TTWP.keys():
+            wp_i, wp_j = arc
+            if wp_i in ['parking', 'charging-station']: continue            
+            if wp_j in ['parking', 'charging-station']: continue   
+            self.ARCs.append('__'.join(arc))
+        rospy.Service('/hrisim/riskMap/predict', GetRiskMap, self.handle_get_risk_map)
         
         rospy.set_param('/hrisim/prediction_ready', True)
-             
+        rospy.logwarn("Prediction Manager ready!")     
+                   
                                       
     def cb_robot_pose(self, pose: PoseWithCovarianceStamped):
         self.robot.x, self.robot.y, self.robot.yaw = ros_utils.getPose(pose.pose.pose)
@@ -91,11 +131,6 @@ class PredictionManager:
     def cb_robot_battery(self, b: BatteryStatus):
         self.robot.battery_level = b.level.data
         self.robot.is_charging = b.is_charging.data
-        
-        
-    def cb_robot_bac(self, bacs: BatteryAtChargers):
-        for bac in bacs.BACs:
-            self.BACs[bac.WP_id.data] = bac.BAC.data
     
     
     def cb_people_counter(self, wps: WPPeopleCounters):
@@ -111,47 +146,30 @@ class PredictionManager:
         self.elapsed = t.elapsed
             
             
-    def get_treatment_len(self):        
-        # Calculate the prediction horizon based on the time needed to reach the furthest waypoint
-        travelled_distances = []
-        for wp in WPS_COORD.keys():
-            path = nx.astar_path(G, self.robot.closest_wp, wp, heuristic=heuristic, weight='weight')
-            travelled_distance = 0
-            for wp_idx in range(1, len(path)):
-                wp_current = path[wp_idx-1]
-                wp_next = path[wp_idx]
-                travelled_distance += math.sqrt((WPS_COORD[wp_next]['x'] - WPS_COORD[wp_current]['x'])**2 + (WPS_COORD[wp_next]['y'] - WPS_COORD[wp_current]['y'])**2)
-            travelled_distances.append(travelled_distance)
-        return math.ceil((max(travelled_distances)/ROBOT_MAX_VEL)/PREDICTION_STEP)
-            
-            
-    def collect_data(self):
+    def get_ttwp(self, relative=False):
         """
-        Collects the current state of all data and logs or processes it.
-        """
-        # Check that self.PDs has exactly the same keys as WPS_COORD
-        if (set(self.PDs.keys()) != set(WPS_COORD.keys())) or (set(self.BACs.keys()) != set(WPS_COORD.keys())):
-            rospy.logerr("Mismatch between PDs/BACs keys and WPS_COORD keys")
-            return
-        
-        # Create a dictionary for the current data
-        current_data = {
-            "TOD": self.TOD,
-            "R_V": self.robot.v,
-            "R_B": self.robot.battery_level,
-            "B_S": 1 if self.robot.is_charging else 0,
-        }
-        for wp in WPS_COORD.keys():
-            current_data[f"PD_{wp}"] = self.PDs[wp]
-            current_data[f"BAC_{wp}"] = self.BACs[wp]
-        # for wp in self.PDs.keys():
-        #     current_data[f"PD_{wp}"] = self.PDs[wp] #! version without BAC
+        Calculate the time to travel between each pair of waypoints in the graph.
 
-        # Add current data to the sliding window
-        self.observations.append(current_data)
-        if self.service is None: 
-            self.service = rospy.Service('/get_risk_map', GetRiskMap, PM.handle_get_risk_map)
-            
+        Returns:
+            dict: A dictionary with waypoint pairs as keys and travel times as values.
+        """
+        travelled_distances = {}
+        if relative:
+            for wp in WPS_COORD.keys():
+                path = nx.astar_path(G, self.robot.closest_wp, wp, heuristic=heuristic, weight='weight')
+                travelled_distance = 0
+                for wp_idx in range(1, len(path)):
+                    wp_current = path[wp_idx-1]
+                    wp_next = path[wp_idx]
+                    travelled_distance += math.sqrt((WPS_COORD[wp_next]['x'] - WPS_COORD[wp_current]['x'])**2 + (WPS_COORD[wp_next]['y'] - WPS_COORD[wp_current]['y'])**2)
+                travelled_distances[wp] = math.ceil((travelled_distance/ROBOT_MAX_VEL)/PREDICTION_STEP)
+        else:
+            for arc in G.edges():
+                wp_i, wp_j = arc
+                travelled_distance = math.sqrt((WPS_COORD[wp_i]['x'] - WPS_COORD[wp_j]['x'])**2 + (WPS_COORD[wp_i]['y'] - WPS_COORD[wp_j]['y'])**2)
+                travelled_distances[arc] = math.ceil((travelled_distance/ROBOT_MAX_VEL)/PREDICTION_STEP)
+        return travelled_distances
+                       
             
     def elapsed2TOD(self, t):
         d = 0
@@ -161,62 +179,100 @@ class PredictionManager:
                 continue
             else:
                 return constants.TODS[SCHEDULE[time]['name']]
+            
+            
+    def predict_BC(self, rv, cs):
         
-        
+        def find_bin(value, edges):
+            """
+            Given a continuous value and an array of bin edges,
+            return the index of the bin that contains the value.
+            """
+            idx = np.digitize(value, edges, right=False) - 1
+            return int(max(0, min(idx, len(edges) - 2)))
+    
+        RV_bin_idx = find_bin(rv, self.RV_info['edges'])
+                
+        # --- BN prediction ---
+        bn = self.CIE['target-3']['bn']
+        cm = self.CIE['target-3']['cm']
+        ie = pyAgrum.VariableElimination(bn)
+        evidence = {"RVt": RV_bin_idx, "CSt": cs}
+        ie.setEvidence(evidence)
+        ie.makeInference()
+        bn_posterior = ie.posterior("ECt")
+        bn_posterior_values = bn_posterior.toarray()
+        pred_bn = sum(bn_posterior_values[j] * self.EC_info['midpoints'][j] for j in range(len(bn_posterior_values)))
+                        
+        # --- CausalModel prediction ---
+        _, adj, _ = pyc.causalImpact(cm, on="ECt", doing="RVt", knowing={"CSt"}, values=evidence)
+        posterior_causal = adj.toarray()
+        pred_causal = sum(posterior_causal[j] * self.EC_info['midpoints'][j] for j in range(len(posterior_causal)))
+                        
+        return pred_bn, pred_causal
+    
+    
+    def predict_PD(self, tod, wp):
+
+        wp_bin = 0
+        tod_bin = tod
+              
+        bn = self.CIE[wp]['bn']
+        cm = self.CIE[wp]['cm']
+        dwp = self.CIE[wp]['d']
+               
+        _, _, midpoints_PD = get_info(dwp, self.CIE[wp]['audit'], 'PD0')
+      
+        # --- BN prediction ---
+        ie = pyAgrum.VariableElimination(bn)
+        evidence = {"TOD0": tod_bin, "WP0": wp_bin}
+        ie.setEvidence(evidence)
+        ie.makeInference()
+        bn_posterior = ie.posterior("PD0")
+        bn_posterior_values = bn_posterior.toarray()
+        pred_bn = sum(bn_posterior_values[j] * midpoints_PD[j] for j in range(len(bn_posterior_values)))
+                                
+        # --- CausalModel prediction ---
+        _, adj, _ = pyc.causalImpact(cm, on="PD0", doing="TOD0", knowing={"WP0"}, values=evidence)
+        posterior_causal = adj.toarray()
+        pred_causal = sum(posterior_causal[j] * midpoints_PD[j] for j in range(len(posterior_causal)))
+
+        return pred_bn, pred_causal
+    
+
     def handle_get_risk_map(self, req):
-        treatment_len = self.get_treatment_len()
-        rospy.logwarn(f"Treatment length: {treatment_len}")
-        rospy.logwarn(f"Treatment seconds: {treatment_len*PREDICTION_STEP}")
+        rospy.logwarn("Prediction requested!")
         
         # Convert the observations deque to a pandas DataFrame
-        data = pd.DataFrame(list(self.observations))
+        TTWP_relative = self.get_ttwp(relative=True)
                
         # Init output
-        flattened_PDs = []
-        flattened_BACs = []
+        PD_wps = {}
+        PDs = []
+        BCs = []
         
-        for i, wp in enumerate(WPS_COORD.keys()):
-            # For each waypoint, pass the corresponding data to the causal inference engine
-            # wp_obs = data[["TOD", "R_V", "R_B", "B_S", f"PD_{wp}"]].values #! version without BAC
-            wp_obs = data[["TOD", "R_V", "R_B", "B_S", f"PD_{wp}", f"BAC_{wp}"]].values
-            # wp_obs_df = pd.DataFrame(wp_obs, columns=["TOD", "R_V", "R_B", "B_S", "PD"]) #! version without BAC
-            wp_obs_df = pd.DataFrame(wp_obs, columns=["TOD", "R_V", "R_B", "B_S", "PD", "BAC"])
-            wp_obs_df["WP"] = constants.WPS[wp]
+        for wp in WPS_COORD.keys():
+            if wp in ['parking', 'charging-station']: continue
+            traversal_step = TTWP_relative[wp]
+            tod = self.elapsed2TOD(self.elapsed + traversal_step * PREDICTION_STEP)
+            PD_wps[wp] = self.predict_PD(tod, wp)[1]
             
-            # Init prior knowledge
-            prior_knowledge = {f: np.full(treatment_len, wp_obs_df[f].values[-1]) for f in ['B_S', 'WP']}
-            prior_knowledge['TOD'] = [self.elapsed2TOD(self.elapsed + i * PREDICTION_STEP) for i in range(treatment_len)]
-            if i > 0: prior_knowledge['R_B'] = prediction_df['R_B'].values
+        for arc in self.ARCs:
+            wp_i, wp_j = arc.split('__')
+            if wp_i in ['parking', 'charging-station']: continue            
+            if wp_j in ['parking', 'charging-station']: continue            
+            traversal_step = self.TTWP[(wp_i, wp_j)]
+            BCs.append(self.predict_BC(rv=ROBOT_MAX_VEL, cs=0)[1]*traversal_step)
+            PDs.append((PD_wps[wp_i] + PD_wps[wp_j])/2)
             
-            # start_time_cie = time.time()
-            res = self.CIE.whatIf('R_V', 
-                                  ROBOT_MAX_VEL * np.ones(treatment_len), 
-                                  wp_obs_df.values,
-                                  prior_knowledge,
-                                  self.calculation_order
-                                 )
-            # end_time_cie = time.time()
-            # rospy.logwarn(f"Time elapsed CIE: {end_time_cie - start_time_cie}")
-
-            # prediction_df = pd.DataFrame(res, columns=["TOD", "R_V", "R_B", "B_S", "PD", "WP"]) #! version without BAC
-            prediction_df = pd.DataFrame(res, columns=["TOD", "R_V", "R_B", "B_S", "PD", "BAC", "WP"])
-            if wp == constants.WP.CHARGING_STATION.value: prediction_df["BAC"] = prediction_df["R_B"]
-            flattened_PDs.extend(prediction_df['PD'].values)
-            # flattened_BACs.extend(prediction_df['R_B'].values) #! version without BACs
-            flattened_BACs.extend(prediction_df['BAC'].values)
-        
-        return GetRiskMapResponse(list(self.PDs.keys()), 
-                                  treatment_len, 
-                                  len(self.PDs.keys()),
-                                  flattened_PDs,
-                                  flattened_BACs)
+        return GetRiskMapResponse(self.ARCs, PDs, BCs)
         
 
 if __name__ == "__main__":
     # Initialize the node
     rospy.init_node('prediction_manager')
     
-    CIEDIR = os.path.join(rospy.get_param("~CIE"), "cie.pkl")
+    CIEDIR = rospy.get_param("~CIE")
     PREDICTION_STEP = rospy.get_param("~pred_step")
     ROBOT_MAX_VEL = float(ros_utils.wait_for_param("/move_base/TebLocalPlannerROS/max_vel_x"))
     g_path = ros_utils.wait_for_param("/peopleflow_pedsim_bridge/g_path")
@@ -232,7 +288,5 @@ if __name__ == "__main__":
     
     rate = rospy.Rate(1 / PREDICTION_STEP)
         
-    rospy.loginfo("Starting periodic data collection.")
     while not rospy.is_shutdown():
-        PM.collect_data()
         rate.sleep()

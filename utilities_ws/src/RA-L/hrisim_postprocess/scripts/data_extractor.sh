@@ -1,8 +1,8 @@
 #!/bin/bash
 
-bagname="causal-12012025"
+bagname="base"
 
-for i in {10..10}
+for i in {5..5}
 do
     if [ $i -eq 11 ]; then
         time_of_the_day="off"

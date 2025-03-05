@@ -20,7 +20,7 @@ if __name__ == "__main__":
     CLEANING_PATH = nx.approximation.traveling_salesman_problem(G, cycle=False)
     TASK_LIST[constants.TOD.OFF.value] = CLEANING_PATH
 
-    random_target = 300
+    random_target = 200
     whereIam = 'T'
     for tod in constants.TOD:
         if tod in [constants.TOD.H1, constants.TOD.H2, constants.TOD.H3, constants.TOD.H4,

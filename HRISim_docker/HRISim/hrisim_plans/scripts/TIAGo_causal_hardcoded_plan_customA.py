@@ -22,7 +22,7 @@ import hrisim_util.ros_utils as ros_utils
 import hrisim_util.constants as constants
 import networkx as nx
 from peopleflow_msgs.msg import Time as pT
-from robot_srvs.srv import NewTask, FinishTask, SetBattery, VisualisePath
+from robot_srvs.srv import NewTask, NewTaskResponse, FinishTask, FinishTaskResponse, SetBattery, SetBatteryResponse
 import functools
 from std_srvs.srv import Empty  # Import the Empty service
 import argparse
@@ -71,7 +71,7 @@ def shortest_heuristic(a, b):
     return ((x1 - x2)**2 + (y1 - y2)**2)**0.5
 
 
-def causal_heuristic(a, b, max_d_cost, max_pd_cost, max_bc_cost):
+def causal_heuristic(a, b, max_d_cost, max_pd_cost, max_bc_cost, R_B, current_path):
     
     def _extract_info(a, b, variable):
         if (a, b) in RISK_MAP:
@@ -90,27 +90,73 @@ def causal_heuristic(a, b, max_d_cost, max_pd_cost, max_bc_cost):
 
     # Calculate normalized distance cost
     distance_cost = math.sqrt((x1 - x2) ** 2 + (y1 - y2) ** 2)
-    #! Not normalised
-    normalized_d_cost = distance_cost
-    #! Normalised
-    # normalized_d_cost = distance_cost / max_d_cost if max_d_cost > 0 else 0
+    normalized_d_cost = distance_cost / max_d_cost if max_d_cost > 0 else 0
 
     # Calculate PD cost
     PD_cost = _extract_info(a, b, 'PD')
-    #! Not normalised
-    normalized_PD_cost = PD_cost
-    #! Normalised
-    # normalized_PD_cost = PD_cost / max_pd_cost if max_pd_cost > 0 else 0
+    normalized_PD_cost = PD_cost / max_pd_cost if max_pd_cost > 0 else 0
 
     # Calculate BC cost
     BC_cost = _extract_info(a, b, 'BC')
-    #! Not normalised
-    normalized_BC_cost = BC_cost
-    #! Normalised
-    # normalized_BC_cost = BC_cost / max_bc_cost if max_bc_cost > 0 else 0
+    normalized_BC_cost = BC_cost / max_bc_cost if max_bc_cost > 0 else 0
+
+    # Compute total estimated battery consumption for the path
+    total_battery_cost = sum(_extract_info(x, y, 'BC') for x, y in zip(current_path, current_path[1:]))
+
+    # Enforce battery constraint
+    if R_B - total_battery_cost < BATTERY_CRITICAL_LEVEL:
+        return float('inf')
 
     # Combine weighted costs
     return K_D * normalized_d_cost + K_PD * normalized_PD_cost + K_BC * normalized_BC_cost
+
+
+def astar_with_causal_heuristic(G, start, goal, max_d_cost, max_pd_cost, max_bc_cost, R_B):
+    """
+    Custom A* search that keeps track of paths and applies the causal heuristic correctly.
+    """
+    # Priority queue: (total cost, current node, path taken so far)
+    pq = [(0, start, [start])]
+
+    while pq:
+        cost, node, path = heapq.heappop(pq)
+
+        # If we reached the goal, return the path
+        if node == goal:
+            return path
+
+        # Expand neighbors
+        for neighbor in G.neighbors(node):
+            if neighbor in path:  # Avoid cycles
+                continue
+
+            # Compute heuristic with the current path
+            heuristic_func = functools.partial(
+                causal_heuristic, 
+                max_d_cost=max_d_cost, 
+                max_pd_cost=max_pd_cost, 
+                max_bc_cost=max_bc_cost, 
+                R_B=R_B, 
+                current_path=path + [neighbor]  # Update path
+            )
+
+            # Get edge weight
+            edge_weight = G[node][neighbor].get('weight', 1)
+
+            # Compute heuristic value
+            h_value = heuristic_func(node, neighbor)
+
+            # If the heuristic returns infinity (battery constraint), discard the path
+            if h_value == float('inf'):
+                continue
+
+            # Total cost (g(n) + h(n))
+            total_cost = cost + edge_weight + h_value
+
+            # Add to priority queue
+            heapq.heappush(pq, (total_cost, neighbor, path + [neighbor]))
+
+    return None
 
 
 def compute_max_values(G, risk_map):
@@ -169,16 +215,10 @@ def update_G_weights(g, max_d_cost, max_pd_cost, max_bc_cost):
         
         pd_costs.append(PD_cost)
         bc_costs.append(BC_cost)
-    
-    #! Not normalised   
-    normalized_d_costs = d_costs
-    normalized_pd_costs = pd_costs
-    normalized_bc_costs = bc_costs
-    
-    #! Normalised   
-    # normalized_d_costs = [d / max_d_cost for d in d_costs]
-    # normalized_pd_costs = [c / max_pd_cost for c in pd_costs]
-    # normalized_bc_costs = [c / max_bc_cost for c in bc_costs]
+            
+    normalized_d_costs = [d / max_d_cost for d in d_costs]
+    normalized_pd_costs = [c / max_pd_cost for c in pd_costs]
+    normalized_bc_costs = [c / max_bc_cost for c in bc_costs]
 
     # Apply normalization and scaling factors
     for idx, (u, v) in enumerate(g.edges()):
@@ -187,9 +227,6 @@ def update_G_weights(g, max_d_cost, max_pd_cost, max_bc_cost):
         BC_cost = normalized_bc_costs[idx]
                 
         # Assign the combined weight to the edge between u and v
-        g[u][v]['D_cost'] = d_cost
-        g[u][v]['PD_cost'] = PD_cost
-        g[u][v]['BC_cost'] = BC_cost
         g[u][v]['weight'] = K_D * d_cost + K_PD * PD_cost + K_BC * BC_cost
         
     return g
@@ -217,7 +254,27 @@ def get_next_goal():
         else:
             rospy.logwarn("No tasks left, shutting down the planning.")
             return None, None, False
-
+                       
+            
+# def check_BAC(risk_map, queue, heuristic, robot_speed = 0.5):
+#     for wp in queue:
+#         if wp == constants.WP.CHARGING_STATION.value and wp not in risk_map: continue
+#         time_to_reach_wp = ros_utils.get_time_to_wp(G_original, ROBOT_CLOSEST_WP, wp, heuristic, robot_speed)
+#         # time_to_reach_charger = ros_utils.get_time_to_wp(G_original, wp, constants.WP.CHARGING_STATION.value, shortest_heuristic, robot_speed)
+#         battery_consumption = time_to_reach_wp * (STATIC_CONSUMPTION + K * robot_speed)
+        
+#         wp_BAC_idx = math.ceil(time_to_reach_wp / PRED_STEP)
+#         wp_BAC_idx = min(len(risk_map[wp]['BAC']) - 1, wp_BAC_idx)
+#         wp_BAC = risk_map[wp]['BAC'][wp_BAC_idx] - battery_consumption
+#         if wp_BAC >= BATTERY_CRITICAL_LEVEL:
+#             rospy.logwarn(f"{wp} ttwp: {wp_BAC_idx} BWP: {risk_map[wp]['BAC'][wp_BAC_idx]} BTC: {battery_consumption}.")
+#             rospy.logwarn(f"{wp} BAC: {wp_BAC}. Critical? False")
+#         else:
+#             rospy.logerr(f"{wp} ttwp: {wp_BAC_idx} BWP: {risk_map[wp]['BAC'][wp_BAC_idx]} BTC: {battery_consumption}.")
+#             rospy.logerr(f"{wp} BAC: {wp_BAC}. Critical? True")
+#             return True
+        
+#     return False
 
 def set_battery(b):
     try:
@@ -275,6 +332,22 @@ def Plan(p):
         rospy.sleep(0.1)
         
     global NEXT_GOAL, QUEUE, GO_TO_CHARGER, G, RISK_MAP, TASK_LIST, set_battery_level, dynobs_remove_service, dynobs_timer_service
+    # rospy.logwarn("Waiting rosservice /hrisim/new_task to be ready...")
+    # rospy.wait_for_service('/hrisim/new_task')
+    # rospy.logwarn("Waiting rosservice /hrisim/finish_task to be ready...")
+    # rospy.wait_for_service('/hrisim/finish_task')
+    # rospy.logwarn("Waiting rosservice /hrisim/shutdown to be ready...")
+    # rospy.wait_for_service('/hrisim/shutdown')
+    # rospy.logwarn("Waiting rosservice /hrisim/set_battery_level to be ready...")
+    # rospy.wait_for_service('/hrisim/set_battery_level')
+    # rospy.logwarn("Waiting rosservice /hrisim/obstacles/remove to be ready...")
+    # rospy.wait_for_service('/hrisim/obstacles/remove')
+    # rospy.logwarn("Waiting rosservice /hrisim/obstacles/timer/off to be ready...")
+    # rospy.wait_for_service('/hrisim/obstacles/timer/off')
+    # rospy.logwarn("Waiting rosservice /hrisim/riskMap/predict to be ready...")
+    # rospy.wait_for_service('/hrisim/riskMap/predict')
+    # rospy.logwarn("Waiting rosservice /update_graph_visualization to be ready...")
+    # rospy.wait_for_service('/update_graph_visualization')
     ros_utils.wait_for_service('/hrisim/new_task')
     ros_utils.wait_for_service('/hrisim/finish_task')
     ros_utils.wait_for_service('/hrisim/shutdown')
@@ -282,8 +355,7 @@ def Plan(p):
     ros_utils.wait_for_service('/hrisim/obstacles/remove')
     ros_utils.wait_for_service('/hrisim/obstacles/timer/off')
     ros_utils.wait_for_service('/hrisim/riskMap/predict')
-    ros_utils.wait_for_service('/graph/weights/update')
-    ros_utils.wait_for_service('/graph/path/show')
+    ros_utils.wait_for_service('/update_graph_visualization')
 
     new_task_service = rospy.ServiceProxy('/hrisim/new_task', NewTask)
     finish_task_service = rospy.ServiceProxy('/hrisim/finish_task', FinishTask)
@@ -291,8 +363,7 @@ def Plan(p):
     set_battery_level = rospy.ServiceProxy('/hrisim/set_battery_level', SetBattery)
     dynobs_remove_service = rospy.ServiceProxy('/hrisim/obstacles/remove', Empty)
     dynobs_timer_service = rospy.ServiceProxy('/hrisim/obstacles/timer/off', Empty) 
-    graph_weight_update = rospy.ServiceProxy('/graph/weights/update', Empty)
-    graph_path_show = rospy.ServiceProxy('/graph/path/show', VisualisePath)
+    update_service = rospy.ServiceProxy('/update_graph_visualization', Empty)
    
     ros_utils.wait_for_param("/hrisim/prediction_ready")
     
@@ -342,36 +413,18 @@ def Plan(p):
             max_d_cost, max_pd_cost, max_bc_cost = compute_max_values(G, RISK_MAP)
             G = update_G_weights(G, max_d_cost, max_pd_cost, max_bc_cost)
             ros_utils.load_graph_to_rosparam(G, "/peopleflow/G")
-            graph_weight_update()
-            
-            # Wrap the heuristic function to pre-fill parameters
-            causal_heuristic_predefined = functools.partial(
-                causal_heuristic, 
-                max_d_cost=max_d_cost, 
-                max_pd_cost=max_pd_cost, 
-                max_bc_cost=max_bc_cost, 
-            )
+            update_service()
 
-            # Step 1: Run A* to find the best path based on distance, people density, and battery cost
-            try:
-                QUEUE = nx.astar_path(G, ROBOT_CLOSEST_WP, NEXT_GOAL, heuristic=causal_heuristic_predefined, weight='weight')
-            except nx.NetworkXNoPath:
-                raise ValueError("No valid path found by A*!")
-                
-            # Step 2: Check the battery consumption of the chosen path
-            if QUEUE:
-                total_battery_cost = sum(RISK_MAP.get((a, b), {}).get('BC', 0) for a, b in zip(QUEUE, QUEUE[1:]))
-
-                # Step 3: Enforce the battery constraint AFTER path selection
-                if BATTERY_LEVEL - total_battery_cost < BATTERY_CRITICAL_LEVEL:
-                    rospy.logwarn("Path violates battery safety constraint! Going to charger")
-                    QUEUE = []
-                    GO_TO_CHARGER = True
-                    continue
-                else:
-                    rospy.logwarn(f"Path found: {QUEUE}")
+            QUEUE = astar_with_causal_heuristic(G, ROBOT_CLOSEST_WP, NEXT_GOAL, max_d_cost, max_pd_cost, max_bc_cost, BATTERY_LEVEL)
+            if QUEUE is None:
+                rospy.logwarn("No path found, going to charger")
+                QUEUE = []
+                GO_TO_CHARGER = True
+                continue
+            else:
+                rospy.logwarn(f"Path found: {QUEUE}")
+            if GO_TO_CHARGER: continue
             
-            graph_path_show(','.join(QUEUE))
             TASK_LIST[rospy.get_param('/peopleflow/timeday')].pop(0)
             task_id = new_task_service(NEXT_GOAL, QUEUE).task_id
             TASK_ON = True
@@ -437,9 +490,9 @@ if __name__ == "__main__":
 
     
     PRED_STEP = 5
-    K_D = 1
+    K_D = 7.5
     K_PD = 10
-    K_BC = 5
+    K_BC = 10
     global TASK_LIST
 
     p = PNPCmd()

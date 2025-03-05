@@ -163,7 +163,6 @@ def Plan(p):
     
     rospy.logwarn("Ready for the plan!")
     while PLAN_ON:
-        rospy.logerr("Planning..")
         if GO_TO_CHARGER:
             if TASK_ON:
                 rospy.logerr(f"Task {task_id} fail for critical battery")

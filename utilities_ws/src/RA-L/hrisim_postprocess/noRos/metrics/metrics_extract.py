@@ -9,8 +9,7 @@ from tqdm import tqdm
 
 
 INDIR = '/home/lcastri/git/PeopleFlow/utilities_ws/src/RA-L/hrisim_postprocess/csv/HH/original'
-# BAGNAME= ['causal-12012025']
-BAGNAME= ['noncausal-11012025', 'causal-12012025']
+BAGNAME= ['base']
 SCENARIO = 'warehouse'
 WPS_COORD = readScenario(SCENARIO)
 
