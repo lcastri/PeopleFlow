@@ -19,7 +19,7 @@ def update_astar_path(request):
     # Extract path from request
     latest_astar_path = request.path.split(",") if request.path else []
 
-    rospy.loginfo(f"Updated A* path: {latest_astar_path}")
+    # rospy.loginfo(f"Updated A* path: {latest_astar_path}")
 
     # Immediately update visualization
     ros_graph = ros_utils.wait_for_param('/peopleflow/G')
@@ -88,7 +88,7 @@ def update_astar_path(request):
 
     # Publish visualization
     marker_pub.publish(markers)
-    rospy.loginfo("Graph visualization updated with A* path and goal marker")
+    # rospy.loginfo("Graph visualization updated with A* path and goal marker")
     
     return VisualisePathResponse()
 

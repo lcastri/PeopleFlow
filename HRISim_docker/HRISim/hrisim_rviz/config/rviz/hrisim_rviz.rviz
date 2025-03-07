@@ -548,6 +548,27 @@ Visualization Manager:
               text size: 12
               top: 0
               width: 128
+            - Align Bottom: false
+              Background Alpha: 0.800000011920929
+              Background Color: 0; 0; 0
+              Class: jsk_rviz_plugin/OverlayText
+              Enabled: true
+              Foreground Alpha: 0.800000011920929
+              Foreground Color: 25; 255; 240
+              Invert Shadow: false
+              Name: Tasks
+              Overtake BG Color Properties: false
+              Overtake FG Color Properties: false
+              Overtake Position Properties: false
+              Topic: /hrisim/robot/info/tasks
+              Value: true
+              font: DejaVu Sans Mono
+              height: 128
+              left: 0
+              line width: 2
+              text size: 12
+              top: 0
+              width: 128
           Enabled: true
           Name: Overlay Texts
         - Class: rviz/Group
@@ -578,27 +599,6 @@ Visualization Manager:
             "": true
           Queue Size: 100
           Value: true
-        - Align Bottom: false
-          Background Alpha: 0.800000011920929
-          Background Color: 0; 0; 0
-          Class: jsk_rviz_plugin/OverlayText
-          Enabled: true
-          Foreground Alpha: 0.800000011920929
-          Foreground Color: 25; 255; 240
-          Invert Shadow: false
-          Name: Tasks
-          Overtake BG Color Properties: false
-          Overtake FG Color Properties: false
-          Overtake Position Properties: false
-          Topic: /hrisim/robot/info/tasks
-          Value: true
-          font: DejaVu Sans Mono
-          height: 128
-          left: 0
-          line width: 2
-          text size: 12
-          top: 0
-          width: 128
       Enabled: true
       Name: Robot
     - Class: rviz/Group
@@ -1047,8 +1047,9 @@ Visualization Manager:
             Value: true
           Value: true
         ROS-Causal:
-          "": true
+          DAG: true
           Value: true
+          tsDAG: true
         Robot:
           A* path: true
           Clearance:
@@ -1063,6 +1064,7 @@ Visualization Manager:
           Overlay Texts:
             Battery & Velocity: true
             Obstacle: true
+            Tasks: true
             Value: true
           RobotModel: true
           Sensors:
@@ -1075,11 +1077,13 @@ Visualization Manager:
             Velodyne Cloud: true
             Virtual Obstacles: true
           TF: true
-          Tasks: true
           Twist: true
           Value: true
         Tracking:
-          "": true
+          Bounding Boxes: true
+          MarkerArray: true
+          Pose: true
+          PoseArray: true
           Value: true
         Value: true
       Zoom Factor: 1
@@ -1341,7 +1345,7 @@ Visualization Manager:
           Marker Topic: /graph_visualization
           Name: WPGraph
           Namespaces:
-            {}
+            "": true
           Queue Size: 100
           Value: true
         - Class: rviz/Group
@@ -1471,7 +1475,7 @@ Visualization Manager:
   Views:
     Current:
       Class: rviz/Orbit
-      Distance: 26.679832458496094
+      Distance: 28.197063446044922
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.05999999865889549
         Stereo Focal Distance: 1
@@ -1479,9 +1483,9 @@ Visualization Manager:
         Value: false
       Field of View: 0.7853981852531433
       Focal Point:
-        X: -5.291196823120117
-        Y: -0.7152460217475891
-        Z: -1.7636786699295044
+        X: -4.676022052764893
+        Y: -0.08442909270524979
+        Z: -1.5159965753555298
       Focal Shape Fixed Size: true
       Focal Shape Size: 0.05000000074505806
       Invert Z Axis: false
