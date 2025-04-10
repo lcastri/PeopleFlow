@@ -1,8 +1,8 @@
 #!/bin/bash
 
-bagname="base"
+bagname="bayes"
 
-for i in {5..5}
+for i in {2..2}
 do
     if [ $i -eq 11 ]; then
         time_of_the_day="off"

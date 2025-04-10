@@ -3,6 +3,7 @@ import os
 from matplotlib import pyplot as plt
 import numpy as np
 import xml.etree.ElementTree as ET
+from scipy.stats import shapiro, mannwhitneyu, ttest_ind, normaltest
 
 
 def readScenario(scenario):
@@ -25,6 +26,47 @@ def get_initrow(df):
     for r in range(len(df)):
         if (df.iloc[r]["G_X"] != -1000 and df.iloc[r]["G_Y"] != -1000 and df.iloc[r].notnull().all()):
             return r
+        
+        
+def is_normal(data, alpha=0.05):
+    # Automatically choose test based on sample size
+    if len(data) <= 5000:
+        # Shapiro-Wilk test for small datasets
+        stat, p = shapiro(data)
+    else:
+        # D'Agostino and Pearson's test for larger datasets
+        stat, p = normaltest(data)
+
+    # Plot density for visual inspection
+    # plt.figure(figsize=(8, 5))
+    # sns.kdeplot(data, fill=True, color='skyblue', alpha=0.5)
+    # plt.title(f'Density Plot (p={p:.3f}, Normal: {p > alpha})')
+    # plt.xlabel('Values')
+    # plt.ylabel('Density')
+    # plt.grid(True)
+    # plt.show()
+
+    return p > alpha
+
+def compute_p_values(data, metric_name, alpha=0.05):
+    noncausal_data = np.array(data['base'][metric_name])
+    causal_data = np.array(data['causal'][metric_name])
+
+    # Check normality for both groups
+    noncausal_normal = False
+    causal_normal = False
+    # noncausal_normal = is_normal(noncausal_data, alpha)
+    # causal_normal = is_normal(causal_data, alpha)
+
+    # Select appropriate test
+    if noncausal_normal and causal_normal:
+        stat, p_value = ttest_ind(noncausal_data, causal_data, equal_var=False)
+        test_used = "T-Test"
+    else:
+        stat, p_value = mannwhitneyu(noncausal_data, causal_data, alternative='two-sided')
+        test_used = "Mann-Whitney U Test"
+
+    return p_value, test_used
         
         
 def compute_min_h_distance(df):
@@ -237,16 +279,31 @@ def plot_grouped_bar(bagnames, metrics_dict, title, ylabel, figsize=(14, 8), out
 #         plt.savefig(os.path.join(outdir, f"{tod}-{title}.png" if tod is not None else f"{title}.png"), dpi=300, bbox_inches='tight')
 #     else:
 #         plt.show()
-def plot_stacked_bar(metrics_dict, title, ylabel, xTickLabel, bar_width=0.1, offset=0.01, figsize=(10, 8), showSubclass = False, tod = None, outdir=None):
+
+# Convert p-values into significance markers
+def get_significance(p):
+    if p < 0.0001:
+        return "****"
+    elif p < 0.001:
+        return "***"
+    elif p < 0.01:
+        return "**"
+    elif p < 0.05:
+        return "*"
+    return "n.s."  # Not significant
+
+def plot_stacked_bar(metrics_dict, title, ylabel, xTickLabel, bar_width=0.1, offset=0.01, figsize=(10, 8), fontsize=20, showSubclass = False, step = 10, tod = None, outdir=None, noPerc=False):
     # Categories and components
     categories = list(metrics_dict.keys())
     components = list(metrics_dict[categories[0]].keys())
 
     # Extracting values and colors for stacked bars
     values = {component: [metrics_dict[cat][component]["value"] for cat in categories] for component in components}
-    percs = {component: [metrics_dict[cat][component]["%"] for cat in categories] for component in components}
+    pvalues = {component: [metrics_dict[cat][component]["p-value"] for cat in categories] for component in components}
+    if not noPerc:
+        percs = {component: [metrics_dict[cat][component]["%"] for cat in categories] for component in components}
     colors = {component: [metrics_dict[cat][component]["color"] for cat in categories] for component in components}
-    total_values = [metrics_dict[cat][components[0]]["100%"] for cat in categories]  # Overall total for each category
+    # total_values = [metrics_dict[cat][components[0]]["100%"] for cat in categories]  # Overall total for each category
 
     # Additional components
     if showSubclass:
@@ -274,22 +331,28 @@ def plot_stacked_bar(metrics_dict, title, ylabel, xTickLabel, bar_width=0.1, off
     # Plot the stacked bars
     bottom = np.zeros(len(categories))
     for component in components:
-        bars = ax.bar(x_stacked, values[component], bar_width, label=component, bottom=bottom, color=colors[component])
+        bars = ax.bar(x_stacked, values[component], bar_width, label=rf"${component}$", bottom=bottom, color=colors[component])
         bottom += np.array(values[component])
         # Add percentage annotation for stacked bars
         for i, bar in enumerate(bars):
             height = bar.get_height()
             if height > 0:
-                if showSubclass:
-                    ax.text(bar.get_x() + bar.get_width() / 2, bar.get_y() + height / 2,
-                            f"{percs[component][i]:.1f}%", ha='center', va='center', fontsize=10)
+                if not noPerc:
+                    if showSubclass:
+                        ax.text(bar.get_x() + bar.get_width() / 2, bar.get_y() + height / 2,
+                                f"{percs[component][i]:.1f}%", ha='center', va='center', fontsize=fontsize)
+                    else:
+                        ax.text(bar.get_x() + bar.get_width() / 2, bar.get_y() + height / 2,
+                                f"{percs[component][i]:.1f}%", ha='center', va='center', fontsize=fontsize)
+                        # ax.text(bar.get_x() + bar.get_width() / 2, bar.get_y() + height / 2,
+                        #         f"{values[component][i]:.2f} ({percs[component][i]:.1f}%)", ha='center', va='center', fontsize=fontsize)
                 else:
                     ax.text(bar.get_x() + bar.get_width() / 2, bar.get_y() + height / 2,
-                            f"{values[component][i]:.2f} ({percs[component][i]:.1f}%)", ha='center', va='center', fontsize=10)
+                            f"{values[component][i]:.2f}", ha='center', va='center', fontsize=fontsize)
     # Add absolute annotation for stacked bars
-    for i, bar in enumerate(bars):
-        ax.text(bar.get_x() + bar.get_width() / 2, total_values[i] + 1,
-                f"{total_values[i]:.1f}", ha='center', va='bottom', fontsize=10)
+    # for i, bar in enumerate(bars):
+    #     ax.text(bar.get_x() + bar.get_width() / 2, total_values[i] + 1,
+    #             f"{total_values[i]:.1f}", ha='center', va='bottom', fontsize=fontsize)
                 
 
     if showSubclass:
@@ -300,26 +363,35 @@ def plot_stacked_bar(metrics_dict, title, ylabel, xTickLabel, bar_width=0.1, off
         for i, bar in enumerate(total_bars):
             if tmp_separated_values[i] != 0:
                 ax.text(bar.get_x() + bar.get_width() / 2, bar.get_height() + 1,
-                        f"{tmp_separated_values[i]:.1f}", ha='center', va='bottom', fontsize=10)
+                        f"{tmp_separated_values[i]:.1f}", ha='center', va='bottom', fontsize=fontsize)
 
     # Configure x-axis and labels
     ax.set_xticks(x_ticks)
-    ax.set_xticklabels([xTickLabel[cat] for cat in categories], fontsize=12)
-    ax.set_ylabel(ylabel, fontsize=14)
-    ax.set_ylim(0, max(bottom) * 1.05)
-    ax.set_title(f"{tod} -- {title}" if tod is not None else title, fontsize=16)
+    ax.set_xticklabels([xTickLabel[cat] for cat in categories], fontsize=fontsize)
+    ax.tick_params(axis='y', labelsize=fontsize)
+
+    ax.set_ylabel(ylabel, fontsize=fontsize)
+    ax.set_ylim(0, max(bottom) * 1.1)
+    ax.set_yticks(np.arange(0, max(bottom) + step, step))
+    ax.set_title(f"{tod} -- {title}" if tod is not None else title, fontsize=fontsize)
+    # ax.set_yticks(np.round(np.linspace(0, max(bottom), num=6), 2))  # Adjust `num=6` as needed
 
     # Add grid and legend
     ax.grid(axis='y', linestyle='--', alpha=0.6)
-    ax.legend(loc='upper center', bbox_to_anchor=(0.5, -0.05), ncol=len(components), fontsize=12)
+    ax.legend(loc='upper center', bbox_to_anchor=(0.5, -0.05), ncol=len(components), fontsize=fontsize,
+        handletextpad=0.3,  # Reduce spacing between marker and text
+        borderaxespad=0.3,  # Reduce padding between legend and plot
+        columnspacing=0.9  # Reduce spacing between columns
+    )
 
     # Adjust layout and save/display
     fig.tight_layout()
     if outdir is not None:
-        plt.savefig(f"{outdir}/{f'{tod}-{title}' if tod is not None else f'{title}'}.png", dpi=300, bbox_inches="tight")
+        plt.savefig(f"{outdir}/{f'{tod}-{title}' if tod is not None else f'{title}'}.pdf", dpi=300, bbox_inches="tight")
     else:
         plt.show()
-        
+    plt.close()
+          
         
 def plot_efficiency(metrics_list, titles, ylabel, xTickLabel, figsize=(20, 12), tod = None, outdir=None):
     n_plots = len(metrics_list)
@@ -353,7 +425,7 @@ def plot_efficiency(metrics_list, titles, ylabel, xTickLabel, figsize=(20, 12), 
                 height = bar.get_height()
                 if height > 0:
                     ax.text(bar.get_x() + bar.get_width() / 2, bar.get_height() / 2 + bar.get_y(),
-                            f'{percs[component][bars.index(bar)]:.2f}%', ha='center', va='center', fontsize=10, color='black')
+                            f'{percs[component][bars.index(bar)]:.2f}%', ha='center', va='center', fontsize=fontsize, color='black')
 
         # Set x-axis labels
         ax.set_xticks(x)

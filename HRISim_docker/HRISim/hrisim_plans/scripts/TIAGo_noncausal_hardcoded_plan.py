@@ -20,7 +20,7 @@ import hrisim_util.ros_utils as ros_utils
 import hrisim_util.constants as constants
 import networkx as nx
 from peopleflow_msgs.msg import Time as pT
-from robot_srvs.srv import NewTask, NewTaskResponse, FinishTask, FinishTaskResponse, SetBattery, SetBatteryResponse
+from robot_srvs.srv import NewTask, FinishTask, SetBattery, VisualisePath
 from std_srvs.srv import Empty  # Import the Empty service
 import argparse
 
@@ -131,18 +131,13 @@ def Plan(p):
         rospy.sleep(0.1)
         
     global NEXT_GOAL, QUEUE, GO_TO_CHARGER, set_battery_level, dynobs_remove_service, dynobs_timer_service
-    rospy.logwarn("Waiting rosservice /hrisim/new_task to be ready...")
-    rospy.wait_for_service('/hrisim/new_task')
-    rospy.logwarn("Waiting rosservice /hrisim/finish_task to be ready...")
-    rospy.wait_for_service('/hrisim/finish_task')
-    rospy.logwarn("Waiting rosservice /hrisim/shutdown to be ready...")
-    rospy.wait_for_service('/hrisim/shutdown')
-    rospy.logwarn("Waiting rosservice /hrisim/set_battery_level to be ready...")
-    rospy.wait_for_service('/hrisim/set_battery_level')
-    rospy.logwarn("Waiting rosservice /hrisim/obstacles/remove to be ready...")
-    rospy.wait_for_service('/hrisim/obstacles/remove')
-    rospy.logwarn("Waiting rosservice /hrisim/obstacles/timer/off to be ready...")
-    rospy.wait_for_service('/hrisim/obstacles/timer/off')
+    ros_utils.wait_for_service('/hrisim/new_task')
+    ros_utils.wait_for_service('/hrisim/finish_task')
+    ros_utils.wait_for_service('/hrisim/shutdown')
+    ros_utils.wait_for_service('/hrisim/set_battery_level')
+    ros_utils.wait_for_service('/hrisim/obstacles/remove')
+    ros_utils.wait_for_service('/hrisim/obstacles/timer/off')
+    ros_utils.wait_for_service('/graph/path/show')
 
     new_task_service = rospy.ServiceProxy('/hrisim/new_task', NewTask)
     finish_task_service = rospy.ServiceProxy('/hrisim/finish_task', FinishTask)
@@ -150,7 +145,8 @@ def Plan(p):
     set_battery_level = rospy.ServiceProxy('/hrisim/set_battery_level', SetBattery)
     dynobs_remove_service = rospy.ServiceProxy('/hrisim/obstacles/remove', Empty)
     dynobs_timer_service = rospy.ServiceProxy('/hrisim/obstacles/timer/off', Empty)
-        
+    graph_path_show = rospy.ServiceProxy('/graph/path/show', VisualisePath)
+    
     rospy.logwarn("Waiting PeopleFlow timeday to be ready...")
     while ros_utils.wait_for_param("/peopleflow/timeday") != INIT_TIME: 
         rospy.sleep(0.1)    
@@ -188,6 +184,7 @@ def Plan(p):
             firstgoal = QUEUE[0]
             rospy.logwarn(f"{QUEUE}")
             
+            graph_path_show(','.join(QUEUE))
             task_id = new_task_service(NEXT_GOAL, QUEUE).task_id
             TASK_ON = True
         

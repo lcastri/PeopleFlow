@@ -5,8 +5,8 @@ from utils import *
 
 
 INDIR = '/home/lcastri/git/PeopleFlow/utilities_ws/src/RA-L/hrisim_postprocess/csv/HH/original'
-BAGNAMES = ['noncausal-11012025', 'causal-12012025']
-CATEGORIES = {'noncausal-11012025': 'Non-Causal', 'causal-12012025': 'Causal'}
+BAGNAMES = ['base', 'causal']
+CATEGORIES = {'base': 'Baseline', 'causal': 'Causal'}
 OUTDIR = os.path.join('/home/lcastri/git/PeopleFlow/utilities_ws/src/RA-L/hrisim_postprocess/results', 'comparison', '__'.join(BAGNAMES), 'trends')
 os.makedirs(OUTDIR, exist_ok=True)
 
@@ -110,7 +110,7 @@ plot_stacked_bars_over_time(success_failure_trends, time_labels, "Success-Failur
 plot_stacked_bars_over_time(working_time_trends, time_labels, "Task Time", "s", outdir=OUTDIR)
 plot_stacked_bars_over_time(path_trends, time_labels, "Path Length", "m", outdir=OUTDIR)
 plot_stacked_bars_over_time(battery_trends, time_labels, "Battery Usage", "%", outdir=OUTDIR)
-plot_bars_over_time(velocity_trends, time_labels, "Velocity", "m/s", label_bar_pos=0.01, percentage=False, outdir=OUTDIR)
+# plot_bars_over_time(velocity_trends, time_labels, "Velocity", "m/s", label_bar_pos=0.01, percentage=False, outdir=OUTDIR)
 plot_bars_over_time(collision_trends, time_labels, "Collision", "Count", label_bar_pos=0.5, percentage=False, outdir=OUTDIR)
-plot_bars_over_time(clearance_trends, time_labels, "Clearance Distance to Obstacles", "m", label_bar_pos=0.025, percentage=False, outdir=OUTDIR)
-plot_bars_over_time(proxemics_trends, time_labels, "Proxemics", "Percentage (%)", outdir=OUTDIR)
+# plot_bars_over_time(clearance_trends, time_labels, "Clearance Distance to Obstacles", "m", label_bar_pos=0.025, percentage=False, outdir=OUTDIR)
+# plot_bars_over_time(proxemics_trends, time_labels, "Proxemics", "Percentage (%)", outdir=OUTDIR)

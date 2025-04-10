@@ -53,7 +53,7 @@ def update_astar_path(request):
             edge_marker.color.r = 0.0  # Remove red
             edge_marker.color.g = 0.0  # Remove green
             edge_marker.color.b = 1.0  # Highlight the path in blue
-            edge_marker.scale.x = 0.05  # Make path edges thicker
+            edge_marker.scale.x = 0.2  # Make path edges thicker
 
         # Set edge positions
         edge_marker.points = [
@@ -71,9 +71,9 @@ def update_astar_path(request):
             goal_marker.header.frame_id = "map"
             goal_marker.type = Marker.SPHERE
             goal_marker.id = len(edge_data) + 1  # Unique ID
-            goal_marker.scale.x = 0.5  # Sphere size
-            goal_marker.scale.y = 0.5
-            goal_marker.scale.z = 0.5
+            goal_marker.scale.x = 1  # Sphere size
+            goal_marker.scale.y = 1
+            goal_marker.scale.z = 1
             goal_marker.color.r = 0.0
             goal_marker.color.g = 1.0  # Green color
             goal_marker.color.b = 0.0

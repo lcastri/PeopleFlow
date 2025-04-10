@@ -1,3 +1,4 @@
+import pickle
 import json
 import math
 import os
@@ -9,7 +10,8 @@ from tqdm import tqdm
 
 
 INDIR = '/home/lcastri/git/PeopleFlow/utilities_ws/src/RA-L/hrisim_postprocess/csv/HH/original'
-BAGNAME= ['base']
+# BAGNAME= ['base', 'causal']
+BAGNAME= [ 'causal']
 SCENARIO = 'warehouse'
 WPS_COORD = readScenario(SCENARIO)
 
@@ -20,6 +22,7 @@ ROBOT_MAX_VEL = 0.5
 ROBOT_BASE_DIAMETER = 0.54
 Ks = 100 / (static_duration * 3600)
 Kd = (100 / (dynamic_duration * 3600) - Ks)/ROBOT_MAX_VEL
+Kobs = 3
 
 STALLED_THRESHOLD = 0.05
 PROXEMIC_THRESHOLDS =  {
@@ -34,8 +37,9 @@ for bag in BAGNAME:
     METRICS = {tod.value: None for tod in TOD}
     
     for tod in TOD:
-        with open(os.path.join(INDIR, bag, f'tasks-{tod.value}.json')) as json_file:
-            TASKS = json.load(json_file)
+    # for tod in [TOD.H1, TOD.H2, TOD.H3]:
+        with open(os.path.join(INDIR, bag, f'tasks-{tod.value}.json')) as pkl_file:
+            TASKS = json.load(pkl_file)
         TASK_IDs = list(range(TASKS['n_tasks']))
         
         DF = pd.read_csv(os.path.join(INDIR, f"{bag}", f"{bag}-{tod.value}.csv"))
@@ -80,8 +84,10 @@ for bag in BAGNAME:
                     (WPS_COORD[TASKS[str(task_id)]['path'][wp_idx]]['y'] - WPS_COORD[TASKS[str(task_id)]['path'][wp_idx+1]]['y'])**2
                 )
                 for wp_idx in range(len(TASKS[str(task_id)]['path'])-1)])
-            PLANNED_BATTERY_CONSUMPTION = compute_planned_battery_consumption(PATH_LENGTH, len(TASKS[str(task_id)]['path'])-1,
-                                                                            ROBOT_MAX_VEL, Ks, Kd, Astar_time)
+            NO_OBS_PLANNED_BATTERY_CONSUMPTION = compute_planned_battery_consumption(PATH_LENGTH, len(TASKS[str(task_id)]['path'])-1,
+                                                                              ROBOT_MAX_VEL, Ks, Kd, Astar_time)
+            OBS_PLANNED_BATTERY_CONSUMPTION = compute_planned_battery_consumption(PATH_LENGTH, len(TASKS[str(task_id)]['path'])-1,
+                                                                                   ROBOT_MAX_VEL, Ks*Kobs, Kd*Kobs, Astar_time)
             if SUCCESS == 1:
                 TIME_TO_GOAL = TASKS[str(task_id)]['end'] - TASKS[str(task_id)]['start']
                 TRAVELLED_DISTANCE = compute_travelled_distance(task_df)
@@ -112,7 +118,8 @@ for bag in BAGNAME:
             
             TOD_METRICS[task_id]['result'] = SUCCESS
             TOD_METRICS[task_id]['path_length'] = float(PATH_LENGTH)
-            TOD_METRICS[task_id]['planned_battery_consumption'] = float(PLANNED_BATTERY_CONSUMPTION)
+            TOD_METRICS[task_id]['planned_battery_consumption'] = float(NO_OBS_PLANNED_BATTERY_CONSUMPTION)
+            TOD_METRICS[task_id]['obs_planned_battery_consumption'] = float(OBS_PLANNED_BATTERY_CONSUMPTION)
             TOD_METRICS[task_id]['time_to_reach_goal'] = float(TIME_TO_GOAL)
             TOD_METRICS[task_id]['travelled_distance'] = float(TRAVELLED_DISTANCE)
             TOD_METRICS[task_id]['battery_consumption'] = float(BATTERY_CONSUMPTION)
@@ -145,10 +152,14 @@ for bag in BAGNAME:
         TOD_METRICS['overall_path_length_only_success'] = float(np.sum([TOD_METRICS[task]['path_length'] for task in tmp_tasks if TOD_METRICS[task]['result'] == 1]))
         TOD_METRICS['overall_planned_battery_consumption'] = float(np.sum([TOD_METRICS[task]['planned_battery_consumption'] for task in tmp_tasks]))
         TOD_METRICS['overall_planned_battery_consumption_only_success'] = float(np.sum([TOD_METRICS[task]['planned_battery_consumption'] for task in tmp_tasks if TOD_METRICS[task]['result'] == 1]))
+        TOD_METRICS['overall_obs_planned_battery_consumption'] = float(np.sum([TOD_METRICS[task]['obs_planned_battery_consumption'] for task in tmp_tasks]))
+        TOD_METRICS['overall_obs_planned_battery_consumption_only_success'] = float(np.sum([TOD_METRICS[task]['obs_planned_battery_consumption'] for task in tmp_tasks if TOD_METRICS[task]['result'] == 1]))
         TOD_METRICS['mean_path_length'] = float(np.mean([TOD_METRICS[task]['path_length'] for task in tmp_tasks]))
         TOD_METRICS['mean_path_length_only_success'] = float(np.mean([TOD_METRICS[task]['path_length'] for task in tmp_tasks if TOD_METRICS[task]['result'] == 1]))
         TOD_METRICS['mean_planned_battery_consumption'] = float(np.mean([TOD_METRICS[task]['planned_battery_consumption'] for task in tmp_tasks]))
         TOD_METRICS['mean_planned_battery_consumption_only_success'] = float(np.mean([TOD_METRICS[task]['planned_battery_consumption'] for task in tmp_tasks if TOD_METRICS[task]['result'] == 1]))
+        TOD_METRICS['mean_obs_planned_battery_consumption'] = float(np.mean([TOD_METRICS[task]['obs_planned_battery_consumption'] for task in tmp_tasks]))
+        TOD_METRICS['mean_obs_planned_battery_consumption_only_success'] = float(np.mean([TOD_METRICS[task]['obs_planned_battery_consumption'] for task in tmp_tasks if TOD_METRICS[task]['result'] == 1]))
 
         TOD_METRICS['overall_travelled_distance'] = float(np.sum([TOD_METRICS[task]['travelled_distance'] for task in tmp_tasks]))
         TOD_METRICS['overall_battery_consumption'] = float(np.sum([TOD_METRICS[task]['battery_consumption'] for task in tmp_tasks]))
@@ -197,10 +208,14 @@ for bag in BAGNAME:
     METRICS['overall_path_length_only_success'] = float(np.sum([METRICS[tod]['overall_path_length_only_success'] for tod in METRICS.keys() if isinstance(METRICS[tod], dict)]))
     METRICS['overall_planned_battery_consumption'] = float(np.sum([METRICS[tod]['overall_planned_battery_consumption'] for tod in METRICS.keys() if isinstance(METRICS[tod], dict)]))
     METRICS['overall_planned_battery_consumption_only_success'] = float(np.sum([METRICS[tod]['overall_planned_battery_consumption_only_success'] for tod in METRICS.keys() if isinstance(METRICS[tod], dict)]))
+    METRICS['overall_obs_planned_battery_consumption'] = float(np.sum([METRICS[tod]['overall_obs_planned_battery_consumption'] for tod in METRICS.keys() if isinstance(METRICS[tod], dict)]))
+    METRICS['overall_obs_planned_battery_consumption_only_success'] = float(np.sum([METRICS[tod]['overall_obs_planned_battery_consumption_only_success'] for tod in METRICS.keys() if isinstance(METRICS[tod], dict)]))
     METRICS['mean_path_length'] = float(np.mean([METRICS[tod][task]['path_length'] for tod in METRICS.keys() if isinstance(METRICS[tod], dict) for task in METRICS[tod].keys() if isinstance(task, int)]))
     METRICS['mean_path_length_only_success'] = float(np.mean([METRICS[tod][task]['path_length'] for tod in METRICS.keys() if isinstance(METRICS[tod], dict) for task in METRICS[tod].keys() if isinstance(task, int) and METRICS[tod][task]['result'] == 1]))
     METRICS['mean_planned_battery_consumption'] = float(np.mean([METRICS[tod][task]['planned_battery_consumption'] for tod in METRICS.keys() if isinstance(METRICS[tod], dict) for task in METRICS[tod].keys() if isinstance(task, int)]))
     METRICS['mean_planned_battery_consumption_only_success'] = float(np.mean([METRICS[tod][task]['planned_battery_consumption'] for tod in METRICS.keys() if isinstance(METRICS[tod], dict) for task in METRICS[tod].keys() if isinstance(task, int) and METRICS[tod][task]['result'] == 1]))
+    METRICS['mean_obs_planned_battery_consumption'] = float(np.mean([METRICS[tod][task]['obs_planned_battery_consumption'] for tod in METRICS.keys() if isinstance(METRICS[tod], dict) for task in METRICS[tod].keys() if isinstance(task, int)]))
+    METRICS['mean_obs_planned_battery_consumption_only_success'] = float(np.mean([METRICS[tod][task]['obs_planned_battery_consumption'] for tod in METRICS.keys() if isinstance(METRICS[tod], dict) for task in METRICS[tod].keys() if isinstance(task, int) and METRICS[tod][task]['result'] == 1]))
 
     METRICS['overall_travelled_distance'] = float(np.sum([METRICS[tod]['overall_travelled_distance'] for tod in METRICS.keys() if isinstance(METRICS[tod], dict)]))
     METRICS['overall_battery_consumption'] = float(np.sum([METRICS[tod]['overall_battery_consumption'] for tod in METRICS.keys() if isinstance(METRICS[tod], dict)]))
@@ -219,7 +234,6 @@ for bag in BAGNAME:
     METRICS['mean_time_to_reach_goal'] = float(np.mean([METRICS[tod][task]['time_to_reach_goal'] for tod in METRICS.keys() if isinstance(METRICS[tod], dict) for task in METRICS[tod].keys() if isinstance(task, int) and METRICS[tod][task]['result'] == 1]))
     METRICS['mean_wasted_time_to_reach_goal'] = float(np.sum([METRICS[tod][task]['wasted_time_to_reach_goal'] for tod in METRICS.keys() if isinstance(METRICS[tod], dict) for task in METRICS[tod].keys() if isinstance(task, int) and METRICS[tod][task]['result'] in [-1, -2]]))
     METRICS['mean_task_time'] = METRICS['mean_stalled_time'] + METRICS['mean_time_to_reach_goal'] + METRICS['mean_wasted_time_to_reach_goal']
-        
 
     METRICS['overall_robot_fallen'] = sum([METRICS[tod]['overall_robot_fallen'] for tod in METRICS.keys() if isinstance(METRICS[tod], dict)])
     METRICS['overall_human_collision'] = sum([METRICS[tod]['overall_human_collision'] for tod in METRICS.keys() if isinstance(METRICS[tod], dict)])
@@ -233,6 +247,6 @@ for bag in BAGNAME:
         METRICS['overall_space_compliance'][proxemic] = float(np.sum([METRICS[tod][task]['space_compliance'][proxemic] for tod in METRICS.keys() if isinstance(METRICS[tod], dict) for task in METRICS[tod].keys() if isinstance(task, int)]))
         METRICS['mean_space_compliance'][proxemic] = float(np.mean([METRICS[tod][task]['space_compliance'][proxemic] for tod in METRICS.keys() if isinstance(METRICS[tod], dict) for task in METRICS[tod].keys() if isinstance(task, int)]))
 
-    json_to_save = make_serializable(METRICS)
-    with open(os.path.join(INDIR, f"{bag}", "metrics.json"), 'w') as json_file:
-        json.dump(json_to_save, json_file)
+    pkl_to_save = make_serializable(METRICS)
+    with open(os.path.join(INDIR, f"{bag}", "metrics.pkl"), 'wb') as pkl_file:
+        pickle.dump(pkl_to_save, pkl_file)
