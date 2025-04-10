@@ -4,7 +4,6 @@ Panels:
     Name: Displays
     Property Tree Widget:
       Expanded:
-        - /Robot1/Info1
         - /Planning1/Base1/Global1
         - /Planning1/Base1/Global1/Plan1
         - /Mapping1/Map1
@@ -312,7 +311,7 @@ Visualization Manager:
           Marker Topic: twist_marker
           Name: Twist
           Namespaces:
-            {}
+            "": true
           Queue Size: 100
           Value: true
         - Class: rviz/Marker
@@ -505,27 +504,72 @@ Visualization Manager:
               Value: true
           Enabled: true
           Name: Sensors
-        - Align Bottom: false
-          Background Alpha: 0.800000011920929
-          Background Color: 0; 0; 0
-          Class: jsk_rviz_plugin/OverlayText
+        - Class: rviz/Group
+          Displays:
+            - Align Bottom: false
+              Background Alpha: 0.800000011920929
+              Background Color: 0; 0; 0
+              Class: jsk_rviz_plugin/OverlayText
+              Enabled: true
+              Foreground Alpha: 0.800000011920929
+              Foreground Color: 25; 255; 240
+              Invert Shadow: false
+              Name: Battery & Velocity
+              Overtake BG Color Properties: false
+              Overtake FG Color Properties: false
+              Overtake Position Properties: false
+              Topic: /hrisim/robot/info/main
+              Value: true
+              font: DejaVu Sans Mono
+              height: 50
+              left: 0
+              line width: 2
+              text size: 15
+              top: 0
+              width: 190
+            - Align Bottom: false
+              Background Alpha: 0.800000011920929
+              Background Color: 0; 0; 0
+              Class: jsk_rviz_plugin/OverlayText
+              Enabled: true
+              Foreground Alpha: 0.800000011920929
+              Foreground Color: 25; 255; 240
+              Invert Shadow: false
+              Name: Obstacle
+              Overtake BG Color Properties: false
+              Overtake FG Color Properties: false
+              Overtake Position Properties: false
+              Topic: /hrisim/robot/info/obstacle
+              Value: true
+              font: DejaVu Sans Mono
+              height: 128
+              left: 0
+              line width: 2
+              text size: 12
+              top: 0
+              width: 128
           Enabled: true
-          Foreground Alpha: 0.800000011920929
-          Foreground Color: 25; 255; 240
-          Invert Shadow: false
-          Name: Info
-          Overtake BG Color Properties: false
-          Overtake FG Color Properties: false
-          Overtake Position Properties: false
-          Topic: /hrisim/otext_robot_info
-          Value: true
-          font: DejaVu Sans Mono
-          height: 50
-          left: 0
-          line width: 2
-          text size: 15
-          top: 0
-          width: 190
+          Name: Overlay Texts
+        - Class: rviz/Group
+          Displays:
+            - Class: rviz/Marker
+              Enabled: true
+              Marker Topic: /robot_position_marker
+              Name: Robot Position
+              Namespaces:
+                robot_position: true
+              Queue Size: 100
+              Value: true
+            - Class: rviz/Marker
+              Enabled: true
+              Marker Topic: /closest_obstacle_marker
+              Name: Closest Map Obstacle
+              Namespaces:
+                closest_obstacle: true
+              Queue Size: 100
+              Value: true
+          Enabled: true
+          Name: Clearance
       Enabled: true
       Name: Robot
     - Class: rviz/Group
@@ -921,8 +965,7 @@ Visualization Manager:
       Value: false
       Visibility:
         Control:
-          Move: true
-          Path: true
+          "": true
           Value: true
         Grid: true
         Localization:
@@ -938,32 +981,24 @@ Visualization Manager:
           Trajectory: true
           Value: true
         PedSim:
+          TeleopPerson:
+            Axes: true
+            Distance line: true
+            Distance text: true
+            Goal: true
+            Goal line: true
+            Risk: true
+            TeleopPersons: true
+            Value: true
+          Time: true
+          TrackedPersons: true
+          Value: true
+          WPGraph: true
+          Walls: true
+          Waypoints: true
+        Planning:
           "":
             "": true
-            Value: true
-          Value: true
-        Planning:
-          Base:
-            Global:
-              Costmap: true
-              Plan:
-                Global Planner: true
-                Navfn: true
-                Value: true
-              Potential: true
-              Value: true
-              Voxel Grid: true
-            Goal: true
-            Local:
-              Cost: true
-              Costmap: true
-              Plan:
-                DWA: true
-                Pal: true
-                Trajectory: true
-                Value: true
-              Trajectories: true
-              Value: true
             Value: true
           Value: true
         ROS-Causal:
@@ -971,27 +1006,19 @@ Visualization Manager:
           Value: true
           tsDAG: true
         Robot:
-          Dynamic Footprint: true
-          Dynamics: true
-          Footprint: true
-          Info: true
-          Mode: true
-          Odometry: true
-          RobotModel: true
-          Sensors:
-            Depth Cloud: true
-            Laser: true
-            RGBD scan: true
-            Sonar Cloud: true
-            Sonars: true
+          "":
+            "": true
             Value: true
-            Velodyne Cloud: true
-            Virtual Obstacles: true
-          TF: true
-          Twist: true
+          Clearance:
+            Closest Map Obstacle: true
+            Robot Position: true
+            Value: true
           Value: true
         Tracking:
-          "": true
+          Bounding Boxes: true
+          MarkerArray: true
+          Pose: true
+          PoseArray: true
           Value: true
         Value: true
       Zoom Factor: 1
@@ -1112,7 +1139,6 @@ Visualization Manager:
             corridor-0: true
             corridor-1: true
             corridor-2-c: true
-            corridor-2-l: true
             corridor-2-r: true
             corridor-3-c: true
             corridor-3-l: true
@@ -1124,10 +1150,8 @@ Visualization Manager:
             corridor-5-l: true
             corridor-5-r: true
             corridor-6-c: true
-            corridor-6-l: true
             corridor-6-r: true
             corridor-7-c: true
-            corridor-7-l: true
             corridor-7-r: true
             corridor-canteen-1: true
             corridor-canteen-2: true
@@ -1143,11 +1167,19 @@ Visualization Manager:
             door-toilet-1: true
             door-toilet-2: true
             entrance: true
-            kitchen-1: true
-            kitchen-2: true
             office-1: true
             office-2: true
             parking: true
+            support-0: true
+            support-1: true
+            support-2: true
+            support-3: true
+            support-4: true
+            support-5: true
+            support-6: true
+            support-7: true
+            support-8: true
+            support-9: true
             table-12: true
             table-23: true
             target-1: true
@@ -1166,6 +1198,8 @@ Visualization Manager:
             wa-2-l: true
             wa-2-r: true
             wa-3-c: true
+            wa-3-cl: true
+            wa-3-cr: true
             wa-3-l: true
             wa-3-r: true
             wa-4-c: true
@@ -1246,7 +1280,7 @@ Visualization Manager:
           Marker Topic: /graph_visualization
           Name: WPGraph
           Namespaces:
-            {}
+            "": true
           Queue Size: 100
           Value: true
         - Class: rviz/Group
@@ -1376,7 +1410,7 @@ Visualization Manager:
   Views:
     Current:
       Class: rviz/Orbit
-      Distance: 30.897693634033203
+      Distance: 18.61168098449707
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.05999999865889549
         Stereo Focal Distance: 1
@@ -1384,9 +1418,9 @@ Visualization Manager:
         Value: false
       Field of View: 0.7853981852531433
       Focal Point:
-        X: -5.353213310241699
-        Y: 1.7170037031173706
-        Z: -0.5330871343612671
+        X: -13.83207893371582
+        Y: -3.6882030963897705
+        Z: -3.1964333057403564
       Focal Shape Fixed Size: true
       Focal Shape Size: 0.05000000074505806
       Invert Z Axis: false

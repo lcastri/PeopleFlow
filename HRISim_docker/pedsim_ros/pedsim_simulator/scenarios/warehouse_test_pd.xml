@@ -7812,7 +7812,7 @@
   
   <schedule>
     <!-- Time resolution: seconds -->
-    <time name="H1" duration="600" >    <!-- 01h : 8am - 9am -->
+    <time name="H1" duration="300" >    <!-- 01h : 8am - 9am -->
       <adddest name="parking"         p="0.05" std="0" />
       <adddest name="office-1"        p="0.025" std="0" />
       <adddest name="office-2"        p="0.025" std="0" />
@@ -7846,7 +7846,7 @@
       <adddest name="corridor-canteen-3"       p="0.025" std="0" />
     </time>
     <!-- 02h : 9am - 10am -->
-    <time name="H2" duration="600" >
+    <time name="H2" duration="300" >
       <adddest name="parking"         p="0" std="0" />
       <adddest name="office-1"        p="0.05" std="0" />
       <adddest name="office-2"        p="0.05" std="0" />
@@ -7880,7 +7880,7 @@
       <adddest name="corridor-canteen-3"       p="0.01" std="0" />
     </time>
     <!-- 03h : 10am - 11am -->
-    <time name="H3" duration="600" >
+    <time name="H3" duration="300" >
       <adddest name="parking"         p="0" std="0" />
       <adddest name="office-1"        p="0.05" std="0" />
       <adddest name="office-2"        p="0.05" std="0" />
@@ -7914,7 +7914,7 @@
       <adddest name="corridor-canteen-3"       p="0.01" std="0.005" />
     </time>
     <!-- 04h : 11am - 12am -->
-    <time name="H4" duration="600" >
+    <time name="H4" duration="300" >
       <adddest name="parking"         p="0" std="0" />
       <adddest name="office-1"        p="0.05" std="0" />
       <adddest name="office-2"        p="0.05" std="0" />
@@ -7948,7 +7948,7 @@
       <adddest name="corridor-canteen-3"       p="0.01" std="0" />
     </time>
     <!-- 05h : 12am - 1pm -->
-    <time name="H5" duration="600" >
+    <time name="H5" duration="300" >
       <adddest name="parking"         p="0" std="0" />
       <adddest name="office-1"        p="0.05" std="0" />
       <adddest name="office-2"        p="0.05" std="0" />
@@ -7982,7 +7982,7 @@
       <adddest name="corridor-canteen-3"       p="0.01" std="0" />
     </time>
     <!-- 06h : 1pm - 2pm -->
-    <time name="H6" duration="600" >
+    <time name="H6" duration="300" >
       <adddest name="parking"         p="0" std="0" />
       <adddest name="office-1"        p="0" std="0" />
       <adddest name="office-2"        p="0" std="0" />
@@ -8016,7 +8016,7 @@
       <adddest name="corridor-canteen-3"       p="0.225" std="0" />
     </time>
     <!-- 07h : 2pmm - 3pm -->
-    <time name="H7" duration="600" >
+    <time name="H7" duration="300" >
       <adddest name="parking"         p="0" std="0" />
       <adddest name="office-1"        p="0.05" std="0" />
       <adddest name="office-2"        p="0.05" std="0" />
@@ -8050,7 +8050,7 @@
       <adddest name="corridor-canteen-3"       p="0.01" std="0" />
     </time>
     <!-- 08h : 3pm - 4pm -->
-    <time name="H8" duration="600" >
+    <time name="H8" duration="300" >
       <adddest name="parking"         p="0" std="0" />
       <adddest name="office-1"        p="0.05" std="0" />
       <adddest name="office-2"        p="0.05" std="0" />
@@ -8084,7 +8084,7 @@
       <adddest name="corridor-canteen-3"       p="0.01" std="0" />
     </time>
     <!-- 09h : 4pm - 5pm -->
-    <time name="H9" duration="600" >
+    <time name="H9" duration="300" >
       <adddest name="parking"         p="0" std="0" />
       <adddest name="office-1"        p="0.05" std="0" />
       <adddest name="office-2"        p="0.05" std="0" />
@@ -8118,7 +8118,7 @@
       <adddest name="corridor-canteen-3"       p="0.01" std="0" />
     </time>
     <!-- 10h : 5pm - 6pm -->
-    <time name="H10" duration="600" >
+    <time name="H10" duration="300" >
       <adddest name="parking"         p="0" std="0" />
       <adddest name="office-1"        p="0.05" std="0" />
       <adddest name="office-2"        p="0.05" std="0" />

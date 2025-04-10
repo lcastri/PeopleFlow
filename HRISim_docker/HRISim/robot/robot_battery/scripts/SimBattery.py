@@ -22,8 +22,8 @@ class SimBatteryManager():
         
         self.K_nl_s = 100 / (self.static_duration * 3600)
         self.K_nl_d = (100 / (self.dynamic_duration * 3600) - self.K_nl_s)/(ROBOT_MAX_VEL)
-        self.K_l_s = self.K_nl_s * LOAD_FACTOR
-        self.K_l_d = self.K_nl_d * LOAD_FACTOR
+        self.K_l_s = self.K_nl_s * OBS_FACTOR
+        self.K_l_d = self.K_nl_d * OBS_FACTOR
         self.charge_rate = 100 / (self.charging_time * 3600)
         rospy.set_param("/robot_battery/noload_static_consumption", self.K_nl_s)
         rospy.set_param("/robot_battery/noload_dynamic_consumption", self.K_nl_d)
@@ -69,9 +69,9 @@ class SimBatteryManager():
         self.lastT = odom.header.stamp.to_sec()
     
     def discharge_battery(self):
-        LOADED = bool(ros_utils.wait_for_param('/hrisim/robot_load'))
-        KS = self.K_l_s if LOADED else self.K_nl_s
-        KD = self.K_l_d if LOADED else self.K_nl_d
+        OBS = bool(ros_utils.wait_for_param('/hrisim/robot_obs'))
+        KS = self.K_l_s if OBS else self.K_nl_s
+        KD = self.K_l_d if OBS else self.K_nl_d
         self.battery_level -= self.deltaT * (KS + KD * self.vel)
         if self.battery_level < 0:
             self.battery_level = 0
@@ -98,7 +98,7 @@ if __name__ == '__main__':
     INIT_BATTERY = float(rospy.get_param("~init_battery", 100))
     STATIC_DURATION = float(rospy.get_param("~static_duration"))
     DYNAMIC_DURATION = float(rospy.get_param("~dynamic_duration"))
-    LOAD_FACTOR = float(rospy.get_param("~load_factor"))
+    OBS_FACTOR = float(rospy.get_param("~obs_factor"))
     CHARGING_TIME = float(rospy.get_param("~charging_time"))
     ROBOT_MAX_VEL = float(ros_utils.wait_for_param("/move_base/TebLocalPlannerROS/max_vel_x"))
 

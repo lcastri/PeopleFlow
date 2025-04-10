@@ -62,7 +62,8 @@ for waypoint in root.findall('waypoint'):
 # Load map information
 INCSV_PATH= os.path.expanduser('utilities_ws/src/RA-L/hrisim_postprocess/csv/HH/shrunk')
 OUTCSV_PATH= os.path.expanduser(f'utilities_ws/src/RA-L/hrisim_postprocess/csv/HH/my_nonoise/')
-BAGNAME= ['test-19022025']
+# BAGNAME= ['test-obs-01', 'test-obs-02', 'test-obs-04', 'test-obs-05']
+BAGNAME= ['noncausal-28022025']
 
 static_duration = 5
 dynamic_duration = 4
@@ -88,16 +89,22 @@ for bag in BAGNAME:
         DF = pd.read_csv(os.path.join(INCSV_PATH, f"{bag}", tod.value, "static", f"{tmp_bag}_{tod.value}.csv"))
         n_rows = len(DF)
         
-        EC = np.full_like(DF['R_V'], 0)
+        # EC = np.full_like(DF['R_V'], 0)
 
-        dt = np.diff(DF['pf_elapsed_time']).tolist()
-        dt.insert(0, 5.0)
-        dt = np.array(dt)
-        EC = np.where(DF["L"] == 0, 
-                      dt * (K_nl_s + K_nl_d * DF['R_V']), 
-                      dt * (K_l_s + K_l_d * DF['R_V']))
-                    
-        RB = DF['R_B'][0] - pd.Series(EC.cumsum()).shift(1).fillna(0)       
+        # dt = np.diff(DF['pf_elapsed_time']).tolist()
+        # dt.insert(0, 5.0)
+        # dt = np.array(dt)
+        # EC = np.where(DF["OBS"] == 0, 
+        #               dt * (K_nl_s + K_nl_d * DF['R_V']), 
+        #               dt * (K_l_s + K_l_d * DF['R_V']))
+        # DF['R_B'] = DF['R_B'].replace(0, np.nan).bfill()
+        EC = np.diff(DF['R_B'].values)
+        ec_list = list(EC)
+        ec_list.insert(0, ec_list[0])
+        EC = np.abs(np.array(ec_list))
+        DF['EC'] = EC
+        # DF['EC'].replace(0, min(EC), inplace=True)
+        # RB = DF['R_B'][0] - pd.Series(EC.cumsum()).shift(1).fillna(0)       
                
         # ELTs = {wp: np.zeros(n_rows) for wp in wps}
         # for wp in wps:
@@ -106,24 +113,24 @@ for bag in BAGNAME:
         #             ELTs[wp][i] = np.maximum(0, RB[i] - get_battery_consumption(wp, 'charging-station', False))
         #         else:
         #             ELTs[wp][i] = np.maximum(0, RB[i] - get_battery_consumption(wp, 'charging-station', True))
-        L = DF['L'].to_numpy()
-        RB_array = np.array(RB)
+        # L = DF['OBS'].to_numpy()
+        # RB_array = np.array(RB)
 
-        # Precompute battery consumption values for both cases
-        battery_consumption_false = {wp: get_battery_consumption(wp, 'charging-station', False) for wp in wps}
-        battery_consumption_true = {wp: get_battery_consumption(wp, 'charging-station', True) for wp in wps}
+        # # Precompute battery consumption values for both cases
+        # battery_consumption_false = {wp: get_battery_consumption(wp, 'charging-station', False) for wp in wps}
+        # battery_consumption_true = {wp: get_battery_consumption(wp, 'charging-station', True) for wp in wps}
 
-        # Use NumPy operations to compute ELTs
-        ELTs = {
-            wp: np.maximum(0, RB_array - np.where(L == 0, battery_consumption_false[wp], battery_consumption_true[wp]))
-            for wp in wps
-        }
+        # # Use NumPy operations to compute ELTs
+        # ELTs = {
+        #     wp: np.maximum(0, RB_array - np.where(L == 0, battery_consumption_false[wp], battery_consumption_true[wp]))
+        #     for wp in wps
+        # }
 
         # Add computed values to DF
-        DF['R_B'] = RB
-        DF['EC'] = EC
-        for wp, elt_array in ELTs.items():
-            DF[f'{wp}_ELT'] = elt_array
+        # DF['R_B'] = RB
+        # DF['EC'] = EC
+        # for wp, elt_array in ELTs.items():
+        #     DF[f'{wp}_ELT'] = elt_array
         
         # Create output directory if it doesn't exist
         out_path = os.path.join(OUTCSV_PATH, f'{bag}', f'{tod.value}')
@@ -137,7 +144,7 @@ for bag in BAGNAME:
             if wp in [WP.PARKING, WP.CHARGING_STATION]: continue 
         
             WPDF = pd.read_csv(os.path.join(INCSV_PATH, f"{bag}", tod.value, "static", f"{tmp_bag}_{tod.value}_{wp.value}.csv"))
-            WPDF["ELT"] = ELTs[wp.value]
+            # WPDF["ELT"] = ELTs[wp.value]
             WPDF['EC'] = EC
 
             WPDF.to_csv(os.path.join(out_path, f"{tmp_bag}_{tod.value}_{wp.value}.csv"), index=False)

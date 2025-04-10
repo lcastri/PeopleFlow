@@ -40,7 +40,7 @@ class Robot():
         self.clearing_distance = 0
         self.H_collision = 0
         self.task = -1
-        self.load = 0
+        self.obs = 0
             
         
 class Agent():
@@ -98,12 +98,12 @@ class DataManager():
         rospy.Subscriber("/peopleflow/time", pT, self.cb_time)
         rospy.Subscriber("/pedsim_simulator/simulated_agents", AgentStates, self.cb_agents)
         rospy.Subscriber("/hrisim/robot_battery", BatteryStatus, self.cb_robot_battery)
-        rospy.Subscriber("/hrisim/robot_elt", ExpectedLifetimes, self.cb_robot_elt)
+        # rospy.Subscriber("/hrisim/robot_elt", ExpectedLifetimes, self.cb_robot_elt)
         rospy.Subscriber("/hrisim/robot_closest_wp", String, self.cb_robot_closest_wp)
         rospy.Subscriber("/hrisim/robot_clearing_distance", Float32, self.cb_robot_clearing_distance)
         rospy.Subscriber("/hrisim/robot_human_collision", Int32, self.cb_robot_human_collision)
         rospy.Subscriber("/hrisim/robot_tasks_info", TasksInfo, self.cb_robot_tasks)  
-        rospy.Subscriber("/hrisim/robot_load", Bool, self.cb_robot_load)  
+        rospy.Subscriber("/hrisim/robot_obs", Bool, self.cb_robot_obs)  
                    
             
     def cb_clock(self, clock: Clock):
@@ -181,8 +181,8 @@ class DataManager():
         self.n_failure = msg.num_failure
         
         
-    def cb_robot_load(self, msg: Bool):
-        self.robot.load = 1 if msg.data else 0
+    def cb_robot_obs(self, msg: Bool):
+        self.robot.obs = 1 if msg.data else 0
         
         
 def shutdown_callback(data_rows, filename, csv_path, goal_path, data):   
@@ -320,7 +320,7 @@ if __name__ == '__main__':
                 'R_CD': data_handler.robot.clearing_distance,
                 'R_HC': data_handler.robot.H_collision,
                 'T': data_handler.robot.task,
-                'L': data_handler.robot.load,
+                'OBS': data_handler.robot.obs,
             }
             
             data_handler.robot.H_collision = 0
