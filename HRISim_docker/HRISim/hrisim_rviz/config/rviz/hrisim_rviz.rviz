@@ -548,6 +548,27 @@ Visualization Manager:
               text size: 12
               top: 0
               width: 128
+            - Align Bottom: false
+              Background Alpha: 0.800000011920929
+              Background Color: 0; 0; 0
+              Class: jsk_rviz_plugin/OverlayText
+              Enabled: true
+              Foreground Alpha: 0.800000011920929
+              Foreground Color: 25; 255; 240
+              Invert Shadow: false
+              Name: Tasks
+              Overtake BG Color Properties: false
+              Overtake FG Color Properties: false
+              Overtake Position Properties: false
+              Topic: /hrisim/robot/info/tasks
+              Value: true
+              font: DejaVu Sans Mono
+              height: 128
+              left: 0
+              line width: 2
+              text size: 12
+              top: 0
+              width: 128
           Enabled: true
           Name: Overlay Texts
         - Class: rviz/Group
@@ -557,7 +578,7 @@ Visualization Manager:
               Marker Topic: /robot_position_marker
               Name: Robot Position
               Namespaces:
-                robot_position: true
+                {}
               Queue Size: 100
               Value: true
             - Class: rviz/Marker
@@ -565,11 +586,19 @@ Visualization Manager:
               Marker Topic: /closest_obstacle_marker
               Name: Closest Map Obstacle
               Namespaces:
-                closest_obstacle: true
+                {}
               Queue Size: 100
               Value: true
-          Enabled: true
+          Enabled: false
           Name: Clearance
+        - Class: rviz/MarkerArray
+          Enabled: true
+          Marker Topic: /astar_path_visualization
+          Name: A* path
+          Namespaces:
+            "": true
+          Queue Size: 100
+          Value: true
       Enabled: true
       Name: Robot
     - Class: rviz/Group
@@ -969,16 +998,12 @@ Visualization Manager:
           Value: true
         Grid: true
         Localization:
-          "": true
+          Localization Quality: true
+          Pose: true
+          Pose Graph: true
           Value: true
         Mapping:
-          HeadOctomap: true
-          Map: true
-          Map (with Virtual Obstacles): true
-          OctoMap: true
-          SLAM Graph Edges: true
-          SLAM Graph Vertices: true
-          Trajectory: true
+          "": true
           Value: true
         PedSim:
           TeleopPerson:
@@ -1006,8 +1031,28 @@ Visualization Manager:
           Value: true
           tsDAG: true
         Robot:
-          "":
-            "": true
+          A* path: true
+          Clearance:
+            Closest Map Obstacle: true
+            Robot Position: true
+            Value: true
+          Dynamic Footprint: true
+          Dynamics: true
+          Footprint: true
+          Mode: true
+          Odometry: true
+          Overlay Texts:
+            Battery & Velocity: true
+            Obstacle: true
+            Tasks: true
+            Value: true
+          RobotModel: true
+          Sensors:
+            Depth Cloud: true
+            Laser: true
+            RGBD scan: true
+            Sonar Cloud: true
+            Sonars: true
             Value: true
           Clearance:
             Closest Map Obstacle: true
@@ -1410,7 +1455,7 @@ Visualization Manager:
   Views:
     Current:
       Class: rviz/Orbit
-      Distance: 18.61168098449707
+      Distance: 28.197063446044922
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.05999999865889549
         Stereo Focal Distance: 1
@@ -1418,17 +1463,17 @@ Visualization Manager:
         Value: false
       Field of View: 0.7853981852531433
       Focal Point:
-        X: -13.83207893371582
-        Y: -3.6882030963897705
-        Z: -3.1964333057403564
+        X: -4.676022052764893
+        Y: -0.08442909270524979
+        Z: -1.5159965753555298
       Focal Shape Fixed Size: true
       Focal Shape Size: 0.05000000074505806
       Invert Z Axis: false
       Name: Current View
       Near Clip Distance: 0.009999999776482582
-      Pitch: 1.124796748161316
+      Pitch: 1.1997966766357422
       Target Frame: <Fixed Frame>
-      Yaw: 4.6927900314331055
+      Yaw: 4.7027907371521
     Saved: ~
 Window Geometry:
   DAG:

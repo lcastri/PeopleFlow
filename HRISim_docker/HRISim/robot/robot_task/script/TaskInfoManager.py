@@ -60,7 +60,9 @@ class RobotTaskManager():
         
         
     def finish_task_cb(self, req):
-        resstr = 'SUCCESS' if req.result == constants.TaskResult.SUCCESS.value else 'FAILURE'
+        if req.result == constants.TaskResult.SUCCESS.value: resstr = 'SUCCESS'
+        elif req.result == constants.TaskResult.FAILURE.value: resstr = 'FAILURE'
+        elif req.result == constants.TaskResult.CRITICAL_BATTERY.value: resstr = 'CRITICAL BATTERY'
         rospy.logwarn(f"Task {req.task_id} finished with result {resstr}")
         for task in self.tasks_msg.Tasks:
             if task.task_id == req.task_id:

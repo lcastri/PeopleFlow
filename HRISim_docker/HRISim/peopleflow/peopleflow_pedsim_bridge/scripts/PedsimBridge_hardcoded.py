@@ -9,7 +9,8 @@ import hrisim_util.ros_utils as ros_utils
 import hrisim_util.constants as constants
 import traceback
 import time
-from std_srvs.srv import Trigger
+from std_srvs.srv import Empty
+from robot_srvs.srv import VisualisePath
 
 TIME_INIT = 8
 
@@ -155,7 +156,8 @@ if __name__ == '__main__':
     OBSTACLES = ros_utils.wait_for_param("/peopleflow/obstacles")
     ALLOW_TASK = rospy.get_param("~allow_task", False)
     MAX_TASKTIME = int(rospy.get_param("~max_tasktime"))
-    rospy.wait_for_service('/update_graph_visualization')
+    rospy.wait_for_service('/graph/weights/update')
+    rospy.wait_for_service('/graph/path/show')
 
     
     g_path = str(rospy.get_param("~g_path"))
@@ -164,14 +166,10 @@ if __name__ == '__main__':
         ros_utils.load_graph_to_rosparam(G, "/peopleflow/G")
         
         # Create a handle for the Trigger service
-        update_service = rospy.ServiceProxy('/update_graph_visualization', Trigger)
-        # Call the service
-        response = update_service()
-        # Check the response
-        if response.success:
-            rospy.loginfo(f"Graph visualization updated successfully: {response.message}")
-        else:
-            rospy.logwarn(f"Graph visualization update failed: {response.message}")
+        graph_weight_update = rospy.ServiceProxy('/graph/weights/update', Empty)
+        graph_path_show = rospy.ServiceProxy('/graph/path/show', VisualisePath)
+        graph_weight_update()
+        graph_path_show("")
 
         G.remove_node(constants.WP.CHARGING_STATION.value)
         

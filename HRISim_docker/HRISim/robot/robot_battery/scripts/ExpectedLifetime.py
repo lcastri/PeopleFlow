@@ -30,14 +30,13 @@ class ExpectedLifetime():
            
     def precompute_battery_consumptions(self, load=False):
         """Precompute battery consumption from waypoints to charger as a NumPy array."""
-        robot_speed = LOAD_ROBOT_MAX_VEL if load else NO_LOAD_ROBOT_MAX_VEL
-        battery_consumption_per_time = (KS_LOAD + KD_LOAD * robot_speed) if load else (KS_NOLOAD + KD_NOLOAD * robot_speed)
+        battery_consumption_per_time = (KS_LOAD + KD_LOAD * ROBOT_MAX_VEL) if load else (KS_NOLOAD + KD_NOLOAD * ROBOT_MAX_VEL)
 
         charger_wp = constants.WP.CHARGING_STATION.value
         battery_lookup = np.zeros(self.num_wps, dtype=np.float32)
 
         for i, start_wp in enumerate(WPS):
-            time_to_wp = ros_utils.get_time_to_wp(G, start_wp, charger_wp, heuristic, robot_speed)
+            time_to_wp = ros_utils.get_time_to_wp(G, start_wp, charger_wp, heuristic, ROBOT_MAX_VEL)
             battery_lookup[i] = time_to_wp * battery_consumption_per_time
 
         return battery_lookup
@@ -73,9 +72,7 @@ if __name__ == '__main__':
     KD_NOLOAD = float(ros_utils.wait_for_param("/robot_battery/noload_dynamic_consumption"))
     KS_LOAD = float(ros_utils.wait_for_param("/robot_battery/load_static_consumption"))
     KD_LOAD = float(ros_utils.wait_for_param("/robot_battery/load_dynamic_consumption"))
-    # ROBOT_MAX_VEL = float(ros_utils.wait_for_param("/move_base/TebLocalPlannerROS/max_vel_x"))
-    NO_LOAD_ROBOT_MAX_VEL = 0.3
-    LOAD_ROBOT_MAX_VEL = 0.5
+    ROBOT_MAX_VEL = float(ros_utils.wait_for_param("/move_base/TebLocalPlannerROS/max_vel_x"))
     WPS = ros_utils.wait_for_param("/peopleflow/wps")
     
     with open(G_PATH, 'rb') as f:

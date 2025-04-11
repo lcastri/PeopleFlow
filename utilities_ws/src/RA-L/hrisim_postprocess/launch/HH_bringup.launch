@@ -3,22 +3,18 @@
   <arg name="bagname"/>
   <arg name="scenario" default="warehouse"/>
   <arg name="playback_speed" default="10" />
-  <arg name="time_of_the_day" default="H1" /> 
-  <arg name="load_goal" default="false" /> 
-  <arg name="start_time" default="0" /> <!-- New argument for start time in seconds -->
+  <arg name="start_time" default="0" />
 
   <!-- rosbags play -->
   <param name="use_sim_time" value="true" />
-  <node name="rosbag_play_data" pkg="rosbag" type="play" 
-        args="--clock -r $(arg playback_speed) --start $(arg start_time) $(find hrisim_postprocess)/bags/$(arg bagname).bag" />
+  <node name="rosbag_play_data" pkg="rosbag" type="play"
+        args="--clock -r $(arg playback_speed) --start $(arg start_time) $(find hrisim_postprocess)/bags/experiments/$(arg bagname).bag"/>
 
   <!-- Extracting data -->
-  <node pkg="hrisim_postprocess" type="HH_data_extractor.py" name="hrisim_postprocess" output="screen" required="true" >
+  <node pkg="hrisim_postprocess" type="HH_data_extractor.py" name="hrisim_postprocess" output="screen" >
       <param name="bagname" value="$(arg bagname)" />
       <param name="node_path" value="$(find hrisim_postprocess)" />
       <param name="scenario" value="$(arg scenario)" />
-      <param name="time_of_the_day" value="$(arg time_of_the_day)" />
-      <param name="load_goal" value="$(arg load_goal)" />
   </node>
 
 </launch> 

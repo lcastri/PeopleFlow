@@ -20,6 +20,11 @@ def wait_for_param(param_name, timeout=60):
     return rospy.get_param(param_name)
 
 
+def wait_for_service(service_name):
+    rospy.logwarn(f"Waiting rosservice {service_name} to be ready...")
+    rospy.wait_for_service(service_name)
+
+
 def getPose(p: Pose):
     x = p.position.x
     y = p.position.y
@@ -50,7 +55,8 @@ def load_graph_to_rosparam(graph, param_name):
     ros_graph = {
         'nodes': {node: data for node, data in graph.nodes(data=True)},
         'edges': [
-            {'source': u, 'target': v, 'weight': data.get('weight', 1.0)} 
+            {'source': u, 'target': v, 'weight': data.get('weight', 1.0), 
+             'D_cost': data.get('D_cost', 1.0), 'PD_cost': data.get('PD_cost', 1.0), 'BC_cost': data.get('BC_cost', 1.0)} 
             for u, v, data in graph.edges(data=True)
         ]
     }

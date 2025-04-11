@@ -3,12 +3,12 @@ import os
 import pickle
 import numpy as np
 import pandas as pd
-from metrics.utils_2 import *
+from metrics.utils_for_causaldiscovery import *
 import networkx as nx
 import xml.etree.ElementTree as ET
 
 
-def get_battery_consumption(wp_origin, wp_dest, load):
+def get_battery_consumption(wp_origin, wp_dest):
     pos = nx.get_node_attributes(G, 'pos')
     path = nx.astar_path(G, wp_origin, wp_dest, heuristic=heuristic, weight='weight')
     distanceToCharger = 0
@@ -19,6 +19,7 @@ def get_battery_consumption(wp_origin, wp_dest, load):
     time_to_goal = math.ceil(distanceToCharger/ROBOT_MAX_VEL)
     return time_to_goal * (Ks + Kd * ROBOT_MAX_VEL)
 
+
 def heuristic(a, b):
     pos = nx.get_node_attributes(G, 'pos')
     (x1, y1) = pos[a]
@@ -26,6 +27,12 @@ def heuristic(a, b):
     return ((x1 - x2) ** 2 + (y1 - y2) ** 2) ** 0.5
 
 
+def get_initrow(df):
+    for r in range(len(df)):
+        if (df.iloc[r]["G_X"] != -1000 and df.iloc[r]["G_Y"] != -1000 and df.iloc[r].notnull().all()):
+            return r
+        
+        
 def is_in_danger(robot_positions, static_obstacles, agents, inflation_radius):
     """
     Check if the robot is in a "dangerous" zone at each time step.
@@ -55,12 +62,6 @@ def is_in_danger(robot_positions, static_obstacles, agents, inflation_radius):
             obs_proximity[t] = 1
 
     return obs_proximity
-
-
-def get_initrow(df):
-    for r in range(len(df)):
-        if (df.iloc[r]["G_X"] != -1000 and df.iloc[r]["G_Y"] != -1000 and df.iloc[r].notnull().all()):
-            return r
         
         
 tree = ET.parse('/home/lcastri/git/PeopleFlow/HRISim_docker/pedsim_ros/pedsim_simulator/scenarios/warehouse_old.xml')
@@ -83,8 +84,9 @@ for obstacle in root.findall("obstacle"):
 obstacles = np.array(obstacles)
 
 # Load map information
+ADD_NOISE = True
 INCSV_PATH= os.path.expanduser('utilities_ws/src/RA-L/hrisim_postprocess/csv/TOD/shrunk')
-OUTCSV_PATH= os.path.expanduser(f'utilities_ws/src/RA-L/hrisim_postprocess/csv/TOD/my_nonoise/')
+OUTCSV_PATH= os.path.expanduser(f'utilities_ws/src/RA-L/hrisim_postprocess/csv/TOD/my{"_noised" if ADD_NOISE else "_nonoise"}/')
 BAGNAME= ['BL100_21102024']
 
 static_duration = 5
@@ -92,6 +94,7 @@ dynamic_duration = 4
 charging_time = 2
 ROBOT_MAX_VEL = 0.5
 INFLATION_RADIUS = 0.55
+ALPHA = 0.8
 Ks = 100 / (static_duration * 3600)
 Kd = (100 / (dynamic_duration * 3600) - Ks)/ROBOT_MAX_VEL
 Kobs = 0.1
@@ -105,15 +108,42 @@ for bag in BAGNAME:
     for tod in TOD:
         print(f"- time: {tod.value}")
         DF = pd.read_csv(os.path.join(INCSV_PATH, f"{bag}", tod.value, "static", f"{bag}_{tod.value}.csv"))
+        r = get_initrow(DF)
+        DF = DF[r:]
         n_rows = len(DF)
         
-        BACs = {wp: np.zeros(n_rows) for wp in wps}
-
-        # EXTRACTING DATA
+        
+        # Initialize arrays for RV, RB, and BACs for each waypoint
         RX = DF['R_X'].to_numpy()  # Robot's X position
         RY = DF['R_Y'].to_numpy()  # Robot's Y position
-        RB = DF['R_B']             # Robot's battery
+        RV = DF['R_V'].values 
+        if ADD_NOISE: RV += np.random.normal(0, 0.11, n_rows)
         
+        RB = np.zeros(n_rows)
+        BACs = {wp: np.zeros(n_rows) for wp in wps}
+
+        # Initial battery levels
+        RB[0] = DF.iloc[0]['R_B']
+        for wp in wps:
+            BACs[wp][0] = DF.iloc[0][f'{wp}_BAC']
+        
+        # Vectorize the elapsed time differences
+        elapsed_time_diff = DF['ros_time'].diff().fillna(0).values
+        
+        # Vectorize static consumption and K*velocity calculation
+        dynamic_consumption = Ks + Kd * pd.Series(RV).shift(periods = 1, fill_value=0).values
+        energy_used = elapsed_time_diff * dynamic_consumption
+        energy_charged = elapsed_time_diff * charge_rate
+        
+        # Compute battery level `RB` for all rows at once
+        charge_status = DF['B_S'].values == 1  # boolean array for charging status
+        EC = np.where(charge_status, energy_charged, -energy_used)
+        
+        RB[1:] = RB[0] + np.cumsum(EC[1:])
+        if ADD_NOISE: RB += np.random.uniform(-0.051, 0.051, n_rows)
+        RB = np.clip(RB, 0, 100)  # Ensure battery level remains between 0 and 100
+        
+        # Compute BACs for each waypoint
         # Dynamically extract agent positions
         agent_columns = [col for col in DF.columns if '_X' in col and 'a' in col]
         num_agents = 20
@@ -125,28 +155,26 @@ for bag in BAGNAME:
             # Fill agent positions across all time steps
             agents[:, i - 1, 0] = DF[f'a{i}_X'].to_numpy()  # X-coordinates
             agents[:, i - 1, 1] = DF[f'a{i}_Y'].to_numpy()  # Y-coordinates
-            
         OBS = is_in_danger(np.stack((RX, RY), axis=1), obstacles, agents, INFLATION_RADIUS)
         for wp in wps:
-            BACs[wp][0] = DF.iloc[0][f'{wp}_BAC']
-               
-        for wp in wps:
-            BACs[wp][1:] = np.maximum(0, RB[1:] - get_battery_consumption(wp, WP.CHARGING_STATION.value) - Kobs * OBS[1:])
+            # Compute base BAC values
+            base_bac = RB[1:] - get_battery_consumption(wp, WP.CHARGING_STATION.value) - Kobs * OBS[1:]
+            smoothed_bac = np.zeros_like(base_bac)
+            smoothed_bac[0] = BACs[wp][0]  # Initialize with the first value
+            
+            # Apply exponential smoothing
+            for t in range(1, len(base_bac)):
+                smoothed_bac[t] = ALPHA * base_bac[t] + (1 - ALPHA) * smoothed_bac[t - 1] + (1 if ADD_NOISE else 0) * np.random.uniform(-0.4, 0.4)
 
-        # # Precompute battery consumption values for both cases
-        # battery_consumption_false = {wp: get_battery_consumption(wp, 'charging-station', False) for wp in wps}
-        # battery_consumption_true = {wp: get_battery_consumption(wp, 'charging-station', True) for wp in wps}
-
-        # # Use NumPy operations to compute ELTs
-        # ELTs = {
-        #     wp: np.maximum(0, RB_array - np.where(L == 0, battery_consumption_false[wp], battery_consumption_true[wp]))
-        #     for wp in wps
-        # }
+            BACs[wp][1:] = smoothed_bac
 
         # Add computed values to DF
-        DF[f'OBS'] = OBS
+        DF['R_V'] = RV
+        DF['R_B'] = RB
         for wp, bac_array in BACs.items():
             DF[f'{wp}_BAC'] = bac_array
+        DF[f'OBS'] = OBS
+
         
         # Create output directory if it doesn't exist
         out_path = os.path.join(OUTCSV_PATH, f'{bag}', f'{tod.value}')
@@ -156,11 +184,12 @@ for bag in BAGNAME:
         DF.to_csv(os.path.join(out_path, f"{bag}_{tod.value}.csv"), index=False)
 
         # Save WP-specific DataFrames
-        for wp in WP:
-            if wp in [WP.PARKING, WP.CHARGING_STATION]: continue 
-        
-            WPDF = pd.read_csv(os.path.join(INCSV_PATH, f"{bag}", tod.value, "static", f"{bag}_{tod.value}_{wp.value}.csv"))
-            WPDF["BAC"] = BACs[wp.value]
-            WPDF["OBS"] = OBS
+        general_columns_name = ['pf_elapsed_time', 'TOD', 'R_V', 'R_B', 'B_S']
+        for wp_name, wp_id in WPS.items():
+            if wp_name in [WP.PARKING.value, WP.CHARGING_STATION.value]: continue 
+                    
+            wp_df = DF[general_columns_name + [f"{wp_name}_PD", f"{wp_name}_BAC", "OBS"]]
+            wp_df = wp_df.rename(columns={f"{wp_name}_PD": "PD", f"{wp_name}_BAC": "ELT", "B_S": "C_S"})
+            wp_df["WP"] = wp_id
             
-            WPDF.to_csv(os.path.join(out_path, f"{bag}_{tod.value}_{wp.value}.csv"), index=False)
+            wp_df.to_csv(os.path.join(out_path, f"{bag}_{tod.value}_{wp_name}.csv"), index=False)

@@ -1,113 +1,165 @@
 import json
 import os
+import pickle
 from utils import *
 from metrics_utils import *
 
 INDIR = '/home/lcastri/git/PeopleFlow/utilities_ws/src/RA-L/hrisim_postprocess/csv/HH/original'
-BAGNAMES = ['noncausal-03012025', 'causal-08012025']
-CATEGORIES = {'noncausal-03012025': 'Non-Causal', 'causal-08012025': 'Causal'}
+BAGNAMES = ['base', 'causal']
+CATEGORIES = {'base': 'Baseline', 'causal': 'Causal'}
 OUTDIR = os.path.join('/home/lcastri/git/PeopleFlow/utilities_ws/src/RA-L/hrisim_postprocess/results', 'comparison', '__'.join(BAGNAMES), 'timesplit')
 os.makedirs(OUTDIR, exist_ok=True)
 
 # Initialize aggregated data structures
 success_failure_metrics = {}
 working_time_metrics = {}
-path_metrics = {}
+travelled_distance_metrics = {}
 battery_metrics = {}
 velocity_metrics = {}
 collision_metrics = {}
 clearance_metrics = {}
 proxemics_metrics = {}
 
+pvalues_path = os.path.join(OUTDIR, "pvalues.pkl")
+with open(pvalues_path, 'rb') as pkl_file:
+    PVALUES = pickle.load(pkl_file)
+
 # Load metrics for each bag
 for tod in TOD:
     for bagname in BAGNAMES:
-        metrics_path = os.path.join(INDIR, bagname, "metrics_timesplit.json")
-        with open(metrics_path, 'r') as json_file:
-            METRICS = json.load(json_file)
+        metrics_path = os.path.join(INDIR, bagname, "metrics.pkl")
+        with open(metrics_path, 'rb') as pkl_file:
+            METRICS = pickle.load(pkl_file)
         
         METRICS = METRICS[tod.value]
             
         # EFFICIENCY 
+        #! Success & Failures
         success_failure_metrics[bagname] = {
-            "N. Success": {"value": METRICS['overall_success']*100/METRICS['task_count'] if METRICS['task_count'] > 0 else 0, 
-                           "color": "tab:blue"},
-            "N. Failure (People)": {"value": METRICS['overall_failure_people']*100/METRICS['task_count'] if METRICS['task_count'] > 0 else 0, 
-                                    "color": "tab:orange"},
-            "N. Failure (Critical Battery)": {"value": METRICS['overall_failure_critical_battery']*100/METRICS['task_count'] if METRICS['task_count'] > 0 else 0, 
-                                              "color": "tab:red"}
-        }
-        working_time_metrics[bagname] = {
-            "Active Time": {"value": METRICS['overall_time_to_reach_goal']*100/METRICS['overall_task_time'] if METRICS['overall_task_time'] > 0 else 0, 
-                            "color": "tab:blue"},
-            "Stalled Time": {"value": METRICS['overall_stalled_time']*100/METRICS['overall_task_time'] if METRICS['overall_task_time'] > 0 else 0, 
-                             "color": "tab:orange"},
-            "Wasted Time": {"value": METRICS['overall_wasted_time_to_reach_goal']*100/METRICS['overall_task_time'] if METRICS['overall_task_time'] > 0 else 0, 
-                            "color": "tab:red"},
-        }
-        path_metrics[bagname] = {
-            "Planned Travelled Distance": {"value": METRICS['overall_path_length_only_success']*100/(METRICS['overall_travelled_distance'] + METRICS['overall_wasted_travelled_distance']) if (METRICS['overall_travelled_distance'] + METRICS['overall_wasted_travelled_distance']) > 0 else 0, 
-                                           "color": "tab:blue"},
-            "Extra Travelled Distance": {"value": (METRICS['overall_travelled_distance'] - METRICS['overall_path_length_only_success'])*100/(METRICS['overall_travelled_distance'] + METRICS['overall_wasted_travelled_distance']) if (METRICS['overall_travelled_distance'] + METRICS['overall_wasted_travelled_distance']) > 0 else 0, 
-                                         "color": "tab:orange"},
-            "Wasted Travelled Distance": {"value": METRICS['overall_wasted_travelled_distance']*100/(METRICS['overall_travelled_distance'] + METRICS['overall_wasted_travelled_distance']) if (METRICS['overall_travelled_distance'] + METRICS['overall_wasted_travelled_distance']) > 0 else 0, 
-                                          "color": "tab:red"},
-        }
-        battery_metrics[bagname] = {
-            "Planned Battery Usage": {"value": METRICS['overall_planned_battery_consumption_only_success']*100/(METRICS['overall_battery_consumption'] + METRICS['overall_wasted_battery_consumption']) if (METRICS['overall_battery_consumption'] + METRICS['overall_wasted_battery_consumption']) > 0 else 0, 
-                                      "color": "tab:blue"},
-            "Extra Battery Usage": {"value": (METRICS['overall_battery_consumption'] - METRICS['overall_planned_battery_consumption_only_success'])*100/(METRICS['overall_battery_consumption'] + METRICS['overall_wasted_battery_consumption']) if (METRICS['overall_battery_consumption'] + METRICS['overall_wasted_battery_consumption']) > 0 else 0, 
-                                    "color": "tab:orange"},
-            "Wasted Battery Usage": {"value": METRICS['overall_wasted_battery_consumption']*100/(METRICS['overall_battery_consumption'] + METRICS['overall_wasted_battery_consumption']) if (METRICS['overall_battery_consumption'] + METRICS['overall_wasted_battery_consumption']) > 0 else 0, 
-                                     "color": "tab:red"},
-        }
-        velocity_metrics[bagname] = {
-            "Avg Velocity": {"value": METRICS['mean_average_velocity'], 
-                             "color": "tab:blue"},
+            "Success": {"value": METRICS['overall_success'],
+                        "%": METRICS['overall_success']*100/METRICS['task_count'],
+                        "100%": METRICS['task_count'],
+                        "color": "tab:blue",
+                        "p-value": PVALUES["N. Success"]["p_value"]},
+            "Failures~(D)": {"value": METRICS['overall_failure_people'],
+                                    "%": METRICS['overall_failure_people']*100/METRICS['task_count'], 
+                                    "100%": METRICS['task_count'],
+                                    "color": "tab:orange",
+                                    "p-value": PVALUES["N. Failures (People)"]["p_value"]},
+            "Failures~(L)": {"value": METRICS['overall_failure_critical_battery'], 
+                                            "%": METRICS['overall_failure_critical_battery']*100/METRICS['task_count'], 
+                                            "100%": METRICS['task_count'],
+                                            "color": "tab:red",
+                                            "p-value": PVALUES["N. Failures (Critical Battery)"]["p_value"]}
         }
         
-        # SAFETY 
-        collision_metrics[bagname] = {
-            "Human Collisions": {"value": METRICS['overall_human_collision'] + METRICS['overall_robot_fallen'], 
-                                 "color": "tab:blue"},
+        #! Task Time
+        total_time = METRICS['overall_task_time']/3600
+        active_time = METRICS['overall_time_to_reach_goal_actual']/3600
+        stalled_time = METRICS['overall_time_to_reach_goal_stalled']/3600
+        wasted_time = METRICS['overall_time_to_reach_goal_wasted']/3600
+        working_time_metrics[bagname] = {
+            "Active": {"value": active_time, 
+                            "%": active_time*100/total_time,
+                            "100%": total_time,
+                            "color": "tab:blue",
+                            "p-value": PVALUES["Active Time"]["p_value"]},
+            "Stalled": {"value": stalled_time, 
+                            "%": stalled_time*100/total_time, 
+                            "100%": total_time,
+                            "color": "tab:orange",
+                            "p-value": PVALUES["Stalled Time"]["p_value"]},
+            "Wasted": {"value": wasted_time, 
+                            "%": wasted_time*100/total_time, 
+                            "100%": total_time,
+                            "color": "tab:red",
+                            "p-value": PVALUES["Wasted Time"]["p_value"]},
         }
-        clearance_metrics[bagname] = {
-            "Avg Clearing Distance": {"value": METRICS['mean_average_clearing_distance'], 
-                                      "color": "tab:blue"},
+        
+        #! Travelled Distance
+        total_distance = (METRICS['overall_travelled_distance_actual'] + METRICS['overall_travelled_distance_wasted'])/1000
+        planned_distance = METRICS['overall_travelled_distance_planned_only_success']/1000
+        extra_distance = (METRICS['overall_travelled_distance_actual'] - METRICS['overall_travelled_distance_planned_only_success'])/1000
+        wasted_distance = METRICS['overall_travelled_distance_wasted']/1000
+        travelled_distance_metrics[bagname] = {
+            "Planned": {"value": planned_distance, 
+                                        "%": planned_distance*100/total_distance,
+                                        "100%": total_distance,
+                                        "color": "tab:blue",
+                                        "p-value": PVALUES["Planned Travelled Distance"]["p_value"]},
+            "Extra": {"value": extra_distance,
+                                        "%": extra_distance*100/total_distance, 
+                                        "100%": total_distance,
+                                        "color": "tab:orange",
+                                        "p-value": PVALUES["Extra Travelled Distance"]["p_value"]},
+            "Wasted": {"value": wasted_distance,
+                                        "%": wasted_distance*100/total_distance,  
+                                        "100%": total_distance,
+                                        "color": "tab:red",
+                                        "p-value": PVALUES["Wasted Travelled Distance"]["p_value"]},
         }
-        denominator = METRICS['overall_space_compliance']['public'] + METRICS['overall_space_compliance']['social'] + METRICS['overall_space_compliance']['personal'] + METRICS['overall_space_compliance']['intimate']
-        proxemics_metrics[bagname] = {
-            "Public Proxemics": {"value": METRICS['overall_space_compliance']['public']*100/denominator if denominator > 0 else 0, 
-                                "color": "tab:green"},
-            "Social Proxemics": {"value": METRICS['overall_space_compliance']['social']*100/denominator if denominator > 0 else 0, 
-                                "color": "tab:blue"},
-            "Personal Proxemics": {"value": METRICS['overall_space_compliance']['personal']*100/denominator if denominator > 0 else 0, 
-                                "color": "tab:orange"},
-            "Intimate Proxemics": {"value": METRICS['overall_space_compliance']['intimate']*100/denominator if denominator > 0 else 0, 
-                                "color": "tab:red"},
+        
+        #! Battery
+        # Define total battery reference for normalization
+        total_battery = METRICS['overall_battery_consumption_actual'] + METRICS['overall_battery_consumption_wasted']
+
+        # Get planned and actual battery consumption
+        planned_battery = METRICS['overall_battery_consumption_planned_only_success']/100
+        actual_battery = METRICS['overall_battery_consumption_actual']/100
+        wasted_battery = METRICS['overall_battery_consumption_wasted']/100
+
+        # Compute absolute deviation (ignoring sign)
+        absolute_deviation = abs(METRICS['overall_battery_consumption_actual'] -  METRICS['overall_battery_consumption_planned_only_success'])
+
+        # Use max(planned, actual) as the reference to normalize percentages
+        reference_total = (METRICS['overall_battery_consumption_actual'] + METRICS['overall_battery_consumption_wasted'])/100
+
+        # Update battery metrics dictionary
+        battery_metrics[bagname] = {
+            "Effective": {
+                "value": actual_battery,
+                "%": actual_battery * 100 / reference_total,
+                "100%": reference_total,
+                "color": "tab:blue",
+                "p-value": PVALUES["Effective Battery Usage"]["p_value"]
+            },
+            "Wasted": {
+                "value": wasted_battery,
+                "%": wasted_battery * 100 / reference_total,
+                "100%": reference_total,
+                "color": "tab:red",
+                "p-value": PVALUES["Wasted Battery Usage"]["p_value"]
+            },
         }
+        
+        collision_metrics[bagname] = METRICS['overall_human_collision']
+
 
     # Plot all metrics
-    plot_stacked_bar(success_failure_metrics, "Success-Failure", "%", CATEGORIES, yticks=range(0, 105, 10), tod=tod.value, outdir=OUTDIR)
-    plot_stacked_bar(working_time_metrics, "Task Time", "%", CATEGORIES, yticks=range(0, 105, 10), tod=tod.value, outdir=OUTDIR)
-    plot_stacked_bar(path_metrics, "Path Length", "%", CATEGORIES, yticks=range(0, 105, 10), tod=tod.value, outdir=OUTDIR)
-    plot_stacked_bar(battery_metrics, "Battery Usage", "%", CATEGORIES, yticks=range(0, 105, 10), tod=tod.value, outdir=OUTDIR)
-    plot_stacked_bar(velocity_metrics, "Velocity", "m/s", CATEGORIES, figsize=(8, 4), tod=tod.value, outdir=OUTDIR)
-    plot_stacked_bar(collision_metrics, "Collision", "Count", CATEGORIES, figsize=(8, 4), tod=tod.value, outdir=OUTDIR)
-    plot_stacked_bar(clearance_metrics, "Clearance Distance to Obstacles", "m", CATEGORIES, figsize=(8, 4), tod=tod.value, outdir=OUTDIR)
-    plot_stacked_bar(proxemics_metrics, "Proxemics", "%", CATEGORIES, figsize=(8, 4), tod=tod.value, outdir=OUTDIR)
+    plot_stacked_bar(success_failure_metrics, "Success-Failure", "Count", CATEGORIES,tod=tod.value, outdir=OUTDIR, step=300)
+    plot_stacked_bar(working_time_metrics, "Task Time", "h", CATEGORIES, tod=tod.value, outdir=OUTDIR, step=5)
+    plot_stacked_bar(travelled_distance_metrics, "Travelled Distance", "km", CATEGORIES, tod=tod.value, outdir=OUTDIR, step=5)
+    plot_stacked_bar(battery_metrics, "Battery Usage", "Battery Cycles", CATEGORIES, tod=tod.value, outdir=OUTDIR, step=2)
+    
+    plt.figure(figsize=(10, 8))
+    x_pos = [0.1, 0.21]
+    colors = ["tab:blue", "tab:orange"]
+    fontsize = 15  # Define fontsize
 
-    metrics_list = [
-        success_failure_metrics,
-        working_time_metrics,
-        path_metrics,
-        battery_metrics,
-    ]
-    titles = [
-        "Success-Failure",
-        "Task Time",
-        "Path Length",
-        "Battery Usage",
-    ]
+    # Create bars and store them in a variable
+    bars = plt.bar(x_pos, collision_metrics.values(), width=0.1, color=colors)
 
-    plot_efficiency(metrics_list, titles, "Percentage (%)", CATEGORIES, tod=tod.value, outdir=OUTDIR)
+    # Set labels and title
+    plt.xticks(x_pos, CATEGORIES.values(), fontsize=fontsize)
+    plt.yticks(fontsize=fontsize)
+    plt.grid(axis='y', linestyle='--', alpha=0.6)
+    plt.title(f"{tod.value} -- Human Collision", fontsize=fontsize)
+    plt.ylim(0, max(collision_metrics.values()) * 1.2)  # Give some space above bars
+    plt.tight_layout()
+
+    # Annotate bars
+    for bar, value in zip(bars, collision_metrics.values()):
+        plt.text(bar.get_x() + bar.get_width() / 2, bar.get_height() / 2,
+                f"{value:.2f}", ha='center', va='center', fontsize=fontsize)
+    plt.savefig(f"{OUTDIR}/{tod.value}-Human_Collision.png", dpi=300, bbox_inches="tight")
+    plt.close()

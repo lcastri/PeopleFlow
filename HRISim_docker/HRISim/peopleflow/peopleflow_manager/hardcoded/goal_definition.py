@@ -93,5 +93,5 @@ if __name__ == "__main__":
                 AGENTS[agent]['tasks'][tod]['destinations'].append(destination)
                 AGENTS[agent]['tasks'][tod]['durations'].append(getTaskDuration(destination))
                     
-    with open('/home/lcastri/git/PeopleFlow/HRISim_docker/HRISim/peopleflow/peopleflow_manager/hardcoded/agent_task_list.pkl', 'wb') as f:
+    with open('/home/lcastri/git/PeopleFlow/HRISim_docker/HRISim/peopleflow/peopleflow_manager/hardcode/agent_task_list.pkl', 'wb') as f:
         pickle.dump(AGENTS, f)
