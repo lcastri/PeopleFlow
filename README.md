@@ -22,31 +22,32 @@ cd /path/to/PeopleFlow
 ./HRISim_run.sh 
 ```
 ### Scenario setup and launch
-Once inside the Docker container, run the following command to view the tmule file containing all the simulator parameters:
+Once inside the Docker container, run the following command to view the `.tmule` file containing all simulator parameters:
 ```
 roscd hrisim_tmule/tmule
 cat hrisim_bringup.yaml
 ```
 Parameters:
-* TIAGO_TYPE - represents the type of TIAGo;
-* INIT_BATTERY - Robot battery initial value. Default 100;
-* STATIC_DURATION - Battery duration (hours) if robot idle. Default 5;
-* DYNAMIC_DURATION - Battery duration (hours) if robot moving. Default 4;
-* OBS_FACTOR - Obstacles factor in battery discharging. Default 3;
-* CHARGING_TIME - Battery charging time (hours). Default 2;
-* ABORT_TIME_THRESHOLD - Robot task completion deadline (seconds). Default 45;
-* WORLD - world and map to load. Default "warehouse"<br>
+* TIAGO_TYPE - specifies the type of TIAGo robot;
+* INIT_BATTERY - initial battery level of the robot. Default 100;
+* STATIC_DURATION - battery duration (hours) when robot is idle. Default 5;
+* DYNAMIC_DURATION - battery duration (hours) when robot is moving. Default 4;
+* OBS_FACTOR - obstacle factor affecting battery discharge. Default 3;
+* CHARGING_TIME - battery charging time (hours). Default 2;
+* ABORT_TIME_THRESHOLD - Task completion deadline (seconds). Default 45;
+* WORLD - name of world and map to load. Default "warehouse"<br>
 If you want to add your own WORLD, you can include your .world file in hrisim_gazebo/worlds and your map in hrisim_gazebo/tiago_maps.<br>
 Note that the map must have the same name as the .world file;
 * SCENARIO - pedsim scenario to load. Default "warehouse"<br>
 If you want to add your own SCENARIO, you can include your .xml file in /pedsim_ros/pedsim_simulator/scenarios;
-* ALLOW_TASK - enable the performance of tasks when pedestrians reach their target position;
-* MAX_TASKTIME - maximum task time;
-* GUI - if False, disable Gazebo gui;
-* MAX_STEP_SIZE - determine the time (in s) in the simulation to be simulated in one step;
+* ALLOW_TASK - if True, allows pedestrians to perform tasks when they reach their target position;
+* MAX_TASKTIME - maximum task duration (seconds);
+* GUI - if False, disables the Gazebo gui;
+* MAX_STEP_SIZE - time (seconds) in the simulation to be simulated in one step;
 * FORCE_OBSTACLE - social force model parameter ([Helbing et. al](https://arxiv.org/pdf/cond-mat/9805244));
 * SIGMA_OBSTACLE - social force model parameter ([Helbing et. al](https://arxiv.org/pdf/cond-mat/9805244));
 * FORCE_SOCIAL - social force model parameter ([Helbing et. al](https://arxiv.org/pdf/cond-mat/9805244));
+* RECORD - if True, records the topics listed in hrisim_recording/scripts/record.py into a ROS bag;
 
 If you want to modify any of these parameters, you can edit the hrisim_bringup.yaml file by:
 ```
