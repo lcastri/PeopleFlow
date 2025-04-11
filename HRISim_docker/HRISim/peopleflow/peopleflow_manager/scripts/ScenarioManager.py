@@ -10,6 +10,7 @@ import subprocess
 from std_srvs.srv import Empty  # Import the Empty service
 
 TIME_INIT = 8
+TSTOP = False
 
 class Time:
     def __init__(self, name, duration) -> None:
@@ -100,6 +101,17 @@ def pub_time():
     msg.elapsed = SM.elapsedTime
     time_pub.publish(msg)
     
+
+def isFinished():
+    global TSTOP
+    
+    if SM.elapsedTime is not None and (SM.elapsedTime > SM.T or not ros_utils.wait_for_param("/peopleflow/robot_plan_on")) and not TSTOP:
+        try:
+            TSTOP = True
+            shutdown_service()
+        except Exception as e:
+            rospy.logerr(f"Failed to execute tstop: {str(e)}")
+    
     
 def shutdown_cb(req=None):
     try:
@@ -123,11 +135,14 @@ if __name__ == '__main__':
     
     # Advertise the shutdown service
     rospy.Service('/hrisim/shutdown', Empty, shutdown_cb)
-    
+    shutdown_service = rospy.ServiceProxy('/hrisim/shutdown', Empty)
+
     rospy.loginfo("Shutdown service is running...")
     while not rospy.is_shutdown():
         # Time
         pub_time()
         rospy.set_param('/peopleflow/timeday', str(SM.timeOfTheDay))
                         
+        isFinished()
+        
         rate.sleep()

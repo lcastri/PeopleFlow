@@ -20,7 +20,7 @@ import hrisim_util.ros_utils as ros_utils
 import hrisim_util.constants as constants
 import networkx as nx
 from peopleflow_msgs.msg import Time as pT
-from robot_srvs.srv import NewTask, NewTaskResponse, FinishTask, FinishTaskResponse
+from robot_srvs.srv import NewTask, FinishTask, VisualisePath
 from std_srvs.srv import Empty  # Import the Empty service
 from nav_msgs.msg import Odometry
 
@@ -78,19 +78,25 @@ def Plan(p):
         rospy.sleep(0.1)
         
     global NEXT_GOAL, QUEUE, GO_TO_CHARGER, dynobs_remove_service, dynobs_timer_service
-    ros_utils.wait_for_param("/peopleflow/timeday")
-    rospy.set_param('/hrisim/robot_busy', False)
-    PLAN_ON = True
-    rospy.set_param("/peopleflow/robot_plan_on", PLAN_ON)
     
-    # Service proxies for NewTask and FinishTask
-    rospy.wait_for_service('/hrisim/new_task')
-    rospy.wait_for_service('/hrisim/finish_task')
+    ros_utils.wait_for_service('/hrisim/new_task')
+    ros_utils.wait_for_service('/hrisim/finish_task')
+    ros_utils.wait_for_service('/hrisim/shutdown')
+    ros_utils.wait_for_service('/hrisim/obstacles/remove')
+    ros_utils.wait_for_service('/hrisim/obstacles/timer/off')
+    ros_utils.wait_for_service('/graph/path/show')
+
     new_task_service = rospy.ServiceProxy('/hrisim/new_task', NewTask)
     finish_task_service = rospy.ServiceProxy('/hrisim/finish_task', FinishTask)
     shutdown_service = rospy.ServiceProxy('/hrisim/shutdown', Empty)
     dynobs_remove_service = rospy.ServiceProxy('/hrisim/obstacles/remove', Empty)
     dynobs_timer_service = rospy.ServiceProxy('/hrisim/obstacles/timer/off', Empty)
+    graph_path_show = rospy.ServiceProxy('/graph/path/show', VisualisePath)
+        
+    ros_utils.wait_for_param("/peopleflow/timeday")
+    rospy.set_param('/hrisim/robot_busy', False)
+    PLAN_ON = True
+    rospy.set_param("/peopleflow/robot_plan_on", PLAN_ON)
     
     while PLAN_ON:
         rospy.logerr("Planning..")
@@ -116,6 +122,8 @@ def Plan(p):
             QUEUE = nx.astar_path(G, ROBOT_CLOSEST_WP, NEXT_GOAL, heuristic=heuristic, weight='weight')
             firstgoal = QUEUE[0]
             rospy.logwarn(f"{QUEUE}")
+            
+            graph_path_show(','.join(QUEUE))
             task_id = new_task_service(NEXT_GOAL, QUEUE).task_id
 
         
