@@ -22,9 +22,10 @@ def cb_actor_poses(actors):
             actor_pose = actor.pose
             rospy.loginfo("Spawning model: actor_id = %s", actor_id)
 
-            model_pose = Pose(Point(x= actor_pose.position.x - 0.731689,
-                                y= actor_pose.position.y + 0.002827,
-                                z= actor_pose.position.z + 0.75),
+            # model_pose = Pose(Point(x= actor_pose.position.x - 0.731689,
+            model_pose = Pose(Point(x= actor_pose.position.x,
+                                    y= actor_pose.position.y + 0.002827,
+                                    z= actor_pose.position.z + 0.75),
                             Quaternion(actor_pose.orientation.x,
                                         actor_pose.orientation.y,
                                         actor_pose.orientation.z,

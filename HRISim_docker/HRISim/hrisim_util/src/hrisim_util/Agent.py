@@ -1,11 +1,11 @@
 import copy
 import random
 import networkx as nx
-from scipy import stats
 from geometry_msgs.msg import Point
 import numpy as np
 
 DEFAULT_VALUE = -1000
+CONSECUTIVE_STUCK_THRESHOLD = 2
 
 class Agent:
     def __init__(self, id, schedule, graph, allowTask, maxTaskTime) -> None:
@@ -30,18 +30,39 @@ class Agent:
         self.isQuitting = False
         self.isStuck = False
         self.taskDuration = None
-        
+        self.nConsecutiveStuck = 0
+        self.closestWPidx = 0
+          
+               
     @property
     def closestWP(self):
-        tmp_dist = []
-        if self.x is not None and self.y is not None:
-            pos = nx.get_node_attributes(self.G, 'pos')
-            for wp in self.G.nodes:
-                d = ((self.x - pos[wp][0]) ** 2 + (self.y - pos[wp][1]) ** 2) ** 0.5
-                tmp_dist.append(d)            
-            return list(self.G.nodes)[np.argmin(tmp_dist)]
-        return None
-    
+        if self.x is None or self.y is None:
+            return None
+
+        pos = nx.get_node_attributes(self.G, 'pos')
+
+        # Calculate distances from the agent's position to all waypoints
+        distances = [(wp, ((self.x - pos[wp][0]) ** 2 + (self.y - pos[wp][1]) ** 2) ** 0.5) for wp in self.G.nodes]
+        
+        # Sort by distance
+        sorted_distances = sorted(distances, key=lambda x: x[1])
+
+        # Select the closest waypoint by default
+        if not self.isStuck:
+            return sorted_distances[0][0]
+
+        # If the agent is stuck, attempt to use the second closest waypoint
+        else:
+            if self.nConsecutiveStuck <= CONSECUTIVE_STUCK_THRESHOLD:
+                return sorted_distances[0][0]
+            elif self.nConsecutiveStuck > CONSECUTIVE_STUCK_THRESHOLD and len(sorted_distances) > 1:
+                self.closestWPidx += 1
+                self.closestWPidx = min(len(sorted_distances) - 1, self.closestWPidx)
+                return sorted_distances[self.closestWPidx][0]
+
+        # Fallback in case there’s only one waypoint
+        return sorted_distances[0][0]
+  
     @property
     def isFree(self):
         return len(self.path) == 0
@@ -119,39 +140,44 @@ class Agent:
     
     def selectDestination(self, selected_time, potential_dests):
         destinations = self.schedule[selected_time]['dests']
-        if self.pastFinalDest is not None and self.pastFinalDest != 'delivery_point': potential_dests.remove(self.pastFinalDest)
+        #! I am commenting this line to allow the agents to select the same destination
+        # if self.pastFinalDest is not None and self.pastFinalDest != 'delivery_point': potential_dests.remove(self.pastFinalDest)
         
         # Generate probabilities
+        tmp_dest = []
         probabilities = []
         for dest in potential_dests:
             mean = destinations[dest]['mean']
             std = destinations[dest]['std']
             
-            if std == 0:
-                probability = 0.0
-            else:
-                probability = stats.norm(mean, std).pdf(mean)
-
+            if mean == 0: continue
+            # probability = stats.norm(mean, std).pdf(mean)
+            probability = mean
+            tmp_dest.append(dest)
             probabilities.append(probability)
 
         # Normalize the probabilities
         probabilities = np.array(probabilities)
-        normalized_probabilities = probabilities / probabilities.sum()
-
         # Randomly select a destination
-        selected_destination = np.random.choice(potential_dests, p=normalized_probabilities)
+        selected_destination = np.random.choice(tmp_dest, p=probabilities)
         
         return selected_destination
     
     
-    def setTask(self, destination, duration = None):
+    def setTask(self, destination, duration = None, isStuck = False):
+        if isStuck: 
+            self.nConsecutiveStuck += 1
+        else: 
+            self.nConsecutiveStuck = 0
+            self.closestWPidx = 0
+        
         self.pastFinalDest = self.finalDest if self.finalDest else None
         self.path = nx.astar_path(self.G, self.closestWP, destination, heuristic=self.heuristic, weight='weight')
         self.original_path = copy.deepcopy(self.path)
-        
+            
         self.taskDuration = {wp: 0 for wp in self.path}
         if duration is not None:
-            self.taskDuration[self.path[-1]] = duration 
+            self.taskDuration[self.path[-1]] = duration
         
     
     def getTaskDuration(self):

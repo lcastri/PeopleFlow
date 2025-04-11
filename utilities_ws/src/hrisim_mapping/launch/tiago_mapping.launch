@@ -11,7 +11,7 @@
   <arg name="camera_model"  default="orbbec-astra"/>
   <arg name="base_type" default="pmb2"/>
 
-  <arg name="world"  default="maze"/>
+  <arg name="world"  default="warehouse"/>
   <arg name="gzpose" default="-x 0.0 -y 0.0 -z 0.0 -R 0.0 -P 0.0 -Y 0.0"/>
   <arg name="tuck_arm"  default="true"/>
 

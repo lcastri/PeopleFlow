@@ -134,6 +134,7 @@ class Agent : public ScenarioElement, public Ped::Tagent {
   virtual QPointF getVisiblePosition() const;
   virtual void setVisiblePosition(const QPointF& positionIn);
   QString toString() const;
+  bool isPerformingTask;
 
   // Attributes
  protected:

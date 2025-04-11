@@ -3,7 +3,7 @@
   <arg name="map_name" default="map.yaml"/>
   <arg name="scenario_path" default="$(arg map_path)"/>
   <arg name="scenario_name" default="scene.xml"/>
-  <arg name="use_map_origin" default="false"/>
+  <arg name="use_map_origin" default="true"/>
   
   <arg name="add_agents" default="false"/>
   <arg name="agents_info_path" default="$(arg map_path)"/>

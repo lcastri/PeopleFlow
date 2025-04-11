@@ -20,5 +20,9 @@ if [ -n "$dangling_images" ]; then
     docker rmi $dangling_images
 fi
 
+# echo " "
+# echo "Pruning builder cache..."
+# docker builder prune -a -f
+
 echo " "
 echo "${container_name} docker container built!"

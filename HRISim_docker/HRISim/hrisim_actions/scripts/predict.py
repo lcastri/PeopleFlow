@@ -18,22 +18,20 @@ class predict(AbstractAction):
     def _start_action(self):
         
         # Wait for the service to be available
-        rospy.wait_for_service('/get_risk_map')
+        rospy.wait_for_service('/hrisim/riskMap/predict')
         
         try:
             # Create a proxy for the service
-            get_risk_map = rospy.ServiceProxy('/get_risk_map', GetRiskMap)
+            get_risk_map = rospy.ServiceProxy('/hrisim/riskMap/predict', GetRiskMap)
             
             # Call the service
             response = get_risk_map()
             
             # Save the risk map as a ROS parameter
             rospy.set_param('/hrisim/risk_map', {
-                'waypoint_ids': response.waypoint_ids,
-                'n_steps': response.n_steps,
-                'n_waypoints': response.n_waypoint,
-                'PDs': response.PDs,  # Flattened data
-                'BACs': response.BACs  # Flattened data
+                'arcs': response.arcs,
+                'PDs': response.PDs,
+                'BCs': response.BCs
             })
             self.params.append("done")
         

@@ -64,6 +64,7 @@ Agent::Agent() {
   task_duration = 0;
   initialTime_task = 0;
   initialTime_dest = 0;
+  isPerformingTask = false;
   is_stuck = false;
 }
 
@@ -156,6 +157,7 @@ Ped::Twaypoint* Agent::updateDestination() {
       initialTime_task = currentTimeSec;
     }
     if (!destinations.isEmpty() && currentTimeSec > (initialTime_task + task_duration)) {
+      isPerformingTask = false;
       initialTime_task = 0;
       task_duration = 0;
       if ((!isInGroup()) || (isInGroup() && nextDestination == nullptr)) {
@@ -175,23 +177,6 @@ Ped::Twaypoint* Agent::updateDestination() {
         srv.request.destinations = waypoint_names;
         srv.request.is_stuck = is_stuck;
 
-        // if (destination_client.call(srv)) {
-        //   task_duration = srv.response.task_duration;
-        //   std::string dest_name = srv.response.destination_id;
-        //   initialTime_dest = currentTimeSec;
-        //   if (doesDestinationExist(dest_name)) {
-        //     currentDestination = getDestinationByName(dest_name);
-        //   } else {
-        //     QString id = QString::fromStdString(dest_name);
-        //     AreaWaypoint* w = new AreaWaypoint(id, srv.response.destination.x, srv.response.destination.y, srv.response.destination_radius);
-        //     w->setBehavior(static_cast<Ped::Twaypoint::Behavior>(0));
-        //     Waypoint* waypointPtr = dynamic_cast<Waypoint*>(w);
-        //     currentDestination = waypointPtr;
-        //   }
-        // } else {
-        //   currentDestination = nullptr;
-        //   ROS_ERROR("Failed to call service GetNextDestination");
-        // }
         // Retry mechanism for the service call
         while (retry_count < MAX_RETRIES && !request_successful) {
           if (destination_client.call(srv)) {
@@ -245,6 +230,8 @@ Ped::Twaypoint* Agent::updateDestination() {
         currentDestination = nextDestination;
         nextDestination = nullptr;
       }
+    } else if (!destinations.isEmpty() && currentTimeSec <= (initialTime_task + task_duration)) {
+      isPerformingTask = true;
     }
   } else {
     // Request the next destination via service
@@ -263,20 +250,6 @@ Ped::Twaypoint* Agent::updateDestination() {
     srv.request.destinations = waypoint_names;
     srv.request.is_stuck = is_stuck;
 
-    // if (destination_client.call(srv)) {
-    //   task_duration = srv.response.task_duration;
-    //   std::string dest_name = srv.response.destination_id;
-    //   initialTime_dest = currentTimeSec;
-    //   if (doesDestinationExist(dest_name)) {
-    //     currentDestination = getDestinationByName(dest_name);
-    //   } else {
-    //     QString id = QString::fromStdString(dest_name);
-    //     AreaWaypoint* w = new AreaWaypoint(id, srv.response.destination.x, srv.response.destination.y, srv.response.destination_radius);
-    //     w->setBehavior(static_cast<Ped::Twaypoint::Behavior>(0));
-    //     Waypoint* waypointPtr = dynamic_cast<Waypoint*>(w);
-    //     currentDestination = waypointPtr;
-    //   }
-    // }
     // Retry mechanism for the service call
     while (retry_count < MAX_RETRIES && !request_successful) {
       if (destination_client.call(srv)) {

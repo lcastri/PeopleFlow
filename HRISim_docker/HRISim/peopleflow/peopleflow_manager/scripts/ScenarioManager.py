@@ -3,14 +3,14 @@
 import xml.etree.ElementTree as ET
 
 import rospy
-from std_msgs.msg import Header, String
+from std_msgs.msg import Header
 from peopleflow_msgs.msg import Time as pT
 import hrisim_util.ros_utils as ros_utils
 import subprocess
+from std_srvs.srv import Empty  # Import the Empty service
 
 TIME_INIT = 8
 TSTOP = False
-
 
 class Time:
     def __init__(self, name, duration) -> None:
@@ -65,10 +65,10 @@ class ScenarioManager():
         
         # Parse schedule
         for time in root.find('schedule').findall('time'):
-            tmp = Time(time.get('name'), float(time.get('duration')) * (1/SCALING_FACTOR))
+            tmp = Time(time.get('name'), float(time.get('duration')))
             for adddest in time.findall('adddest'):
                 dest_name = adddest.get('name')
-                tmp.dests[dest_name] = {'mean': tmp.duration * float(adddest.get('p')), 'std': float(adddest.get('std'))}
+                tmp.dests[dest_name] = {'mean': float(adddest.get('p')), 'std': float(adddest.get('std'))}
             self.schedule[tmp.name] = tmp
         
         self.wps = {}
@@ -79,8 +79,18 @@ class ScenarioManager():
             r = float(waypoint.get('r'))
             self.wps[waypoint_id] = {'x': x, 'y': y, 'r': r}
             
+        self.obstacles = {}
+        # Extract obstacle coordinates
+        for obstacle in root.findall("obstacle"):
+            x1 = float(obstacle.get("x1"))
+            y1 = float(obstacle.get("y1"))
+            x2 = float(obstacle.get("x2"))
+            y2 = float(obstacle.get("y2"))
+            self.obstacles[str(len(self.obstacles))] = {"x1": x1, "y1": y1, "x2": x2, "y2": y2}
+            
         rospy.set_param("/peopleflow/schedule", self.schedule)
         rospy.set_param("/peopleflow/wps", self.wps)
+        rospy.set_param("/peopleflow/obstacles", self.obstacles)
 
  
 def pub_time():
@@ -91,18 +101,25 @@ def pub_time():
     msg.elapsed = SM.elapsedTime
     time_pub.publish(msg)
     
-    
+
 def isFinished():
     global TSTOP
     
     if SM.elapsedTime is not None and (SM.elapsedTime > SM.T or not ros_utils.wait_for_param("/peopleflow/robot_plan_on")) and not TSTOP:
         try:
-            rospy.logwarn(f"Calling shutdown...")
-            subprocess.Popen(['bash', '-c', 'tmux send-keys -t HRISim_bringup:0.0 "tstop" C-m'], shell=False)
             TSTOP = True
-            rospy.logwarn(f"Shutting down...")
+            shutdown_service()
         except Exception as e:
             rospy.logerr(f"Failed to execute tstop: {str(e)}")
+    
+    
+def shutdown_cb(req=None):
+    try:
+        rospy.logwarn(f"Calling shutdown...")
+        subprocess.Popen(['bash', '-c', 'tmux send-keys -t HRISim_bringup:0.0 "tstop" C-m'], shell=False)
+        rospy.logwarn(f"Shutting down...")
+    except Exception as e:
+        rospy.logerr(f"Failed to execute tstop: {str(e)}")
     
     
 if __name__ == '__main__':
@@ -110,23 +127,22 @@ if __name__ == '__main__':
     rate = rospy.Rate(10)  # 10 Hz
     
     SCENARIO = str(rospy.get_param("~scenario"))
-    SCALING_FACTOR = int(rospy.get_param("~scaling_factor", 1))
     STARTING_ELAPSED = int(rospy.get_param("~starting_elapsed", 8)) - TIME_INIT
     
     SM = ScenarioManager()
                     
     time_pub = rospy.Publisher('/peopleflow/time', pT, queue_size=10)
-    task_pub = rospy.Publisher('/hrisim/robot_task', String, queue_size=10)
+    
+    # Advertise the shutdown service
+    rospy.Service('/hrisim/shutdown', Empty, shutdown_cb)
+    shutdown_service = rospy.ServiceProxy('/hrisim/shutdown', Empty)
 
+    rospy.loginfo("Shutdown service is running...")
     while not rospy.is_shutdown():
         # Time
         pub_time()
         rospy.set_param('/peopleflow/timeday', str(SM.timeOfTheDay))
-        
+                        
         isFinished()
-        
-        
-        # Robot task
-        task_pub.publish(String(rospy.get_param("/hrisim/robot_task", 'none')))
         
         rate.sleep()

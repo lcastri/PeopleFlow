@@ -42,15 +42,10 @@ COPY HRISim_docker/HRISim/robot/tiago_controller_conf_package.xml /root/tiago_ws
 # Copy files into the image
 COPY HRISim_docker/HRISim/robot/robot_twist_mux/modified_scripts/twist_mux.launch /opt/ros/noetic/share/twist_mux/launch
 COPY HRISim_docker/HRISim/hrisim_gazebo/modified_scripts/local_planner.yaml /root/tiago_ws/src/pal_navigation_cfg_public/pal_navigation_cfg_tiago/config/base/teb
-RUN mkdir -p ~/.pal/tiago_maps/configurations/
-COPY HRISim_docker/HRISim/hrisim_gazebo/tiago_maps/ /root/.pal/tiago_maps/configurations/
 
 RUN /bin/bash -c 'source /opt/ros/noetic/setup.bash; cd ~/tiago_ws; catkin build'
 RUN echo "source ~/tiago_ws/devel/setup.bash" >> ~/.bashrc
 
-# Create .gazebo folders
-RUN mkdir -p ~/.gazebo/models
-COPY HRISim_docker/HRISim/hrisim_gazebo/models /root/.gazebo/models
 RUN echo "export GAZEBO_MODEL_PATH=~/.gazebo/models:$GAZEBO_MODEL_PATH" >> ~/.bashrc
 
 # Install gazebo dependencies for animated actors
@@ -59,25 +54,9 @@ RUN wget https://packages.osrfoundation.org/gazebo.key -O - | apt-key add -
 RUN DEBIAN_FRONTEND=noninteractive apt-get update && DEBIAN_FRONTEND=noninteractive apt-get install -y \
     ros-noetic-gazebo-ros-control ros-noetic-gazebo-ros-pkgs
 
-############################################################################## CausalFlow
-# Clone and install causalflow
-RUN mkdir -p ~/repos
-WORKDIR /root/repos
-RUN DEBIAN_FRONTEND=noninteractive pip install --upgrade pip setuptools wheel importlib_metadata numpy
-RUN DEBIAN_FRONTEND=noninteractive pip install --upgrade --ignore-installed cython
-
-# Clone the causalflow repository
-ARG CACHE=3
-RUN git clone -b dev-reasoning-gmm-robot https://github.com/lcastri/causalflow.git causalflow
-
-# Install Python dependencies
-WORKDIR /root/repos/causalflow
-RUN pip install --no-cache-dir -r requirements.txt
-
-# Install the causalflow package
-RUN /usr/bin/env python setup.py install
-RUN echo 'export PYTHONPATH=/root/repos/causalflow:$PYTHONPATH' >> ~/.bashrc
-RUN echo "source /root/.bashrc" >> ~/.bash_profile
+############################################################################## pyAgrum
+RUN DEBIAN_FRONTEND=noninteractive pip install pyAgrum
+RUN DEBIAN_FRONTEND=noninteractive pip install pandas
 
 ############################################################################## HRISim
 # Create a new workspace
@@ -92,6 +71,7 @@ RUN apt-get update && \
     DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
     ros-noetic-jsk-rviz-plugins \
     psmisc
+
 # Clone and install PetriNetPlans
 RUN cd ~/ros_ws
 RUN git clone -b noetic_devel https://github.com/francescodelduchetto/PetriNetPlans.git
@@ -124,6 +104,15 @@ COPY HRISim_docker/pedsim_ros /root/ros_ws/src/pedsim_ros
 ############################################################################## Final
 # Create a shared folder with the host machine
 RUN mkdir -p ~/shared
+
+# Transfer files to the image
+# Create tiago_maps folder
+RUN mkdir -p ~/.pal/tiago_maps/configurations/
+COPY HRISim_docker/HRISim/hrisim_gazebo/tiago_maps/ /root/.pal/tiago_maps/configurations/
+
+# Create .gazebo folders
+RUN mkdir -p ~/.gazebo/models
+COPY HRISim_docker/HRISim/hrisim_gazebo/models /root/.gazebo/models
 
 # Set the entrypoint to run the script
 ENTRYPOINT ["/usr/local/bin/entrypoint.sh"]

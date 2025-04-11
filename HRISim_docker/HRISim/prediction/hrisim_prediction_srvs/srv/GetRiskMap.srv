@@ -1,6 +1,4 @@
 ---
-string[] waypoint_ids  # List of waypoint IDs (keys)
-uint32 n_steps           # Number of rows in the original 2D array
-uint32 n_waypoint        # Number of columns in the original 2D array
-float32[] PDs            # Flattened 2D array of PD values (use n_waypoint and n_steps to reconstruct the orginal matrix (n_waypoints, n_steps))
-float32[] BACs           # Flattened 2D array of BAC values (use n_waypoint and n_steps to reconstruct the orginal matrix (n_waypoints, n_steps))
+string[] arcs  # List of arcs (keys)
+float32[] PDs  # 2D array of PD values
+float32[] BCs  # 2D array of BC values

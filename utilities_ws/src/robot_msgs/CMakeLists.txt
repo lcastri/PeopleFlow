@@ -10,9 +10,11 @@ include_directories(${catkin_INCLUDE_DIRS})
 add_message_files( DIRECTORY msg
   FILES
   BatteryStatus.msg
-  BatteryAtCharger.msg
-  BatteryAtChargers.msg
+  ExpectedLifetime.msg
+  ExpectedLifetimes.msg
   PathInfo.msg
+  TaskInfo.msg
+  TasksInfo.msg
 )
 
 # Generate added messages and services with any dependencies listed here

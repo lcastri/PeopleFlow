@@ -10,7 +10,6 @@
   <arg name="update_rate" default="25.0"/> <!-- Hz -->
   <arg name="spawn_period" default="5.0"/>
   <arg name="people_frame_ref" default="map"/>
-  <arg name="scaling_factor" default="12.0"/>
   <arg name="is_stuck_threshold" default="60.0"/> 
   <arg name="force_obstacle" default="10.0"/>
   <arg name="sigma_obstacle" default="0.2"/> 
@@ -40,7 +39,6 @@
     <param name="update_rate" value="$(arg update_rate)" type="double"/>
     <param name="spawn_period" value="$(arg spawn_period)" type="double"/>
     <param name="frame_id" value="$(arg people_frame_ref)" type="string"/>
-    <param name="scaling_factor" value="$(arg scaling_factor)" type="double"/>
     <param name="is_stuck_threshold" value="$(arg is_stuck_threshold)" type="double"/>
     <param name="force_obstacle" value="$(arg force_obstacle)" type="double"/>
     <param name="sigma_obstacle" value="$(arg sigma_obstacle)" type="double"/>

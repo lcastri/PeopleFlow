@@ -1,15 +1,17 @@
 import pickle
+import json
 import random
 import networkx as nx
 import constants as constants
 
-SHELFS = [constants.WP.SHELF1, constants.WP.SHELF2, constants.WP.SHELF3, constants.WP.SHELF4, constants.WP.SHELF5, constants.WP.SHELF6]
+WORKING_TOP_TARGETS = [constants.WP.TARGET_2.value]
+WORKING_BOTTOM_TARGETS = [constants.WP.TARGET_5.value]
+LUNCH_TARGETS = [constants.WP.ENTRANCE.value, constants.WP.TARGET_7.value]
+# WORKING_TOP_TARGETS = [constants.WP.TARGET_1.value, constants.WP.TARGET_2.value, constants.WP.TARGET_3.value]
+# WORKING_BOTTOM_TARGETS = [constants.WP.TARGET_4.value, constants.WP.TARGET_5.value, constants.WP.TARGET_6.value]
+# LUNCH_TARGETS = [constants.WP.ENTRANCE.value, constants.WP.TARGET_7.value]
 
-TASK_LIST = {
-    constants.Task.DELIVERY.value: [],
-    constants.Task.INVENTORY.value: [],
-    constants.Task.CLEANING.value: [],
-    }
+TASK_LIST = {tod.value: [] for tod in constants.TOD}
    
 if __name__ == "__main__":  
 
@@ -17,36 +19,43 @@ if __name__ == "__main__":
     with open(GPATH, 'rb') as f:
         G = pickle.load(f)
         G.remove_node("parking")
-    CLEANING_PATH = nx.approximation.traveling_salesman_problem(G, cycle=False)
-
-    # DELIVERY
-    random_shelfs = random.choices(SHELFS, k=1000)
-    for s in random_shelfs:
-        TASK_LIST[constants.Task.DELIVERY.value].append(s.value)
-        TASK_LIST[constants.Task.DELIVERY.value].append(constants.WP.DELIVERY_POINT.value)
-        
-    # INVENTORY
-    random_shelfs = random.choices(SHELFS, k=1000)
-    previous_shelf = None
-    filtered_shelfs = []
-
-    for shelf in random_shelfs:
-        if shelf != previous_shelf:
-            filtered_shelfs.append(shelf)
-            previous_shelf = shelf
-        else:
-            # Choose a different shelf if the current one matches the previous
-            alternative_shelfs = [s for s in SHELFS if s != previous_shelf]
-            new_shelf = random.choice(alternative_shelfs)
-            filtered_shelfs.append(new_shelf)
-            previous_shelf = new_shelf
-
-    for s in filtered_shelfs:
-        TASK_LIST[constants.Task.INVENTORY.value].append(s.value)
-        
     # CLEANING
     CLEANING_PATH = nx.approximation.traveling_salesman_problem(G, cycle=False)
-    TASK_LIST[constants.Task.CLEANING.value] = CLEANING_PATH
+    TASK_LIST[constants.TOD.OFF.value] = CLEANING_PATH
+
+    random_target = 200
+    whereIam = 'T'
+    for tod in constants.TOD:
+        if tod in [constants.TOD.H1, constants.TOD.H2, constants.TOD.H3, constants.TOD.H4,
+                   constants.TOD.H5, constants.TOD.H7, constants.TOD.H8, constants.TOD.H9, constants.TOD.H10]:
+            # DELIVERY
+            for s in range(random_target):
+                if whereIam == 'T':
+                    TASK_LIST[tod.value].append(random.choice(WORKING_BOTTOM_TARGETS))
+                    whereIam = 'B'
+                else:
+                    TASK_LIST[tod.value].append(random.choice(WORKING_TOP_TARGETS))
+                    whereIam = 'T'
+                
+        elif tod == constants.TOD.H6:            
+            # LUNCH
+            for s in range(random_target):
+                if whereIam == 'T':
+                    TASK_LIST[tod.value].append(constants.WP.TARGET_7.value)
+                    whereIam = 'B'
+                else:
+                    TASK_LIST[tod.value].append(constants.WP.ENTRANCE.value)
+                    whereIam = 'T'
+        
+    # LUNCH
+    random_target = 2000
+    for s in range(random_target):
+        TASK_LIST['LUNCH'].append(constants.WP.ENTRANCE.value)
+        TASK_LIST['LUNCH'].append(constants.WP.TARGET_7.value)
     
-    with open('task_list.pkl', 'wb') as f:
-        pickle.dump(TASK_LIST, f)
+    # CLEANING
+    CLEANING_PATH = nx.approximation.traveling_salesman_problem(G, cycle=False)
+    TASK_LIST[constants.Task.CLEANING.value] = [p for p in CLEANING_PATH]
+    
+    with open('/home/lcastri/git/PeopleFlow/HRISim_docker/HRISim/hrisim_plans/hardcoded/task_list.json', 'w') as f:
+        json.dump(TASK_LIST, f)
