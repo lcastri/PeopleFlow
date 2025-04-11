@@ -122,8 +122,8 @@ windows:
     tags: ['core']
     panes:
       - 'roslaunch pnp_ros pnp_ros.launch plans_folder:=$PNP_PLANS actions_folder:=$PNP_ACTIONS conditions_folder:=$PNP_CONDITIONS'
-      - 'rosparam set /hrisim/abort_time_threshold $ABORT_TIME_THRESHOLD && roscd hrisim_plans/scripts && python TIAGo_noncausal_hardcoded_plan.py --init_time=$INIT_TIME --init_battery=$INIT_BATTERY'
-      # - 'rosparam set /hrisim/abort_time_threshold $ABORT_TIME_THRESHOLD && roscd hrisim_plans/scripts && python TIAGo_causal_hardcoded_plan.py --init_time=$INIT_TIME --init_battery=$INIT_BATTERY'
+      - 'rosparam set /hrisim/abort_time_threshold $ABORT_TIME_THRESHOLD && roscd hrisim_plans/scripts && python TIAGo_noncausal_hardcoded_plan.py'
+      # - 'rosparam set /hrisim/abort_time_threshold $ABORT_TIME_THRESHOLD && roscd hrisim_plans/scripts && python TIAGo_causal_hardcoded_plan.py'
   - name: scenario
     tags: ['exp']
     panes:
