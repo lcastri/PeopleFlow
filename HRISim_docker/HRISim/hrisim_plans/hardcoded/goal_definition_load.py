@@ -24,18 +24,18 @@ if __name__ == "__main__":
     # DELIVERY
     random_target = 2000
     for s in range(random_target):
-        TASK_LIST[constants.Task.DELIVERY.value].append(random.choice(WORKING_TOP_TARGETS))
-        TASK_LIST[constants.Task.DELIVERY.value].append(random.choice(WORKING_BOTTOM_TARGETS))
+        TASK_LIST[constants.Task.DELIVERY.value].append((random.choice(WORKING_TOP_TARGETS), bool(random.getrandbits(1))))
+        TASK_LIST[constants.Task.DELIVERY.value].append((random.choice(WORKING_BOTTOM_TARGETS), bool(random.getrandbits(1))))
         
     # LUNCH
     random_target = 2000
     for s in range(random_target):
-        TASK_LIST['LUNCH'].append(constants.WP.ENTRANCE.value)
-        TASK_LIST['LUNCH'].append(constants.WP.TARGET_7.value)
+        TASK_LIST['LUNCH'].append((constants.WP.ENTRANCE.value, bool(random.getrandbits(1))))
+        TASK_LIST['LUNCH'].append((constants.WP.TARGET_7.value, bool(random.getrandbits(1))))
     
     # CLEANING
     CLEANING_PATH = nx.approximation.traveling_salesman_problem(G, cycle=False)
-    TASK_LIST[constants.Task.CLEANING.value] = [p for p in CLEANING_PATH]
+    TASK_LIST[constants.Task.CLEANING.value] = [(p, False) for p in CLEANING_PATH]
     
     with open('/home/lcastri/git/PeopleFlow/HRISim_docker/HRISim/hrisim_plans/hardcoded/task_list.pkl', 'wb') as f:
         pickle.dump(TASK_LIST, f)

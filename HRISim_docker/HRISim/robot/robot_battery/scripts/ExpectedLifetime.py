@@ -18,7 +18,7 @@ def heuristic(a, b):
 
 class ExpectedLifetime():
     def __init__(self):
-        self.robot_load = bool(ros_utils.wait_for_param('/hrisim/robot_load'))
+        self.robot_obs = bool(ros_utils.wait_for_param('/hrisim/robot_obs'))
         self.num_wps = len(WPS)
 
         self.elt_pub = rospy.Publisher('/hrisim/robot_elt', msgELTs, queue_size=10)
@@ -49,7 +49,7 @@ class ExpectedLifetime():
         msg.header = Header()
 
         battery_level = b.level.data
-        battery_lookup = self.load_battery_lookup if self.robot_load else self.noload_battery_lookup
+        battery_lookup = self.load_battery_lookup if self.robot_obs else self.noload_battery_lookup
 
         # Vectorized subtraction for fast computation
         elt_values = battery_level - battery_lookup
@@ -84,4 +84,4 @@ if __name__ == '__main__':
     ELT = ExpectedLifetime()
     
     while not rospy.is_shutdown():
-        ELT.robot_load = bool(ros_utils.wait_for_param('/hrisim/robot_load'))
+        ELT.robot_obs = bool(ros_utils.wait_for_param('/hrisim/robot_load'))

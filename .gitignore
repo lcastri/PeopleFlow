@@ -371,3 +371,6 @@ utilities_ws/src/RA-L/hrisim_postprocess/csv/
 utilities_ws/src/RA-L/hrisim_postprocess/results/
 HRISim_docker/HRISim/prediction/hrisim_prediction_manager/CIEs/*
 HRISim_docker/HRISim/prediction/hrisim_prediction_manager/DAGs/*
+HRISim_docker/HRISim/peopleflow/peopleflow_manager/hardcoded/*
+HRISim_docker/HRISim/hrisim_plans/hardcoded/*
+pd/*

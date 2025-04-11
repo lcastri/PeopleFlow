@@ -22,7 +22,7 @@ TOPICS = [
     "/hrisim/robot_tasks_info",
     "/hrisim/robot_human_collision",
     "/hrisim/robot_clearing_distance",
-    "/hrisim/robot_load"
+    "/hrisim/robot_obs"
 ]
    
 if __name__ == '__main__':
