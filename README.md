@@ -2,11 +2,11 @@
 A Gazebo-based simulator designed to model context-sensitive human-robot spatial interactions in shared workspaces. It features realistic human and
 robot trajectories influenced by contextual factors such as time, environment layout, and robot state, and can simulate a large number of agents. It involves a [TIAGo](https://pal-robotics.com/robots/tiago/) robot and multiple pedestrians modelled using the [pedsim_ros](https://github.com/srl-freiburg/pedsim_ros) ROS library.
 
-<video width="320" height="240" controls>
-  <source src="https://github.com/lcastri/PeopleFlow/blob/dev/videos/peopleflow.mp4" type="video/mp4">
-  Your browser does not support the video tag.
-</video>
-
+<div align="center">
+<p float="left">
+    <img src="https://github.com/lcastri/PeopleFlow/blob/dev/media/peopleflow.gif">
+</p>
+</div>
 
 ## Features
 * Customisable world
