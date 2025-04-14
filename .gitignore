@@ -366,7 +366,6 @@ dist/
 /utilities_ws/src/RA-L/hrisim_postprocess/frames/*
 
 *.vscode
-*.gif
 utilities_ws/src/RA-L/hrisim_postprocess/csv/
 utilities_ws/src/RA-L/hrisim_postprocess/results/
 HRISim_docker/HRISim/prediction/hrisim_prediction_manager/CIEs/*
