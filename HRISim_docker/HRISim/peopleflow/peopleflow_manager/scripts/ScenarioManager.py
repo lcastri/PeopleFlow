@@ -104,8 +104,9 @@ def pub_time():
 
 def isFinished():
     global TSTOP
-    
-    if SM.elapsedTime is not None and (SM.elapsedTime > SM.T or not ros_utils.wait_for_param("/peopleflow/robot_plan_on")) and not TSTOP:
+    PLAN_ON = ros_utils.wait_for_param("/peopleflow/robot_plan_on")
+
+    if SM.elapsedTime is not None and (SM.elapsedTime > SM.T or not PLAN_ON) and not TSTOP:
         try:
             TSTOP = True
             shutdown_service()
@@ -125,6 +126,7 @@ def shutdown_cb(req=None):
 if __name__ == '__main__':
     rospy.init_node('peopleflow_manager')
     rate = rospy.Rate(10)  # 10 Hz
+    
     
     SCENARIO = str(rospy.get_param("~scenario"))
     STARTING_ELAPSED = int(rospy.get_param("~starting_elapsed", 8)) - TIME_INIT
