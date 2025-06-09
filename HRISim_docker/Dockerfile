@@ -86,8 +86,8 @@ RUN echo "export PNP_HOME=~/ros_ws/src/pnp_ros/" >> ~/.bashrc
 COPY HRISim_docker/HRISim/pnp_ros/main.cpp /root/ros_ws/PetriNetPlans/PNPros/ROS_bridge/pnp_ros/src/main.cpp
 
 # Copy the entrypoint.sh script into the image and give execute permissions to the script
-COPY HRISim_docker/entrypoint.sh /usr/local/bin/
-RUN chmod +x /usr/local/bin/entrypoint.sh
+COPY HRISim_docker/robot_entrypoint.sh /usr/local/bin/
+RUN chmod +x /usr/local/bin/robot_entrypoint.sh
 
 # Create the runtime directory with appropriate permissions
 RUN mkdir -p /run/user/1000 && chmod 0700 /run/user/1000
@@ -103,14 +103,4 @@ COPY HRISim_docker/HRISim /root/ros_ws/src/HRISim
 # Create a shared folder with the host machine
 RUN mkdir -p ~/shared
 
-# # Transfer files to the image
-# # Create tiago_maps folder
-# RUN mkdir -p ~/.pal/tiago_maps/configurations/
-# COPY HRISim_docker/HRISim/hrisim_gazebo/tiago_maps/ /root/.pal/tiago_maps/configurations/
-
-# # Create .gazebo folders
-# RUN mkdir -p ~/.gazebo/models
-# COPY HRISim_docker/HRISim/hrisim_gazebo/models /root/.gazebo/models
-
-# Set the entrypoint to run the script
-ENTRYPOINT ["/usr/local/bin/entrypoint.sh"]
+ENTRYPOINT ["/usr/local/bin/robot_entrypoint.sh"]

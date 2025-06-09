@@ -14,7 +14,6 @@ project(hrisim_rviz)
 find_package(catkin REQUIRED COMPONENTS
   geometry_msgs
   visualization_msgs
-  pedsim_msgs
   rospy
 )
 
@@ -39,7 +38,7 @@ find_package(catkin REQUIRED COMPONENTS
 catkin_package(
 #  INCLUDE_DIRS include
 #  LIBRARIES gzb_vel_plugin
-  CATKIN_DEPENDS geometry_msgs visualization_msgs pedsim_msgs
+  CATKIN_DEPENDS geometry_msgs visualization_msgs
 #  DEPENDS system_lib
 )
 

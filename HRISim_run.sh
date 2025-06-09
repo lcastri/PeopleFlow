@@ -22,7 +22,8 @@ docker run --name ${container_name} -it --rm \
   -v $host_folder:$container_folder \
   --privileged --gpus all \
   --network host \
-  ${image_name}
+  ${image_name} \
+  $1 $2
 
 echo " "
 echo "Closing docker container..."
