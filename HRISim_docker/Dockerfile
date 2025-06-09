@@ -98,21 +98,19 @@ ENV XDG_RUNTIME_DIR=/run/user/1000
 # Copy files into the image
 RUN mkdir -p ~/ros_ws/src/HRISim/
 COPY HRISim_docker/HRISim /root/ros_ws/src/HRISim
-RUN mkdir -p ~/ros_ws/src/pedsim_ros/
-COPY HRISim_docker/pedsim_ros /root/ros_ws/src/pedsim_ros
 
 ############################################################################## Final
 # Create a shared folder with the host machine
 RUN mkdir -p ~/shared
 
-# Transfer files to the image
-# Create tiago_maps folder
-RUN mkdir -p ~/.pal/tiago_maps/configurations/
-COPY HRISim_docker/HRISim/hrisim_gazebo/tiago_maps/ /root/.pal/tiago_maps/configurations/
+# # Transfer files to the image
+# # Create tiago_maps folder
+# RUN mkdir -p ~/.pal/tiago_maps/configurations/
+# COPY HRISim_docker/HRISim/hrisim_gazebo/tiago_maps/ /root/.pal/tiago_maps/configurations/
 
-# Create .gazebo folders
-RUN mkdir -p ~/.gazebo/models
-COPY HRISim_docker/HRISim/hrisim_gazebo/models /root/.gazebo/models
+# # Create .gazebo folders
+# RUN mkdir -p ~/.gazebo/models
+# COPY HRISim_docker/HRISim/hrisim_gazebo/models /root/.gazebo/models
 
 # Set the entrypoint to run the script
 ENTRYPOINT ["/usr/local/bin/entrypoint.sh"]
