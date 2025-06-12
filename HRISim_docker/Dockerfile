@@ -15,7 +15,12 @@ RUN DEBIAN_FRONTEND=noninteractive apt-get update && \
     ros-noetic-move-base-msgs \
     ros-noetic-base-local-planner \
     ros-noetic-jsk-recognition-msgs \
-    ros-noetic-control-msgs
+    ros-noetic-control-msgs \
+    ros-noetic-gazebo-ros-control \
+    ros-noetic-gazebo-ros-pkgs \
+    ros-noetic-jsk-rviz-plugins \
+    psmisc \
+    ros-noetic-people-msgs
 
 # Source ROS environment in .bashrc
 RUN echo "source /opt/ros/noetic/setup.bash" >> ~/.bashrc
@@ -30,10 +35,8 @@ RUN wget https://raw.githubusercontent.com/pal-robotics/tiago_tutorials/noetic-d
     rosinstall src /opt/ros/noetic tiago_public-noetic.rosinstall
 
 # Initialize rosdep and update
-RUN rm -rf /etc/ros/rosdep/sources.list.d/20-default.list && rosdep init && rosdep update
-
-# Install dependencies
-RUN DEBIAN_FRONTEND=noninteractive rosdep install -y --from-paths src --ignore-src --rosdistro noetic --skip-keys \
+RUN rm -rf /etc/ros/rosdep/sources.list.d/20-default.list && rm -rf ~/.ros/rosdep/sources.cache && \
+    rosdep init && rosdep update --include-eol-distros && rosdep fix-permissions && DEBIAN_FRONTEND=noninteractive rosdep install -y --from-paths src --ignore-src --rosdistro noetic --skip-keys \
     "urdf_test omni_drive_controller orocos_kdl pal_filters libgazebo9-dev pal_usb_utils speed_limit_node camera_calibration_files pal_moveit_plugins pal_startup_msgs pal_local_joint_control pal_pcl_points_throttle_and_filter current_limit_controller hokuyo_node dynamixel_cpp pal_moveit_capabilities pal_pcl dynamic_footprint gravity_compensation_controller pal-orbbec-openni2 pal_loc_measure pal_map_manager ydlidar_ros_driver"
 
 # Fix tiago_controller_configuration package.xml
@@ -41,7 +44,7 @@ COPY HRISim_docker/HRISim/robot/tiago_controller_conf_package.xml /root/tiago_ws
 
 # Copy files into the image
 COPY HRISim_docker/HRISim/robot/robot_twist_mux/modified_scripts/twist_mux.launch /opt/ros/noetic/share/twist_mux/launch
-COPY HRISim_docker/HRISim/hrisim_gazebo/modified_scripts/local_planner.yaml /root/tiago_ws/src/pal_navigation_cfg_public/pal_navigation_cfg_tiago/config/base/teb
+COPY HRISim_docker/HRISim/scripts/local_planner.yaml /root/tiago_ws/src/pal_navigation_cfg_public/pal_navigation_cfg_tiago/config/base/teb
 
 RUN /bin/bash -c 'source /opt/ros/noetic/setup.bash; cd ~/tiago_ws; catkin build'
 RUN echo "source ~/tiago_ws/devel/setup.bash" >> ~/.bashrc
@@ -50,27 +53,22 @@ RUN echo "export GAZEBO_MODEL_PATH=~/.gazebo/models:$GAZEBO_MODEL_PATH" >> ~/.ba
 
 # Install gazebo dependencies for animated actors
 RUN echo "deb http://packages.osrfoundation.org/gazebo/ubuntu-stable $(lsb_release -cs) main" > /etc/apt/sources.list.d/gazebo-stable.list
-RUN wget https://packages.osrfoundation.org/gazebo.key -O - | apt-key add -
-RUN DEBIAN_FRONTEND=noninteractive apt-get update && DEBIAN_FRONTEND=noninteractive apt-get install -y \
-    ros-noetic-gazebo-ros-control ros-noetic-gazebo-ros-pkgs
+RUN wget https://packages.osrfoundation.org/gazebo.key -O - | apt-key add -    
 
-############################################################################## pyAgrum
-RUN DEBIAN_FRONTEND=noninteractive pip install pyAgrum
-RUN DEBIAN_FRONTEND=noninteractive pip install pandas
+############################################################################## pkgs
+RUN DEBIAN_FRONTEND=noninteractive pip install \
+    pyAgrum \
+    pandas \
+    networkx \
+    numpy==1.23 \
+    tmule \
+    shapely
 
 ############################################################################## HRISim
 # Create a new workspace
 RUN mkdir -p ~/ros_ws/src
 WORKDIR /root/ros_ws
 
-# Install pkgs
-RUN DEBIAN_FRONTEND=noninteractive pip install tmule 
-RUN DEBIAN_FRONTEND=noninteractive pip install shapely
-RUN DEBIAN_FRONTEND=noninteractive pip install networkx
-RUN apt-get update && \
-    DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
-    ros-noetic-jsk-rviz-plugins \
-    psmisc
 
 # Clone and install PetriNetPlans
 RUN cd ~/ros_ws

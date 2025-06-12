@@ -1,0 +1,12 @@
+<launch>
+  <arg name="scenario" default="warehouse"/>
+  <arg name="map" default="warehouse"/>
+  <arg name="res_dir" default="$(find peopleflow_manager)/res/"/>
+
+  <node name="waypointgraph" pkg="peopleflow_manager" type="WaypointGraph.py" output="screen">
+    <param name="scenario"   value="$(find pedsim_simulator)/scenarios/$(arg scenario)"/> 
+    <param name="map"        value="$(find hrisim_gazebo)/tiago_maps/$(arg map)"/> 
+    <param name="res_dir"    value="$(arg res_dir)"/> 
+  </node>
+ 
+</launch>

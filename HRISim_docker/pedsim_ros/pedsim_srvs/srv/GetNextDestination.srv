@@ -1,9 +1,0 @@
-uint64 agent_id
-geometry_msgs/Point origin
-string[] destinations
-bool is_stuck
----
-string destination_id
-geometry_msgs/Point destination
-float64 destination_radius
-float64 task_duration
