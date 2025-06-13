@@ -1,18 +1,14 @@
 #!/usr/bin/env python
 
 import rospy
-from visualization_msgs.msg import Marker
+from visualization_msgs.msg import Marker, MarkerArray
 import hrisim_util.ros_utils as ros_utils
+from robot_srvs.srv import VisualisePath
 
 
 def publish_waypoint_markers():
-    rospy.init_node('wp_visualiser')
-    pub = rospy.Publisher('/hrisim/waypoints/markers', Marker, queue_size=10)
-    rate = rospy.Rate(5)
+        marker_array = MarkerArray()
 
-    waypoints = ros_utils.wait_for_param("/hrisim/wps")
-
-    while not rospy.is_shutdown():
         for i, (wp_id, data) in enumerate(waypoints.items()):
             x = data['x']
             y = data['y']
@@ -38,9 +34,8 @@ def publish_waypoint_markers():
             circle_marker.color.b = 0.0
             circle_marker.color.a = 1.0
             circle_marker.lifetime = rospy.Duration()
-
-            pub.publish(circle_marker)
-
+            marker_array.markers.append(circle_marker)
+            
             # TEXT marker (label)
             text_marker = Marker()
             text_marker.header.frame_id = "map"
@@ -60,14 +55,26 @@ def publish_waypoint_markers():
             text_marker.color.a = 1.0
             text_marker.text = wp_id
             text_marker.lifetime = rospy.Duration()
+            marker_array.markers.append(text_marker)
 
-            pub.publish(text_marker)
+            pub.publish(marker_array)
 
-        rate.sleep()
 
 
 if __name__ == '__main__':
-    try:
+    rospy.init_node('graph_visualiser')
+    pub = rospy.Publisher('/hrisim/waypoints/markers', MarkerArray, queue_size=10)
+    rate = rospy.Rate(5)
+
+    waypoints = ros_utils.wait_for_param("/hrisim/wps")
+    
+    # Create a handle for the Trigger service
+    rospy.sleep(5)
+    ros_utils.wait_for_service('/graph/path/show')
+    graph_path_show = rospy.ServiceProxy('/graph/path/show', VisualisePath)
+    graph_path_show("")
+    
+    while not rospy.is_shutdown():
         publish_waypoint_markers()
-    except rospy.ROSInterruptException:
-        pass
+        rate.sleep()
+    

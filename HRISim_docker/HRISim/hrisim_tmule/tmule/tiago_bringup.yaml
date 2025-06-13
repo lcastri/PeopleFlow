@@ -24,18 +24,11 @@ init_cmd: |
   export_default CATKIN_WS "$HOME/ros_ws"
 
   # robot specific arguments
-  export_default ABORT_TIME_THRESHOLD "45"
+  export_default ABORT_TIMEOUT "45"
 
   # world arguments
   # choose a map between: maze, maze_corridor, maze_corridor_withTurn, maze_corridor_withDoors
   export_default WORLD "INB-3floor"
-
-  # navigation specific arguments
-  export_default GLOBAL_PLANNER "global_planner"
-  export_default LOCAL_PLANNER "teb"
-  export_default LOCALIZATION "amcl"
-  export_default CONFIG_BASE_PATH "$(rospack find tiago_navigation)"
-  export_default MAP "$HOME/.pal/tiago_maps/configurations/$WORLD"
 
   # PNP specific arguments
   export_default PNP_PLANS "$CATKIN_WS/src/HRISim/hrisim_plans"
@@ -57,11 +50,20 @@ windows:
     panes:
       - 'roslaunch graph_creator graph_publisher.launch graph:=$WORLD'
       - 'roslaunch waypoint_publisher wp_publisher.launch map:=$WORLD'
-      - 'rosrun waypoint_visualiser wp_visualiser.py'
+      - 'rosrun path_visualiser path_visualiser.py'
+      - 'rosrun graph_visualiser graph_visualiser.py'
   - name: robot
     tags: ['core']
     panes:
       - 'rosrun robot_info robot_displayinfo.py'
+      - 'rosrun robot_info robot_closestWP.py'
+      - 'rosparam set /hrisim/abort_timeout $ABORT_TIMEOUT && roslaunch robot_wp_navigation Astar_navigation.launch graph:=$WORLD'
+  - name: planning
+    tags: ['core']
+    panes:
+      - 'roslaunch pnp_ros pnp_ros.launch plans_folder:=$PNP_PLANS actions_folder:=$PNP_ACTIONS conditions_folder:=$PNP_CONDITIONS'
+      - 'cd ~/ros_ws/src/HRISim/hrisim_plans/scripts; echo -e "\033[1;31mStart your plan here: python <PLAN-NAME>.py\033[0m"'
+
   # - name: robot
     # tags: ['robot']
     # panes:
@@ -73,11 +75,6 @@ windows:
   #   tags: ['obs']
   #   panes: 
   #     - 'rosrun robot_obs DynamicObstacle.py'
-  # - name: planning
-  #   tags: ['core']
-  #   panes:
-  #     - 'roslaunch pnp_ros pnp_ros.launch plans_folder:=$PNP_PLANS actions_folder:=$PNP_ACTIONS conditions_folder:=$PNP_CONDITIONS'
-  #     - 'cd ~/ros_ws/src/HRISim/hrisim_plans; echo -e "\033[1;31mStart your plan here: python PassByTheCentre.py nRepetition Bagname, e.g.\n python PassByTheCentre.py 8 robotPriority\033[0m"'
   # - name: scenario
   #   tags: ['exp']
   #   panes:

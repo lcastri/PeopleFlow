@@ -13,8 +13,8 @@ add_service_files(
   FILES
   NewTask.srv
   FinishTask.srv
-  SetBattery.srv
   VisualisePath.srv
+  PathRequest.srv
 )
 
 ## Generate added messages and services

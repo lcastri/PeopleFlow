@@ -19,11 +19,11 @@ class goto(AbstractAction):
     def _start_action(self):
         rospy.set_param('/hri/robot_busy', True)
         rospy.logwarn(f"STARTED goto " + " ".join(self.params))
-        TIME_THRESHOLD = float(self.params[3])
 
         if len(self.params) < 1:
-            rospy.logwarn("Wrong use of action, pass the coordinates the robots needs to reach in /map frame as X_Y_Theta")
+            rospy.logwarn("Wrong use of action, pass the coordinates the robots needs to reach in /map frame as X_Y_Theta-Timeout")
         else:
+            TIMEOUT = float(self.params[3])
             self.client = actionlib.SimpleActionClient('/move_base', MoveBaseAction)
             self.client.wait_for_server()
 
@@ -39,8 +39,8 @@ class goto(AbstractAction):
             self.client.send_goal(self.goal_msg)
             
             rospy.loginfo("Waiting for goTo result...")
-            if TIME_THRESHOLD > 0:
-                self.client.wait_for_result(timeout=rospy.Duration(TIME_THRESHOLD))
+            if TIMEOUT > 0:
+                self.client.wait_for_result(timeout=rospy.Duration(TIMEOUT))
             else:
                 self.client.wait_for_result()
             

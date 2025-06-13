@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 2.8.3)
-project(waypoint_visualiser)
+project(graph_visualiser)
 
 ## Compile as C++11, supported in ROS Kinetic and newer
  add_compile_options(-std=c++11)
@@ -15,6 +15,7 @@ find_package(catkin REQUIRED COMPONENTS
   geometry_msgs
   rospy
   std_msgs
+  robot_srvs
 )
 
 ## System dependencies are found with CMake's conventions
@@ -47,7 +48,7 @@ find_package(catkin REQUIRED COMPONENTS
 ###################################
 
 catkin_package(
-  CATKIN_DEPENDS rospy std_msgs geometry_msgs
+  CATKIN_DEPENDS rospy std_msgs geometry_msgs robot_srvs
 )
 
 catkin_package(

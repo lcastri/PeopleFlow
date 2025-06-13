@@ -1,8 +1,8 @@
 <?xml version="1.0"?>
 <package format="2">
-  <name>graph_visualisation</name>
+  <name>weights_visualiser</name>
   <version>0.0.0</version>
-  <description>The graph_visualisation package</description>
+  <description>The weights_visualiser package</description>
 
   <!-- One maintainer tag required, multiple allowed, one person per tag -->
   <!-- Example:  -->

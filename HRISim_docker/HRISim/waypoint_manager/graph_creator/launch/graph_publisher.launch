@@ -2,7 +2,7 @@
   <arg name="graph" />
 
   <node name="graph_publisher" pkg="graph_creator" type="graph_publisher.py" output="screen">
-    <param name="graph_file" value="$(find graph_creator)/graph/$(arg graph)/graph.xml"/>
+    <param name="graph_file" value="$(find graph_creator)/graph/$(arg graph)/graph.pkl"/>
   </node>
  
 </launch>

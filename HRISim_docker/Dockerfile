@@ -59,7 +59,7 @@ RUN wget https://packages.osrfoundation.org/gazebo.key -O - | apt-key add -
 RUN DEBIAN_FRONTEND=noninteractive pip install \
     pyAgrum \
     pandas \
-    networkx \
+    networkx==3.1 \
     numpy==1.23 \
     tmule \
     shapely
@@ -100,5 +100,5 @@ COPY HRISim_docker/HRISim /root/ros_ws/src/HRISim
 ############################################################################## Final
 # Create a shared folder with the host machine
 RUN mkdir -p ~/shared
-
+ENV DISABLE_ROS1_EOL_WARNINGS=1
 ENTRYPOINT ["/usr/local/bin/robot_entrypoint.sh"]

@@ -25,8 +25,7 @@ class RobotClosestWP():
 if __name__ == '__main__':
     rospy.init_node('robot_closest_wp')
     rate = rospy.Rate(10)  # 1 Hz
-    SCENARIO = str(ros_utils.wait_for_param("/peopleflow_manager/scenario"))
-    WPS = ros_utils.wait_for_param("/peopleflow/wps")
+    WPS = ros_utils.wait_for_param("/hrisim/wps")
 
     RWPP = RobotClosestWP()
     

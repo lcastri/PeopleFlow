@@ -22,7 +22,7 @@ def update_astar_path(request):
     # rospy.loginfo(f"Updated A* path: {latest_astar_path}")
 
     # Immediately update visualization
-    ros_graph = ros_utils.wait_for_param('/peopleflow/G')
+    ros_graph = ros_utils.wait_for_param('/hrisim/G')
 
     # Extract node positions and edges
     node_positions = {node: (data['pos'][0], data['pos'][1]) for node, data in ros_graph['nodes'].items()}
@@ -88,16 +88,15 @@ def update_astar_path(request):
 
     # Publish visualization
     marker_pub.publish(markers)
-    # rospy.loginfo("Graph visualization updated with A* path and goal marker")
     
     return VisualisePathResponse()
 
 
 if __name__ == "__main__":
-    rospy.init_node('astar_path_visualization_service')
+    rospy.init_node('path_visualiser')
 
     # Publisher for the visualization markers
-    marker_pub = rospy.Publisher('/astar_path_visualization', MarkerArray, queue_size=10)
+    marker_pub = rospy.Publisher('/hrisim/path/markers', MarkerArray, queue_size=10)
 
     # Service to trigger A* path visualization
     rospy.Service('/graph/path/show', VisualisePath, update_astar_path)

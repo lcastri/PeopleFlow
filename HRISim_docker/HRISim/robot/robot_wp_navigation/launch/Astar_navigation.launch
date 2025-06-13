@@ -1,0 +1,8 @@
+<launch>
+  <arg name="graph" />
+
+  <node name="Astar_navigation" pkg="robot_wp_navigation" type="Astar_navigation.py" output="screen">
+    <param name="graph_path" value="$(find graph_creator)/graph/$(arg graph)/graph.pkl"/>
+  </node>
+ 
+</launch>

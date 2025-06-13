@@ -12,7 +12,7 @@ if [ -z "$ROBOT_NUM" ]; then
   echo -e "${RED}ERROR: No argument supplied!${NC}"
   echo
   echo -e "${RED}Usage: ./HRISim_run.sh ROBOT_NUM ETH${NC}"
-  echo -e "${RED}Example: ./HRISim_run.sh 125 true${NC}"
+  echo -e "${RED}Example: ./HRISim_run.sh 125 1${NC}"
   exit 1
 fi
 
