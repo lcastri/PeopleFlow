@@ -51,13 +51,17 @@ windows:
     tags: ['core']
     panes:
       - htop
-  - name: visual
+      - 'rviz -d "$(rospack find hrisim_rviz)/config/rviz/tiago_rviz.rviz" --fixed-frame map'
+  - name: wp
     tags: ['core']
     panes:
-      - 'rviz -d "$(rospack find hrisim_rviz)/config/rviz/tiago_rviz.rviz" --fixed-frame map'
-      - 'rosrun robot_info robot_displayinfo.py'
+      - 'roslaunch graph_creator graph_publisher.launch graph:=$WORLD'
       - 'roslaunch waypoint_publisher wp_publisher.launch map:=$WORLD'
       - 'rosrun waypoint_visualiser wp_visualiser.py'
+  - name: robot
+    tags: ['core']
+    panes:
+      - 'rosrun robot_info robot_displayinfo.py'
   # - name: robot
     # tags: ['robot']
     # panes:
