@@ -24,24 +24,11 @@ init_cmd: |
   export_default CATKIN_WS "$HOME/ros_ws"
 
   # robot specific arguments
-  export_default TIAGO_TYPE "iron"
-  export_default TIAGO_x "0.0"
-  export_default TIAGO_y "0.0"
-  export_default TIAGO_z "0.0"
-  export_default TIAGO_R "0.0"
-  export_default TIAGO_P "0.0"
-  export_default TIAGO_Y "0"
-  export_default INIT_BATTERY "100"
-  export_default STATIC_DURATION "5"
-  export_default DYNAMIC_DURATION "4"
-  export_default OBS_FACTOR "3"
-  export_default CHARGING_TIME "2"
-  export_default OBS_FACTOR "3"
   export_default ABORT_TIME_THRESHOLD "45"
 
   # world arguments
   # choose a map between: maze, maze_corridor, maze_corridor_withTurn, maze_corridor_withDoors
-  export_default WORLD "warehouse"
+  export_default WORLD "INB-3floor"
 
   # navigation specific arguments
   export_default GLOBAL_PLANNER "global_planner"
@@ -55,36 +42,7 @@ init_cmd: |
   export_default PNP_ACTIONS "$CATKIN_WS/src/HRISim/hrisim_actions"
   export_default PNP_CONDITIONS "$CATKIN_WS/src/HRISim/hrisim_conditions"
 
-  # PedSim arguments
-  # robot_mode == 0: CONTROLLED implies that the robot's velocity is set by some planning algorithm like DWA. Its very similar to the teleoperation mode, using tf in the mix is just a layer on top of this -->
-  # robot_mode == 1: TELEOPERATION , we map the output of a teleop node (like joystick) to drive the robot -->
-  # robot_mode == 2: SOCIAL mode means the robot's velocity is set by the social force just like the other agents -->
-  export_default SCENARIO "warehouse"
-  export_default ALLOW_TASK "true"
-  export_default RECORD "true"
-  export_default STARTING_ELAPSED "8"
-  export_default MAX_TASKTIME "60"
-  export_default IS_STUCK_THRESHOLD "65"
-  export_default HUMAN_MODE "1"
-  export_default MAX_HUMAN_SPEED "1.5"
-  export_default ROBOT_RADIUS "5"
-  export_default WITH_TELEOP_PED "false"
-  export_default HUMAN_x "-5"
-  export_default HUMAN_y "5"
-  export_default SPAWN_AGENT "true"
-  export_default SPAWN_TELEOP_AGENT "false"
-  export_default SPAWN_TIMEOUT "10.0"
-  export_default FORCE_OBSTACLE "5.0"
-  export_default SIGMA_OBSTACLE "0.25"
-  export_default FORCE_SOCIAL "10.0"
-  # export_default INIT_TIME "H2"
-
-  # Gazebo arguments
-  export_default GUI "false"
-  export_default MAX_STEP_SIZE "0.002"
-  export_default REAL_TIME_UPDATE_RATE "0"
-
-  # # CausalFlow arguments
+  # CausalFlow arguments
   # export_default CIE "CIE3.8"
   # export_default PRED_STEP "5"
 
@@ -98,6 +56,8 @@ windows:
     panes:
       - 'rviz -d "$(rospack find hrisim_rviz)/config/rviz/tiago_rviz.rviz" --fixed-frame map'
       - 'rosrun robot_info robot_displayinfo.py'
+      - 'roslaunch waypoint_publisher wp_publisher.launch map:=$WORLD'
+      - 'rosrun waypoint_visualiser wp_visualiser.py'
   # - name: robot
     # tags: ['robot']
     # panes:

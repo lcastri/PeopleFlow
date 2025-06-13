@@ -1,0 +1,8 @@
+<launch>
+  <arg name="map" />
+
+  <node name="wp_publisher" pkg="waypoint_publisher" type="wp_publisher.py" output="screen">
+    <param name="xml_file" value="$(find waypoint_publisher)/scenario/$(arg map).xml"/>
+  </node>
+ 
+</launch>

@@ -9,6 +9,7 @@ Panels:
         - /Planning1/Base1/Global1
         - /Planning1/Base1/Global1/Plan1
         - /Mapping1/Map1
+        - /Waypoints1/Waypoint Marker1
       Splitter Ratio: 0.4376731216907501
     Tree Height: 752
   - Class: rviz/Selection
@@ -387,7 +388,7 @@ Visualization Manager:
           Marker Topic: twist_marker
           Name: Twist
           Namespaces:
-            "": true
+            {}
           Queue Size: 100
           Value: true
         - Class: rviz/Marker
@@ -979,9 +980,11 @@ Visualization Manager:
       Unreliable: false
       Value: false
       Visibility:
+        "":
+          Value: true
+          Waypoint Marker: true
         Control:
-          Move: true
-          Path: true
+          "": true
           Value: true
         Grid: true
         Localization:
@@ -1063,6 +1066,18 @@ Visualization Manager:
           Value: true
       Enabled: true
       Name: Tracker
+    - Class: rviz/Group
+      Displays:
+        - Class: rviz/Marker
+          Enabled: true
+          Marker Topic: /hrisim/waypoints/markers
+          Name: Waypoint Marker
+          Namespaces:
+            {}
+          Queue Size: 100
+          Value: true
+      Enabled: true
+      Name: Waypoints
   Enabled: true
   Global Options:
     Background Color: 48; 48; 48
@@ -1091,7 +1106,7 @@ Visualization Manager:
   Views:
     Current:
       Class: rviz/Orbit
-      Distance: 14.34189224243164
+      Distance: 26.003774642944336
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.05999999865889549
         Stereo Focal Distance: 1
@@ -1099,9 +1114,9 @@ Visualization Manager:
         Value: false
       Field of View: 0.7853981852531433
       Focal Point:
-        X: 2.3719818592071533
-        Y: -0.8488299250602722
-        Z: -1.1422512531280518
+        X: -0.09048634022474289
+        Y: -4.186034202575684
+        Z: -1.1597721576690674
       Focal Shape Fixed Size: true
       Focal Shape Size: 0.05000000074505806
       Invert Z Axis: false
@@ -1109,7 +1124,7 @@ Visualization Manager:
       Near Clip Distance: 0.009999999776482582
       Pitch: 1.5697963237762451
       Target Frame: <Fixed Frame>
-      Yaw: 0.004115109331905842
+      Yaw: 4.952307224273682
     Saved: ~
 Window Geometry:
   Displays:

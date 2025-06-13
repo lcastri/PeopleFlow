@@ -58,9 +58,9 @@ def line_of_sight_task(args):
 
 
 # Initialize ROS node
-SCENARIO = "/home/lcastri/git/PeopleFlow/HRISim_docker/pedsim_ros/pedsim_simulator/scenarios/warehouse"
-MAP_NAME = os.path.expanduser('/home/lcastri/git/PeopleFlow/HRISim_docker/HRISim/hrisim_gazebo/tiago_maps/') + 'warehouse'
-RES_DIR = "/home/lcastri/git/PeopleFlow/HRISim_docker/HRISim/peopleflow/peopleflow_manager/res"
+SCENARIO = "/home/lcastri/git/PeopleFlow/HRISim_docker/HRISim/waypoint_manager/waypoint_publisher/scenario/INB-3floor"
+MAP_NAME = "/home/lcastri/git/PeopleFlow/HRISim_docker/HRISim/robot/maps/INB-3floor"
+RES_DIR = "/home/lcastri/git/PeopleFlow/HRISim_docker/HRISim/waypoint_manager/graph_creator/graph"
 
 # Create directory for results
 scenario_name = SCENARIO.split("/")[-1]
@@ -78,14 +78,12 @@ for waypoint in root.findall('waypoint'):
     y = float(waypoint.get('y'))
     r = float(waypoint.get('r'))
     waypoints.append((wp_id, x, y, r))
-    if wp_id.startswith('door-'): 
-        doors.append((wp_id, x, y, r))
     
 with open(os.path.join(MAP_NAME, 'map.yaml'), 'r') as yaml_file:
     map_info = yaml.safe_load(yaml_file)
 
 # Load map image
-map_image = mpimg.imread(os.path.join(MAP_NAME, 'map.pgm'))
+map_image = mpimg.imread(os.path.join(MAP_NAME, 'submap_0.pgm'))
 
 # Get resolution and origin from YAML
 resolution = map_info['resolution']
@@ -106,8 +104,8 @@ for y in range(map_image.shape[0]):
 
 # Prepare plot
 fig, ax = plt.subplots(figsize=(12, 8))
-ax.set_xlim(-20, 11)  # Replace with your desired x-axis limits
-ax.set_ylim(-11, 11)  # Replace with your desired y-axis limits
+ax.set_xlim(-12, 36)  # Replace with your desired x-axis limits
+ax.set_ylim(-10, 7.5)  # Replace with your desired y-axis limits
 ax.imshow(map_image, extent=(origin_x, origin_x + map_image.shape[1] * resolution, 
                              origin_y, origin_y + map_image.shape[0] * resolution), cmap='gray')
 

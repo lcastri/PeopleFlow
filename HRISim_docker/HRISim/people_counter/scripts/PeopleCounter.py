@@ -3,8 +3,7 @@
 import math
 import rospy
 from std_msgs.msg import Header
-from pedsim_msgs.msg import AgentStates
-from peopleflow_msgs.msg import WPPeopleCounter, WPPeopleCounters
+from people_msgs.msg import WPPeopleCounter, WPPeopleCounters
 import hrisim_util.ros_utils as ros_utils
 
 
