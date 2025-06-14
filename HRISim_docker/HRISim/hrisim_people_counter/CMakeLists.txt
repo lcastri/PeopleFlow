@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 2.8.3)
-project(people_counter)
+project(hrisim_people_counter)
 
 ## Compile as C++11, supported in ROS Kinetic and newer
  add_compile_options(-std=c++11)
@@ -12,10 +12,10 @@ project(people_counter)
 ## if COMPONENTS list like find_package(catkin REQUIRED COMPONENTS xyz)
 ## is used, also find other catkin packages
 find_package(catkin REQUIRED COMPONENTS
-  geometry_msgs
   rospy
   std_msgs
   people_msgs
+  message_generation
 )
 
 ## System dependencies are found with CMake's conventions
@@ -25,17 +25,17 @@ find_package(catkin REQUIRED COMPONENTS
 ## Declare ROS messages, services and actions ##
 ################################################
 # Generate messages in the 'msg' folder
-# add_message_files(
-#   FILES
-#   RobotState.msg
-# )
+add_message_files(
+  FILES
+  WPPeopleCounters.msg
+  WPPeopleCounter.msg
+)
 
 # Generate added messages and services with any dependencies listed here
-# generate_messages(
-#   DEPENDENCIES
-#   std_msgs
-#   geometry_msgs
-# )
+generate_messages(
+  DEPENDENCIES
+  std_msgs
+)
 
 
 ################################################
@@ -48,7 +48,7 @@ find_package(catkin REQUIRED COMPONENTS
 ###################################
 
 catkin_package(
-  CATKIN_DEPENDS rospy std_msgs geometry_msgs people_msgs
+  CATKIN_DEPENDS rospy std_msgs people_msgs message_runtime
 )
 
 catkin_package(

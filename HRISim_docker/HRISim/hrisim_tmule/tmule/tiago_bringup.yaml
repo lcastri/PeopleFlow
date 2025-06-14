@@ -25,6 +25,7 @@ init_cmd: |
 
   # robot specific arguments
   export_default ABORT_TIMEOUT "45"
+  export_default RECORD "false"
 
   # world arguments
   # choose a map between: maze, maze_corridor, maze_corridor_withTurn, maze_corridor_withDoors
@@ -58,11 +59,23 @@ windows:
       - 'rosrun robot_info robot_displayinfo.py'
       - 'rosrun robot_info robot_closestWP.py'
       - 'rosparam set /hrisim/abort_timeout $ABORT_TIMEOUT && roslaunch robot_wp_navigation Astar_navigation.launch graph:=$WORLD'
+  - name: people
+    tags: ['core']
+    panes:
+      - 'rosrun hrisim_people_counter PeopleCounter.py'
   - name: planning
     tags: ['core']
     panes:
       - 'roslaunch pnp_ros pnp_ros.launch plans_folder:=$PNP_PLANS actions_folder:=$PNP_ACTIONS conditions_folder:=$PNP_CONDITIONS'
       - 'cd ~/ros_ws/src/HRISim/hrisim_plans/scripts; echo -e "\033[1;31mStart your plan here: python <PLAN-NAME>.py\033[0m"'
+  - name: data
+    tags: ['exp']
+    panes:
+      - if [[ "$RECORD" == "true" ]]; then rosrun hrisim_recording record.py; fi
+  # - name: prediction
+  #   tags: ['exp']
+  #   panes:
+  #     - 'roslaunch hrisim_prediction_manager prediction_manager.launch CIE:=$CIE pred_step:=$PRED_STEP'
 
   # - name: robot
     # tags: ['robot']

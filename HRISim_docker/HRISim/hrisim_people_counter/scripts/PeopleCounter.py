@@ -3,16 +3,16 @@
 import math
 import rospy
 from std_msgs.msg import Header
+from people_msgs.msg import People
 from people_msgs.msg import WPPeopleCounter, WPPeopleCounters
 import hrisim_util.ros_utils as ros_utils
 
 
 class PeopleCounter():
     def __init__(self) -> None:
-        # self.readScenario()
-        self.timeOfDay = ''
-        rospy.Subscriber('/pedsim_simulator/simulated_agents', AgentStates, self.cb_agentstates)
-        self.counter_pub = rospy.Publisher('/peopleflow/counter', WPPeopleCounters, queue_size=10)
+        rospy.Subscriber('/people_tracker/people', People, self.cb_people)
+        self.counter_pub = rospy.Publisher('/hrisim/people_counter', WPPeopleCounters, queue_size=10)
+                
                 
     def get_closestWP(self, p):
         potential_wp = {}
@@ -22,12 +22,12 @@ class PeopleCounter():
             
         return min(potential_wp, key=potential_wp.get) if potential_wp else None
          
-    def cb_agentstates(self, data):
+         
+    def cb_people(self, data: People):
         counter = {wp: 0 for wp in WPS}
-        self.timeOfDay = rospy.get_param("/peopleflow/timeday")
         
-        for agent in data.agent_states:
-            p = [agent.pose.position.x, agent.pose.position.y]
+        for person in data.people:
+            p = [person.position.x, person.position.y]
             wp = self.get_closestWP(p)
             
             if wp is not None:
@@ -36,25 +36,21 @@ class PeopleCounter():
         msg = WPPeopleCounters()
         msg.header = Header()
         msg.counters = []
-        msg.numberOfWorkingPeople = 0
         
         for wp in counter:
             c = WPPeopleCounter()
             c.WP_id.data = wp
-            c.time.data = self.timeOfDay
             c.numberOfPeople = counter[wp]
             
             msg.counters.append(c)
-            msg.numberOfWorkingPeople += counter[wp]
             
         self.counter_pub.publish(msg)
 
+
 if __name__ == '__main__':
-    rospy.init_node('peopleflow_peoplecounter')
+    rospy.init_node('hrisim_people_counter')
     rate = rospy.Rate(10)  # 10 Hz
-    SCENARIO = str(ros_utils.wait_for_param("/peopleflow_manager/scenario"))
-    WPS = ros_utils.wait_for_param("/peopleflow/wps")
-    ros_utils.wait_for_param("/peopleflow/timeday")
+    WPS = ros_utils.wait_for_param("/hrisim/wps")
 
     PC = PeopleCounter()
     
