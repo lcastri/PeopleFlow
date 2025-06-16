@@ -24,10 +24,10 @@ init_cmd: |
   export_default CATKIN_WS "$HOME/ros_ws"
 
   # robot specific arguments
-  export_default ABORT_TIMEOUT "45"
+  export_default ABORT_TIMEOUT "30"
   export_default RECORD "false"
   export_default SCENARIO "S1"
-  export_default DURATION "300"
+  export_default DURATION "120"
 
   # world arguments
   # choose a map between: maze, maze_corridor, maze_corridor_withTurn, maze_corridor_withDoors

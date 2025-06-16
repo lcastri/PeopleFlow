@@ -24,7 +24,11 @@ echo "###"
 echo
 
 # Add robot host (needs sudo)
-if ! echo -e "10.68.0.1\ttiago-${ROBOT_NUM}c" | sudo tee -a /etc/hosts > /dev/null; then
+if ! sudo tee -a /etc/hosts > /dev/null <<EOF
+10.68.0.1    tiago-${ROBOT_NUM}c
+192.168.1.${ROBOT_NUM}    tiago-${ROBOT_NUM}c
+EOF
+then
   echo -e "${RED}[ERROR] Failed to add to /etc/hosts.${NC}"
   exit 1
 fi
