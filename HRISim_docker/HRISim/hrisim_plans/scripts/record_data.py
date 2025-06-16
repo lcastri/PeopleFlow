@@ -27,9 +27,9 @@ def Plan(p):
         
     p.exec_action('speak', 'Recording_data')
     
-    # Wait for 5 minutes (300 seconds)
+    # Wait for DURATION seconds
     start_time = rospy.Time.now()
-    duration = rospy.Duration(300)  # 5 minutes
+    duration = rospy.Duration(DURATION)
 
     while rospy.Time.now() - start_time < duration:
         rospy.sleep(1.0)  # sleep to avoid busy-waiting
@@ -39,10 +39,11 @@ def Plan(p):
     
    
 if __name__ == "__main__":
-    if len(sys.argv) < 2:
+    if len(sys.argv) < 3:
         print("Usage: python script.py SCENARIO")
         sys.exit(1)
     SCENARIO = sys.argv[1]
+    DURATION = int(sys.argv[2])
     
     p = PNPCmd()
     rospy.set_param('/hrisim/time_slot', SCENARIO)

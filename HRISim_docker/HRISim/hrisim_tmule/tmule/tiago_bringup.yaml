@@ -27,6 +27,7 @@ init_cmd: |
   export_default ABORT_TIMEOUT "45"
   export_default RECORD "false"
   export_default SCENARIO "S1"
+  export_default DURATION "300"
 
   # world arguments
   # choose a map between: maze, maze_corridor, maze_corridor_withTurn, maze_corridor_withDoors
@@ -76,7 +77,7 @@ windows:
       - |
           cd ~/ros_ws/src/HRISim/hrisim_plans/scripts
           if [ "$RECORD" = "true" ]; then
-            python record_data.py $SCENARIO
+            python record_data.py $SCENARIO $DURATION
           else
             echo -e "\033[1;31mStart your plan here: python <PLAN-NAME>.py\033[0m"
           fi

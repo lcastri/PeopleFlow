@@ -105,7 +105,7 @@ for y in range(map_image.shape[0]):
 # Prepare plot
 fig, ax = plt.subplots(figsize=(12, 8))
 ax.set_xlim(-12, 36)  # Replace with your desired x-axis limits
-ax.set_ylim(-10, 7.5)  # Replace with your desired y-axis limits
+ax.set_ylim(-10, 10)  # Replace with your desired y-axis limits
 ax.imshow(map_image, extent=(origin_x, origin_x + map_image.shape[1] * resolution, 
                              origin_y, origin_y + map_image.shape[0] * resolution), cmap='gray')
 
