@@ -58,8 +58,8 @@ def line_of_sight_task(args):
 
 
 # Initialize ROS node
-SCENARIO = "/home/lcastri/git/PeopleFlow/HRISim_docker/HRISim/waypoint_manager/waypoint_publisher/scenario/INB-3floor"
-MAP_NAME = "/home/lcastri/git/PeopleFlow/HRISim_docker/HRISim/robot/maps/INB-3floor"
+SCENARIO = "/home/lcastri/git/PeopleFlow/HRISim_docker/HRISim/waypoint_manager/waypoint_publisher/scenario/INB-3floor-reduced"
+MAP_NAME = "/home/lcastri/git/PeopleFlow/HRISim_docker/HRISim/robot/maps/INB-3floor-reduced"
 RES_DIR = "/home/lcastri/git/PeopleFlow/HRISim_docker/HRISim/waypoint_manager/graph_creator/graph"
 
 # Create directory for results
