@@ -31,7 +31,6 @@ class predict(AbstractAction):
             rospy.set_param('/hrisim/risk_map', {
                 'arcs': response.arcs,
                 'PDs': response.PDs,
-                'BCs': response.BCs
             })
             self.params.append("done")
         

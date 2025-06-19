@@ -2,6 +2,8 @@ import math
 import os
 import pickle
 import sys
+
+import numpy as np
 import rospy
 try:
     sys.path.insert(0, os.environ["PNP_HOME"] + '/scripts')
@@ -27,7 +29,7 @@ def send_goal(p, next_dest, nextnext_dest=None):
     else:
         coords = [x, y, 0, TASK_TIMEOUT]
     p.exec_action('goto', "_".join([str(coord) for coord in coords]))
-    
+       
         
 def Plan(p):
     while not ros_utils.wait_for_param("/pnp_ros/ready"): rospy.sleep(0.1)
@@ -43,7 +45,8 @@ def Plan(p):
         rospy.logerr("Planning..")
                    
         if len(QUEUE) == 0:
-            QUEUE = path_request(ROBOT_CLOSEST_WP, DESTINATION, False).queue
+            p.exec_action('predict', "")
+            QUEUE = path_request(ROBOT_CLOSEST_WP, DESTINATION, True).queue
             QUEUE = QUEUE.split(',')
             rospy.logwarn(f"{QUEUE}")
             p.exec_action('speak', f'Navigating_to_{QUEUE[-1]}')

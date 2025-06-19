@@ -39,7 +39,7 @@ init_cmd: |
   export_default PNP_CONDITIONS "$CATKIN_WS/src/HRISim/hrisim_conditions"
 
   # CausalFlow arguments
-  # export_default CIE "CIE3.8"
+  # export_default CIE "CIE"
   # export_default PRED_STEP "5"
 
 windows:
@@ -55,6 +55,7 @@ windows:
       - 'roslaunch waypoint_publisher wp_publisher.launch map:=$WORLD'
       - 'rosrun path_visualiser path_visualiser.py'
       - 'rosrun graph_visualiser graph_visualiser.py'
+      - 'rosrun weights_visualiser weights_visualiser.py'
   - name: robot
     tags: ['core']
     panes:
@@ -81,36 +82,6 @@ windows:
           else
             echo -e "\033[1;31mStart your plan here: python <PLAN-NAME>.py\033[0m"
           fi
-      # - "echo -e '\033[1;31mStart your plan here: python <PLAN-NAME>.py\033[0m'"
-  # - name: prediction
-  #   tags: ['exp']
-  #   panes:
-  #     - 'roslaunch hrisim_prediction_manager prediction_manager.launch CIE:=$CIE pred_step:=$PRED_STEP'
-
-  # - name: robot
-    # tags: ['robot']
-    # panes:
-      # - 'rosrun robot_info robot_closestWP.py'
-      # - 'roslaunch robot_clearing_distance clearing_distance.launch'
-      # - 'rosrun robot_task TaskInfoManager.py'
-      # - 'rosrun robot_path_visualisation AstarVisualisation.py'
-  # - name: obstacle
-  #   tags: ['obs']
-  #   panes: 
-  #     - 'rosrun robot_obs DynamicObstacle.py'
-  # - name: scenario
-  #   tags: ['exp']
-  #   panes:
-  #     - 'roslaunch peopleflow_manager peopleflow_manager.launch scenario:=$SCENARIO starting_elapsed:=$STARTING_ELAPSED'
-  #     - 'roslaunch peopleflow_pedsim_bridge peopleflow_pedsim.launch scenario:=$SCENARIO allow_task:=$ALLOW_TASK max_tasktime:=$MAX_TASKTIME'
-  #     - 'roslaunch pedsim_simulator mysimulator.launch scenario:=$SCENARIO robot_mode:=$HUMAN_MODE max_robot_speed:=$MAX_HUMAN_SPEED robot_radius:=$ROBOT_RADIUS is_stuck_threshold:=$IS_STUCK_THRESHOLD force_obstacle:=$FORCE_OBSTACLE sigma_obstacle:=$SIGMA_OBSTACLE force_social:=$FORCE_SOCIAL with_teleop_ped:=$WITH_TELEOP_PED ped_x:=$HUMAN_x ped_y:=$HUMAN_y ped_theta:=0'
-  #     - 'rosrun rqt_peopleflow agents_info.py'
-  #     - 'rosrun peopleflow_counter PeopleCounter.py'
-  #     - 'rosrun peopleflow_graph_visualisation GraphVisualisation.py'
-  # - name: data
-  #   tags: ['exp']
-  #   panes:
-  #     - if [[ "$RECORD" == "true" ]]; then rosrun hrisim_recording record.py; fi
   # - name: prediction
   #   tags: ['exp']
   #   panes:
