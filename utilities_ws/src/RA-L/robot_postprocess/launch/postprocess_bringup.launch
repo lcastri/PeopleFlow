@@ -1,0 +1,20 @@
+<launch>
+
+  <arg name="bagname"/>
+  <arg name="map" default="INB-3floor"/>
+  <arg name="playback_speed" default="10" />
+  <arg name="start_time" default="0" />
+
+  <!-- rosbags play -->
+  <param name="use_sim_time" value="true" />
+  <node name="rosbag_play_data" pkg="rosbag" type="play"
+        args="--clock -r $(arg playback_speed) --start $(arg start_time) $(find robot_postprocess)/bags/$(arg bagname).bag"/>
+
+  <!-- Extracting data -->
+  <node pkg="robot_postprocess" type="data_extractor.py" name="robot_postprocess" output="screen" >
+      <param name="bagname" value="$(arg bagname)" />
+      <param name="node_path" value="$(find robot_postprocess)" />
+      <param name="map" value="$(arg map)" />
+  </node>
+
+</launch> 
