@@ -9,7 +9,7 @@ import hrisim_util.ros_utils as ros_utils
 
 def visualize_graph_from_rosparam(request):
     # Load graph from ROS parameter
-    ros_graph = ros_utils.wait_for_param('/peopleflow/G')
+    ros_graph = ros_utils.wait_for_param('/hrisim/G')
     
     # Extract data from ROS graph dictionary
     node_positions = {node: (data['pos'][0], data['pos'][1]) for node, data in ros_graph['nodes'].items()}
@@ -66,7 +66,7 @@ def visualize_graph_from_rosparam(request):
         
         # Text content
         # weight_marker.text = f"{edge['weight']:.2f}"  # Format weight to two decimal places
-        weight_marker.text = f"W: {edge['weight']:.2f}\n- D: {edge['D_cost']:.2f}\n- PD: {edge['PD_cost']:.2f}\n- BC: {edge['BC_cost']:.2f}"
+        weight_marker.text = f"W: {edge['weight']:.2f}\n- D: {edge['D']:.2f}\n- PD: {edge['PD']:.2f}"
         markers.markers.append(weight_marker)
 
     

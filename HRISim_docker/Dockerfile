@@ -22,6 +22,7 @@ RUN DEBIAN_FRONTEND=noninteractive apt-get update && \
     psmisc \
     ros-noetic-people-msgs
 
+
 # Source ROS environment in .bashrc
 RUN echo "source /opt/ros/noetic/setup.bash" >> ~/.bashrc
 
@@ -46,14 +47,19 @@ COPY HRISim_docker/HRISim/robot/tiago_controller_conf_package.xml /root/tiago_ws
 COPY HRISim_docker/HRISim/robot/robot_twist_mux/modified_scripts/twist_mux.launch /opt/ros/noetic/share/twist_mux/launch
 COPY HRISim_docker/HRISim/scripts/local_planner.yaml /root/tiago_ws/src/pal_navigation_cfg_public/pal_navigation_cfg_tiago/config/base/teb
 
+# # Install Velodyne Driver
+# RUN git clone https://github.com/ros-drivers/velodyne.git
+# RUN mkdir -p ~/tiago_ws/src/people_tracker
+# COPY HRISim_docker/people_tracker /root/tiago_ws/src/people_tracker
+
 RUN /bin/bash -c 'source /opt/ros/noetic/setup.bash; cd ~/tiago_ws; catkin build'
 RUN echo "source ~/tiago_ws/devel/setup.bash" >> ~/.bashrc
 
-RUN echo "export GAZEBO_MODEL_PATH=~/.gazebo/models:$GAZEBO_MODEL_PATH" >> ~/.bashrc
+# RUN echo "export GAZEBO_MODEL_PATH=~/.gazebo/models:$GAZEBO_MODEL_PATH" >> ~/.bashrc
 
-# Install gazebo dependencies for animated actors
-RUN echo "deb http://packages.osrfoundation.org/gazebo/ubuntu-stable $(lsb_release -cs) main" > /etc/apt/sources.list.d/gazebo-stable.list
-RUN wget https://packages.osrfoundation.org/gazebo.key -O - | apt-key add -    
+# # Install gazebo dependencies for animated actors
+# RUN echo "deb http://packages.osrfoundation.org/gazebo/ubuntu-stable $(lsb_release -cs) main" > /etc/apt/sources.list.d/gazebo-stable.list
+# RUN wget https://packages.osrfoundation.org/gazebo.key -O - | apt-key add -    
 
 ############################################################################## pkgs
 RUN DEBIAN_FRONTEND=noninteractive pip install \

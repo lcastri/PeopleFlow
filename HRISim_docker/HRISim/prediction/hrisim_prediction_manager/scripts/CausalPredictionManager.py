@@ -5,6 +5,7 @@ import pickle
 import numpy as np
 import rospy
 import hrisim_util.ros_utils as ros_utils
+import hrisim_util.constants as constants
 from hrisim_prediction_srvs.srv import GetRiskMap, GetRiskMapResponse
 from hrisim_people_counter.msg import WPPeopleCounters
 from std_msgs.msg import String
@@ -105,29 +106,21 @@ class PredictionManager:
     def predict_PD(self, tod, wp):
 
         wp_bin = 0
-        tod_bin = tod
+        tod_bin = constants.SCENARIOS[tod]['id']
+        evidence = {"TOD0": tod_bin, "WP0": wp_bin}
               
-        bn = self.CIE[wp]['bn']
         cm = self.CIE[wp]['cm']
         dwp = self.CIE[wp]['d']
                
         _, _, midpoints_PD = get_info(dwp, self.CIE[wp]['audit'], 'PD0')
       
-        # --- BN prediction ---
-        ie = pyAgrum.VariableElimination(bn)
-        evidence = {"TOD0": tod_bin, "WP0": wp_bin}
-        ie.setEvidence(evidence)
-        ie.makeInference()
-        bn_posterior = ie.posterior("PD0")
-        bn_posterior_values = bn_posterior.toarray()
-        pred_bn = sum(bn_posterior_values[j] * midpoints_PD[j] for j in range(len(bn_posterior_values)))
                                 
         # --- CausalModel prediction ---
         _, adj, _ = pyc.causalImpact(cm, on="PD0", doing="TOD0", knowing={"WP0"}, values=evidence)
         posterior_causal = adj.toarray()
         pred_causal = sum(posterior_causal[j] * midpoints_PD[j] for j in range(len(posterior_causal)))
 
-        return pred_bn, pred_causal
+        return pred_causal
     
 
     def handle_get_risk_map(self, req):
@@ -138,8 +131,14 @@ class PredictionManager:
         PDs = []
         
         for wp in WPS_COORD.keys():
-            PD_wps[wp] = self.predict_PD(TS, wp)[1]
+            PD_wps[wp] = self.predict_PD(TS, wp)
             
+        for arc in self.ARCs:
+            wp_i, wp_j = arc.split('__')
+            PDs.append((PD_wps[wp_i] + PD_wps[wp_j])/2)
+            
+        rospy.logerr(self.ARCs)
+        rospy.logerr(PDs)
         return GetRiskMapResponse(self.ARCs, PDs)
         
 
@@ -149,7 +148,7 @@ if __name__ == "__main__":
     
     CIEDIR = rospy.get_param("~CIE")
     PREDICTION_STEP = rospy.get_param("~pred_step")
-    ROBOT_MAX_VEL = float(ros_utils.wait_for_param("/move_base/TebLocalPlannerROS/max_vel_x"))
+    ROBOT_MAX_VEL = float(ros_utils.wait_for_param("/move_base/PalLocalPlanner/max_vel_x"))
     g_path = ros_utils.wait_for_param("/graph_publisher/graph_file")
     with open(g_path, 'rb') as f:
         G = pickle.load(f)
@@ -164,4 +163,5 @@ if __name__ == "__main__":
     rate = rospy.Rate(1 / PREDICTION_STEP)
         
     while not rospy.is_shutdown():
+        TS = rospy.get_param("/hrisim/time_slot")
         rate.sleep()

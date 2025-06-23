@@ -274,7 +274,7 @@ if __name__ == "__main__":
     
     CIEDIR = rospy.get_param("~CIE")
     PREDICTION_STEP = rospy.get_param("~pred_step")
-    ROBOT_MAX_VEL = float(ros_utils.wait_for_param("/move_base/TebLocalPlannerROS/max_vel_x"))
+    ROBOT_MAX_VEL = float(ros_utils.wait_for_param("/move_base/PalLocalPlanner/max_vel_x"))
     g_path = ros_utils.wait_for_param("/peopleflow_pedsim_bridge/g_path")
     with open(g_path, 'rb') as f:
         G = pickle.load(f)
