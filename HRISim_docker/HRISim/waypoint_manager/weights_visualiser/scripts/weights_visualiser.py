@@ -20,20 +20,25 @@ def visualize_graph_from_rosparam(request):
     min_weight, max_weight = min(weights), max(weights)
     weight_range = max_weight - min_weight if max_weight != min_weight else 1  # Avoid divide-by-zero
 
+    # Define a range for the edge thickness
+    min_thickness = 0.02  # Thickness for the lowest weight (greenest)
+    max_thickness = 0.1  # Thickness for the highest weight (reddest)
+    thickness_range = max_thickness - min_thickness
+
     # Create MarkerArray for visualization
     markers = MarkerArray()
     
     # Add edges
     for i, edge in enumerate(edge_data):
+        # Normalize weight and determine color
+        normalized_weight = (edge['weight'] - min_weight) / weight_range
+        
         edge_marker = Marker()
         edge_marker.header.frame_id = "map"
         edge_marker.type = Marker.LINE_STRIP
         edge_marker.id = i
-        edge_marker.scale.x = 0.02
+        edge_marker.scale.x = min_thickness + (normalized_weight * thickness_range)
         
-        # Normalize weight and determine color
-        normalized_weight = (edge['weight'] - min_weight) / weight_range
-    
         edge_marker.color.r = normalized_weight  # Red increases with weight
         edge_marker.color.g = 1.0 - normalized_weight  # Green decreases with weight
         edge_marker.color.b = 0.0  # Blue remains constant

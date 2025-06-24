@@ -77,11 +77,12 @@ def cb_robot_closest_wp(wp: String):
     
    
 if __name__ == "__main__":
-    if len(sys.argv) < 2:
+    if len(sys.argv) < 3:
         print("Usage: python script.py DESTINATION SCENARIO")
         sys.exit(1)
     DESTINATION = sys.argv[1]
-    # SCENARIO = sys.argv[2]
+    TASK_TIMEOUT = sys.argv[2]
+    rospy.set_param('/hrisim/Astar/TIMEOUT', TASK_TIMEOUT) 
     
     g_path = ros_utils.wait_for_param("/Astar_navigation/graph_path")
     with open(g_path, 'rb') as f:
@@ -89,7 +90,7 @@ if __name__ == "__main__":
     
     ROBOT_CLOSEST_WP = None
     QUEUE = []
-    TASK_TIMEOUT = ros_utils.wait_for_param("/hrisim/abort_timeout")
+    # TASK_TIMEOUT = ros_utils.wait_for_param("/hrisim/abort_timeout")
     
     p = PNPCmd()
     # rospy.set_param('/hrisim/time_slot', SCENARIO)

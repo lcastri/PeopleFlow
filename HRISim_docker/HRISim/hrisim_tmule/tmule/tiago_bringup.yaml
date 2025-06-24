@@ -24,7 +24,7 @@ init_cmd: |
   export_default CATKIN_WS "$HOME/ros_ws"
 
   # robot specific arguments
-  export_default ABORT_TIMEOUT "30"
+  # export_default ABORT_TIMEOUT "60"
   export_default RECORD "false"
   export_default SCENARIO "S1"
   export_default DURATION "120"
@@ -41,6 +41,9 @@ init_cmd: |
   # CausalFlow arguments
   export_default CIE "CIE"
   export_default PRED_STEP "0.1"
+  export_default KD "2"
+  export_default KPD "10"
+  export_default NORMALISATION "true"
 
 windows:
   - name: rviz
@@ -61,7 +64,8 @@ windows:
       # - "roslaunch bayes_people_tracker_bringup people_tracker.launch"
       - 'rosrun robot_info robot_displayinfo.py'
       - 'rosrun robot_info robot_closestWP.py'
-      - 'rosparam set /hrisim/time_slot $SCENARIO && rosparam set /hrisim/abort_timeout $ABORT_TIMEOUT && roslaunch robot_wp_navigation Astar_navigation.launch graph:=$WORLD'
+      # - 'rosparam set /hrisim/time_slot $SCENARIO && rosparam set /hrisim/abort_timeout $ABORT_TIMEOUT && roslaunch robot_wp_navigation Astar_navigation.launch graph:=$WORLD'
+      - 'rosparam set /hrisim/time_slot $SCENARIO && roslaunch robot_wp_navigation Astar_navigation.launch graph:=$WORLD kd:=$KD kpd:=$KPD normalisation:=$NORMALISATION'
   - name: people
     tags: ['core']
     panes:

@@ -1,8 +1,14 @@
 <launch>
   <arg name="graph" />
+  <arg name="kd" />
+  <arg name="kpd" />
+  <arg name="normalisation" />
 
   <node name="Astar_navigation" pkg="robot_wp_navigation" type="Astar_navigation.py" output="screen">
     <param name="graph_path" value="$(find graph_creator)/graph/$(arg graph)/graph.pkl"/>
+    <param name="kd" value="$(arg kd)"/>
+    <param name="kpd" value="$(arg kpd)"/>
+    <param name="normalisation" value="$(arg normalisation)"/>
   </node>
  
 </launch>
