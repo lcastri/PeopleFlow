@@ -1,7 +1,0 @@
-<launch>
-
-  <node name="robot_clearing_distance" pkg="robot_clearing_distance" type="robot_clearingDistance.py" output="screen">
-    <param name="map_path"        value="$(find hrisim_gazebo)/tiago_maps/warehouse/map.yaml"/> 
-  </node>
- 
-</launch>

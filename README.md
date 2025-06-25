@@ -1,110 +1,47 @@
-# PeopleFlow
-A Gazebo-based simulator designed to model context-sensitive human-robot spatial interactions in shared workspaces. It features realistic human and
-robot trajectories influenced by contextual factors such as time, environment layout, and robot state, and can simulate a large number of agents. It involves a [TIAGo](https://pal-robotics.com/robots/tiago/) robot and multiple pedestrians modelled using the [pedsim_ros](https://github.com/srl-freiburg/pedsim_ros) ROS library.
+# Academic Project Page Template
+This is an academic paper project page template.
 
-<div align="center">
-<p float="left">
-    <img src="https://github.com/lcastri/PeopleFlow/blob/main/media/peopleflow.gif">
-</p>
-</div>
 
-## Citation
+Example project pages built using this template are:
+- https://vision.huji.ac.il/spectral_detuning/
+- https://dreamix-video-editing.github.io
+- https://vision.huji.ac.il/conffusion/
+- https://vision.huji.ac.il/3d_ads/
+- https://vision.huji.ac.il/ssrl_ad/
+- https://vision.huji.ac.il/deepsim/
 
-If you find this repo useful for your research, please consider citing the following paper:
 
-```bibtex
-@misc{castri2025causalityenhanceddecision,
-      title={Causality-enhanced Decision-Making for Autonomous Mobile Robots in Dynamic Environments}, 
-      author={Luca Castri and Gloria Beraldo and Nicola Bellotto},
-      year={2025},
-      eprint={2504.11901},
-      archivePrefix={arXiv},
-      primaryClass={cs.RO},
-      url={https://arxiv.org/abs/2504.11901}, 
-}
-```
 
-## Features
-* Customisable world
-* Customisable people behaviours
-* Customisable HRI scenario
-* Customisable plans for the TIAGo robot
-* Possibility to add context factors influencing human and TIAGo behaviours.
+## Start using the template
+To start using the template click on `Use this Template`.
 
-## How to use
-### Build and run
-After cloning the repository, use the following commands to build the Docker image and run it:
-```
-cd /path/to/PeopleFlow
-./HRISim_build.sh 
-```
-Once the Docker image is built, you can use the following command to run the container:
-```
-cd /path/to/PeopleFlow
-./HRISim_run.sh 
-```
-### Scenario setup and launch
-Once inside the Docker container, run the following command to view the `.tmule` file containing all simulator parameters:
-```
-roscd hrisim_tmule/tmule
-cat hrisim_bringup.yaml
-```
-Parameters:
-* TIAGO_TYPE - specifies the type of TIAGo robot;
-* INIT_BATTERY - initial battery level of the robot. Default 100;
-* STATIC_DURATION - battery duration (hours) when robot is idle. Default 5;
-* DYNAMIC_DURATION - battery duration (hours) when robot is moving. Default 4;
-* OBS_FACTOR - obstacle factor affecting battery discharge. Default 3;
-* CHARGING_TIME - battery charging time (hours). Default 2;
-* ABORT_TIME_THRESHOLD - Task completion deadline (seconds). Default 45;
-* WORLD - name of world and map to load. Default "warehouse"<br>
-If you want to add your own WORLD, you can include your .world file in hrisim_gazebo/worlds and your map in hrisim_gazebo/tiago_maps.<br>
-Note that the map must have the same name as the .world file;
-* SCENARIO - pedsim scenario to load. Default "warehouse"<br>
-If you want to add your own SCENARIO, you can include your .xml file in /pedsim_ros/pedsim_simulator/scenarios;
-* ALLOW_TASK - if True, allows pedestrians to perform tasks when they reach their target position;
-* MAX_TASKTIME - maximum task duration (seconds);
-* GUI - if False, disables the Gazebo gui;
-* MAX_STEP_SIZE - time (seconds) in the simulation to be simulated in one step;
-* FORCE_OBSTACLE - social force model parameter ([Helbing et. al](https://arxiv.org/pdf/cond-mat/9805244));
-* SIGMA_OBSTACLE - social force model parameter ([Helbing et. al](https://arxiv.org/pdf/cond-mat/9805244));
-* FORCE_SOCIAL - social force model parameter ([Helbing et. al](https://arxiv.org/pdf/cond-mat/9805244));
-* RECORD - if True, records the topics listed in hrisim_recording/scripts/record.py into a ROS bag;
+The template uses html for controlling the content and css for controlling the style. 
+To edit the websites contents edit the `index.html` file. It contains different HTML "building blocks", use whichever ones you need and comment out the rest.  
 
-If you want to modify any of these parameters, you can edit the hrisim_bringup.yaml file by:
-```
-roscd hrisim_tmule/tmule
-nano hrisim_bringup.yaml
-```
-Once the tmule file is configured, you can start the simulator with the following command:
-```
-tstart
-```
-to visualise the tmule session
-```
-tshow
-```
-once inside the tmule, run the following command to change panel:
-```
-Ctrl+b
-panel number [0-N]
-```
-and finally to stop it
-```
-Ctrl+b
-panel number 0
-tstop
-```
+**IMPORTANT!** Make sure to replace the `favicon.ico` under `static/images/` with one of your own, otherwise your favicon is going to be a dreambooth image of me.
 
-### Planning
-The ROS-Causal_HRISim includes the [PetriNetPlans](https://github.com/francescodelduchetto/PetriNetPlans) to define predefined plans for the TIAGo robot. The plan is a combination of actions and conditions that can be defined to create your own plan. Three different folders have been pre-created for plans, actions, and conditions, and they are:
-* hrisim_plans
-* hrisim_actions
-* hrisim_conditions
+## Components
+- Teaser video
+- Images Carousel
+- Youtube embedding
+- Video Carousel
+- PDF Poster
+- Bibtex citation
 
-For more details on how to define plans, actions, and conditions, visit the [PetriNetPlans](https://github.com/francescodelduchetto/PetriNetPlans) GitHub reposity.
+## Tips:
+- The `index.html` file contains comments instructing you what to replace, you should follow these comments.
+- The `meta` tags in the `index.html` file are used to provide metadata about your paper 
+(e.g. helping search engine index the website, showing a preview image when sharing the website, etc.)
+- The resolution of images and videos can usually be around 1920-2048, there rarely a need for better resolution that take longer to load. 
+- All the images and videos you use should be compressed to allow for fast loading of the website (and thus better indexing by search engines). For images, you can use [TinyPNG](https://tinypng.com), for videos you can need to find the tradeoff between size and quality.
+- When using large video files (larger than 10MB), it's better to use youtube for hosting the video as serving the video from the website can take time.
+- Using a tracker can help you analyze the traffic and see where users came from. [statcounter](https://statcounter.com) is a free, easy to use tracker that takes under 5 minutes to set up. 
+- This project page can also be made into a github pages website.
+- Replace the favicon to one of your choosing (the default one is of the Hebrew University). 
+- Suggestions, improvements and comments are welcome, simply open an issue or contact me. You can find my contact information at [https://pages.cs.huji.ac.il/eliahu-horwitz/](https://pages.cs.huji.ac.il/eliahu-horwitz/)
 
-## Recent changes
-| Version | Changes |
-| :---: | ----------- |
-| 1.0.0 | package released|
+## Acknowledgments
+Parts of this project page were adopted from the [Nerfies](https://nerfies.github.io/) page.
+
+## Website License
+<a rel="license" href="http://creativecommons.org/licenses/by-sa/4.0/"><img alt="Creative Commons License" style="border-width:0" src="https://i.creativecommons.org/l/by-sa/4.0/88x31.png" /></a><br />This work is licensed under a <a rel="license" href="http://creativecommons.org/licenses/by-sa/4.0/">Creative Commons Attribution-ShareAlike 4.0 International License</a>.

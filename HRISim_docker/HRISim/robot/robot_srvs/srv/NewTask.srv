@@ -1,4 +1,0 @@
-string final_destination  # Final destination for the new task
-string[] path             # Path for the task
----
-int32 task_id             # ID of the newly created task
