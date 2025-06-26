@@ -20,21 +20,18 @@
   <meta name="twitter:image" content="static/images/your_twitter_banner_image.png">
   <meta name="twitter:card" content="summary_large_image">
   <!-- Keywords for your paper to be indexed by-->
-  <meta name="keywords" content="causal robotics, causal discovery, causal reasoning, ROS, human-robot interaction">
+  <meta name="keywords" content="causal robotics, causal infernece, human-robot interaction">
   <meta name="viewport" content="width=device-width, initial-scale=1">
 
 
   <title>Causality-enhanced Decision-Making for Autonomous Mobile Robots in Dynamic Environments</title>
   <!-- <link rel="icon" type="image/x-icon" href="static/images/roscausal.ico"> -->
-  <link href="https://fonts.googleapis.com/css?family=Google+Sans|Noto+Sans|Castoro"
-  rel="stylesheet">
-
+  <link href="https://fonts.googleapis.com/css?family=Google+Sans|Noto+Sans|Castoro" rel="stylesheet">
   <link rel="stylesheet" href="static/css/bulma.min.css">
   <link rel="stylesheet" href="static/css/bulma-carousel.min.css">
   <link rel="stylesheet" href="static/css/bulma-slider.min.css">
   <link rel="stylesheet" href="static/css/fontawesome.all.min.css">
-  <link rel="stylesheet"
-  href="https://cdn.jsdelivr.net/gh/jpswalsh/academicons@1/css/academicons.min.css">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/jpswalsh/academicons@1/css/academicons.min.css">
   <link rel="stylesheet" href="static/css/index.css">
 
   <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
@@ -52,7 +49,7 @@
       <div class="container is-max-desktop">
         <div class="columns is-centered">
           <div class="column has-text-centered">
-            <img src="static/images/roscausal.png" alt="ROS-Causal" style="margin-right: 10px; width: auto; height: 100pt;">
+            <!-- <img src="static/images/roscausal.png" alt="ROS-Causal" style="margin-right: 10px; width: auto; height: 100pt;"> -->
             <h1 class="title is-1 publication-title">Causality-enhanced Decision-Making for Autonomous Mobile Robots in Dynamic Environments</h1>
           </div>
         </div>
@@ -60,13 +57,6 @@
     </div>
   </section>
 
-<section class="hero is-mytitle">
-  <div class="column has-text-centered">
-    <h2 class="title is-3 publication-title">
-      bla-bla
-    </h2>
-  </div>
-</section>
 <section class="hero">
   <div class="column has-text-centered">
     <!-- <h2 class="title is-3 publication-title">
@@ -126,6 +116,13 @@
     </div>            
   </div>
 </section>
+<section class="hero teaser">
+  <div class="container is-max-desktop">
+    <div class="hero-body">
+      <img src="static/images/causal-inference-approach.png" alt="Causal Decision-Making Framework" style="width: 100%;">
+    </div>
+  </div>
+</section>
 
 <!-- Paper abstract -->
 <section class="section hero is-light">
@@ -140,7 +137,7 @@
             By leveraging causal inference to model cause-and-effect relationships, we can better anticipate critical environmental factors and enable autonomous robots to plan and execute tasks more effectively.
             To this end, we propose a novel causality-based decision-making framework that reasons over a learned causal model to predict battery usage and human obstructions, understanding how these factors
             could influence robot task execution. Such reasoning framework assists the robot in deciding when and how to complete a given task. 
-            To achieve this, we developed also PeopleFlow, a new Gazebobased simulator designed to model context-sensitive human-robot spatial interactions in shared workspaces. 
+            To achieve this, we developed also PeopleFlow, a new Gazebo based simulator designed to model context-sensitive human-robot spatial interactions in shared workspaces. 
             PeopleFlow features realistic human and robot trajectories influenced by contextual factors such as time, environment layout, and robot state, and can simulate a large number of agents. 
             While the simulator is general-purpose, in this paper we focus on a warehouse-like environment as a case study, where we conduct an extensive evaluation benchmarking our causal approach against a
             non-causal baseline. Our findings demonstrate the efficacy of the proposed solutions, highlighting how causal reasoning enables autonomous robots to operate more efficiently and safely in dynamic
