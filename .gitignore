@@ -363,5 +363,7 @@ dist/
 
 /results/*
 /shared/*
+/utilities_ws
+/media
 
 *.vscode
