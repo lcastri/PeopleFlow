@@ -81,7 +81,7 @@
       <sup>1</sup>University of Lincoln, UK, 
       <sup>2</sup>University of Padua, Italy, 
       <sup>3</sup>National Research Council of Italy<br>
-      [under-review]
+      Preprint
     </div>
     <div class="column has-text-centered">
       <div class="publication-links">
@@ -150,162 +150,121 @@
 <!-- End paper abstract -->
 
 <section class="section hero is-small">
-  <div class="hero-body">
-    <div class="container is-max-desktop">
-      <div class="columns is-centered has-text-centered">
-        <div class="column">
-          <h2 class="title is-3">What is ROS-Causal?</h2>
-          <div class="content has-text-justified">
-            <p>
-              ROS-Causal is a ROS-Based Causal Analysis Framework that facilitates robot onboard data collection and causal 
-              discovery in human-robot spatial interactions. It is composed by four main ROS nodes:
-              <ul>
-                <li>
-                  <code>roscausal_robot</code>: collects data from several rostopics related to the robot 
-                  (e.g., position, velocity, target position, etc.), and merge them into a single rostopic <code>roscausal/robot</code>
-                </li>
-                <li>
-                  <code>roscausal_human</code>: collects data from several rostopics related to the human 
-                  (e.g., position, velocity, target position, etc.), and merge them into a single rostopic <code>roscausal/human</code>
-                </li>
-                <li>
-                  <code>roscausal_data</code>: subscribes to the topics <code>/roscausal/robot</code> and <code>/roscausal/human</code> 
-                  and begins collecting data in a CSV file. Once the desired time-series length (rosparam) is reached, the node provides the 
-                  option to post-process the data and finally saves the CSV file into a designated folder
-                </li>
-                <li>
-                  <code>roscausal_discovery</code>: performs causal discovery analysis on the collected data and publishes the result on 
-                  the <code>roscausal/causal_model</code> rostopic. 
-                  So far, it incorporates two causal discovery methods: <a href="https://github.com/jakobrunge/tigramite">PCMCI</a> and <a href="https://github.com/lcastri/fpcmci">F-PCMCI</a>.
-                </li>
-              </ul>
-              It is important to highlight that <code>roscausal_data</code> and <code>roscausal_discovery</code> ROS nodes operate asynchronously, 
-              allowing the simultaneous execution of causal analysis on one dataset while continuing the collection of another.
-            </p>
+  <div class="container is-max-desktop">
+    <div class="columns is-centered">
+      <div class="column is-full">
+        <div class="content">
+          <h2 class="title is-3">Motivation & Contribution</h2>
+          <div class="columns">
+            <div class="column is-half">
+              <div class="content has-text-justified">
+                <p>
+                  Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.
+                </p>
+              </div>
+            </div>
+            <div class="column is-half">
+              <img src="static/images/intro.png" alt="Example" style="max-width: 100%; height: auto;">
+            </div>
           </div>
         </div>
       </div>
     </div>
-  </div>  
+  </div>
 </section>
-<!-- Teaser video-->
-<section class="hero teaser">
+  
+<section class="section hero is-light">
   <div class="container is-max-desktop">
-    <div class="hero-body">
-      <video poster="" id="tree" autoplay controls muted loop height="100%">
-        <!-- Your video here -->
-        <source src="static/videos/video_teaser.mp4"
-        type="video/mp4">
-      </video>
-      <h2 class="subtitle has-text-centered">
-        <b>ROS-Causal</b> simultaneously collects data from an HRI scenario and conducts causal discovery analysis on board of the robot.
-      </h2>
+    <div class="columns is-centered">
+      <div class="column is-full">
+        <h2 class="title is-3">Causality-based Robot Decision Making Framework</h2>
+        <div class="content has-text-justified">
+          <p>
+            <img src="static/images/causal-inference-approach.png" alt="Causal Decision-Making Framework" style="width: 100%;">
+          </p>
+          <h2 class="title is-5">Data Extraction Pipeline</h2>
+          <p>
+            Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.
+          </p>
+          <br>
+          <h2 class="title is-5">Learning Pipeline</h2>
+          <p>
+            Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.
+          </p>
+          <br>
+          <h2 class="title is-5">Inference Pipeline</h2>
+          <p>
+            Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.
+          </p>
+        </div>
+      </div>
     </div>
   </div>
 </section>
-<!-- End teaser video -->
+
+
 <section class="section hero is-small">
-  <div class="hero-body">
-    <div class="container is-max-desktop">
-      <div class="columns is-centered has-text-centered">
-        <div class="column">
-          <div class="content has-text-justified">
-            <p>
-              In this <a href="https://arxiv.org/abs/2402.16068">paper</a>, 
-              we provide a detailed technical explanation of ROS-Causal, 
-              accompanied by an experimental evaluation in a simulated environment: <a href="https://github.com/lcastri/ROS-Causal_HRISim">ROS-Causal_HRISim</a>.
-              <br>
-              <br>
-              
-              ROS-Causal_HRISim is a Gazebo-based human-robot interaction simulator that accurately replicates HRI scenarios 
-              involving a TIAGo robot and multiple pedestrians. The pedestrians are controlled either by social forces or user 
-              teleoperation (via keyboard). The simulator has been designed to facilitate the setup of real-life HRI scenarios 
-              and the execution of causal analysis within them. For the latter, ROS-Causal has been integrated into the ROS-Causal_HRISim simulator.
-            </p>
-            <div>
-              <img src="static/gifs/roscausal_hrisim_singleagent.gif" alt="Single-agent scenario" style="width: 33%;">
-              <img src="static/gifs/roscausal_hrisim_multiagent.gif" alt="Multi-agent scenario" style="width: 33%;">
-              <img src="static/gifs/roscausal_hrisim_corridor.gif" alt="Corridor scenario" style="width: 33%;">
-            </div>
-            
-            <br>
-            <p>
-              To evaluate ROS-Causal, we designed an HRI scenario involving a TIAGo robot and a teleoperated individual, represented by 
-              the red manikin. The green dot indicates the target position for the person. For the causal analysis, we considered a predefined 
-              set of variables, comprising:
-              <ul> 
-                <li>
-                <b>v</b> - human velocity;
-                </li>
-                <li>
-                  <b>d<sub>g</sub></b> - distance between the human and his target position;
-                </li>
-                <li>
-                  <b>r</b> - risk of collision with the robot.
-                </li>
-              </ul>
-              In the designed scenario, the robot follows a predefined path, while the person, who is teleoperated, has a target position that is randomly
-              chosen within the map and changes once reached by the person. 
-              In particular, a new target position is randomly chosen for the person, who then starts moving toward the goal, gradually reducing 
-              her velocity as she approaches it. Upon reaching the goal, a new target position is randomly selected, and the process repeats. 
-              If, during her path to the goal, the person encounters the robot, she must avoid it by decreasing her velocity and/or adjusting her steering.
-              Therefore, the expected causal links in this scenario are as follows:
-              <ul> 
-                <li>
-                  <b>v</b> &#10230; <b>d<sub>g</sub></b>, <b>d<sub>g</sub></b> depends inversely on <b>v</b>
-                </li>
-                <li>  
-                  <b>d<sub>g</sub></b> &#10230; <b>v</b> &#10229; <b>r</b>, <b>v</b> is a direct function of the <b>d<sub>g</sub></b>, but it is also affected by the collision risk <b>r</b>
-                </li>
-                <li>
-                  <b>v</b> &#10230; <b>r</b> depends on the velocity
-                </li>
-              </ul>
-            </p>
-            By using ROS-Causal, we were able to retrieve the correct causal model.
-            <br>
-            <br>
-            <div>
-              <img src="static/gifs/roscausal_hrisim_singleagent.gif" alt="Single-agent scenario" style="width: 56%;">
-              <img src="static/images/exp_simulation.png" alt="Causal Model" style="width: 43%;">
-            </div>
-          </div>
+  <div class="container is-max-desktop">
+    <div class="columns is-centered">
+      <div class="column is-full">
+        <h2 class="title is-3">PeopleFlow</h2>
+        <div class="content has-text-justified">
+          <p>
+            Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.     
+          </p>
         </div>
       </div>
     </div>
-  </div>  
+  </div>
 </section>
 
-<!-- <section class="section hero is-light">
-  <div class="hero-body">
+<section class="section hero is-light">
   <div class="container is-max-desktop">
-  <div class="columns is-centered has-text-centered">
-  <div class="column">
-    <h2 class="title is-3">What is ROS-Causal_HRISim?</h2>
-    <div class="content has-text-justified">
-      <p>cio</p>
-    </div>
-  </div>
-  </div>
-  </div>
-  </div>  
-</section> -->
-
-
-<!-- Paper poster -->
-<section class="hero is-small is-light">
-  <div class="hero-body">
-    <div class="container">
-      <h2 class="title">Presentation</h2>
-      <iframe  src="static/pdfs/causalhri2024_slide.pdf" width="100%" height="550"></iframe>
+    <div class="columns is-centered">
+      <div class="column is-full">
+        <h2 class="title is-3">Causality-based Robot Decision Making in PeopleFlow</h2>
+        <div class="content has-text-justified">
+          <p>
+            Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.
+          </p>
+        </div>
       </div>
     </div>
-  </section>
-<!--End paper poster -->
+  </div>
+</section>
 
+<section class="section hero is-small">
+  <div class="container is-max-desktop">
+    <div class="columns is-centered">
+      <div class="column is-full">
+        <h2 class="title is-3">Simulation Experiments</h2>
+        <div class="content has-text-justified">
+          <p>
+            Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.
+          </p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="section hero is-light">
+  <div class="container is-max-desktop">
+    <div class="columns is-centered">
+      <div class="column is-full">
+        <h2 class="title is-3">Real-World Experiments</h2>
+        <div class="content has-text-justified">
+          <p>
+            Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.
+          </p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
 
 <!--BibTex citation + info -->
-  <section class="section" id="BibTeX">
+<section class="section" id="BibTeX">
     <div class="container is-max-desktop content">
       <h2 class="title">BibTeX and useful links</h2>
       <h2 class="title is-5 publication-title">
