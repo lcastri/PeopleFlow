@@ -73,8 +73,6 @@
     </div>
 
     <div class="is-size-5 publication-authors">
-      <!-- <span class="author-block">Institution Name<br>Conferance name and year</span> -->
-      <!-- <span class="eql-cntrb"><small><br><sup>*</sup>Indicates Equal Contribution</small></span> -->
       <sup>1</sup>University of Lincoln, UK, 
       <sup>2</sup>University of Padua, Italy, 
       <sup>3</sup>National Research Council of Italy<br>
@@ -370,7 +368,7 @@
           </div>
           <h2 class="title is-5">Safety ⚠️</h2>
           <p>
-            The framework significantly enhances human safety in the shared human-robot environment.<br>
+            Our framework significantly enhances human safety in the shared human-robot environment.<br>
             The baseline approach, which often chose the shortest but busiest paths, resulted in 182 collisions with humans. 
             In contrast, our causality-aware robot was involved in <b>only 27 collisions</b>. Furthermore, our approach ensures 
             the robot maintains a safer distance from people.
@@ -394,9 +392,31 @@
     <div class="columns is-centered">
       <div class="column is-full">
         <h2 class="title is-3">Real-World Experiments</h2>
-        <div class="content has-text-justified">
+        <div class="content">
+          The framework was also evaluated in a real-world setting at the University of Lincoln (UK). 
+          Two scenarios were staged to qualitatively test the effectiveness of our approach when deployed
+          on a real <a href="https://pal-robotics.com/robot/tiago/" target="_blank" class="mylink">TIAGo robot</a>: 
+          a busy <span style="color: #ec7a1b82; font-weight: bold;">poster session in a corridor</span> and a <span style="color: #ec1b8282; font-weight: bold;">social event in a kitchen</span>.
+          <img src="static/images/INB-3floor-map-coloured.png" alt="INB-3floor-map" style="max-width: 100%; height: auto;">
+          <h2 class="title is-5">Scenario 1: Poster Session</h2>
+          <h2 class="title is-6">Learning</h2>
+          <div class="columns">
+            <div class="column is-half">
+              <img src="static/images/S1-learning-blurred.jpg" alt="S1-learning" style="max-width: 100%; height: auto;">
+            </div>
+            <div class="column is-half">
+              <video poster="" id="tree" autoplay controls muted loop height="100%">
+                <source src="static/videos/S1-learning-screen.mp4" type="video/mp4">
+              </video>           
+            </div>
+          </div>
+          <h2 class="title is-6">Inference</h2>
           <p>
-            Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.
+          </p>
+          <h2 class="title is-5">Scenario 2: Social Event</h2>
+          <h2 class="title is-6">Learning</h2>
+          <h2 class="title is-6">Inference</h2>
+          <p>
           </p>
         </div>
       </div>
