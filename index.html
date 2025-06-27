@@ -226,9 +226,41 @@
       <div class="column is-full">
         <h2 class="title is-3">PeopleFlow</h2>
         <div class="content has-text-justified">
+          <img src="static/images/simulator-approach.png" alt="PeopleFlow Approach" style="max-width: 100%; height: auto;">
           <p>
-            Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.     
+            PeopleFlow is a novel, Gazebo-based simulator designed to create realistic and repeatable scenarios of human-robot spatial interactions (HRSI). 
+            Its key feature is the ability to model <b>context-sensitive behaviours</b>, where factors like the time of day dynamically influence the goals and 
+            interaction patterns of both humans and robots. It includes a <a href="https://pal-robotics.com/robot/tiago/" target="_blank" class="mylink">TIAGo robot</a>
+            and can simulate a large number of human agents.
           </p>
+          <p>
+            The simulator's architecture is built on ROS and Gazebo, using the <a href="https://github.com/srl-freiburg/pedsim_ros" target="_blank" class="mylink">pedsim_ros</a> library to model human movement based on a social force model. 
+            Its novelty lies in two new ROS nodes: the <b>Context Manager</b>, which governs scenario-specific factors like time, and the <b>Context-Pedsim Bridge</b>, 
+            which generates tasks and navigation plans for agents based on the current context.
+          </p>
+        </div>
+        <div class="columns">
+          <div class="column is-half">
+            <img src="static/images/simulator-example-rviz.png" alt="RViz" style="max-width: 100%; height: auto;">
+          </div>
+          <div class="column is-half">
+            <img src="static/images/simulator-example-gazebo.png" alt="Gazebo" style="max-width: 100%; height: auto;">
+          </div>
+        </div>
+        <div class="columns">
+          <div class="column is-half">
+            <p>
+              <b>Case study:</b> warehouse-like environment.<br>
+              This simulated space consists of a working area with shelves, a canteen with tables, offices, 
+              toilets, and a corridor connecting them. The robot's tasks and the areas of human congestion change 
+              dynamically based on the time of day, such as workers being in the working area during shifts and 
+              in the canteen during a lunch break.
+              The environment is divided into meaningful regions using a waypoint system to guide agent movement.
+            </p>
+          </div>
+          <div class="column is-half">
+            <img src="static/images/simulator-scenario.png" alt="Warehouse-like environment" style="max-width: 100%; height: auto;">
+          </div>
         </div>
       </div>
     </div>
