@@ -180,7 +180,6 @@
     </div>
   </div>
 </section>
-  
 <section class="section hero is-light">
   <div class="container is-max-desktop">
     <div class="columns is-centered">
@@ -192,17 +191,27 @@
           </p>
           <h2 class="title is-5">Data Extraction Pipeline</h2>
           <p>
-            Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.
+            The data extraction pipeline continuously gathers information about the robot, humans, and contextual factors from the environment. 
+            The collected data is then preprocessed through subsampling to manage volume and discretisation to prepare it for the learning 
+            and inference components. For real-time inference, data is processed and used directly without being stored.          
           </p>
-          <br>
           <h2 class="title is-5">Learning Pipeline</h2>
           <p>
-            Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.
+            The learning pipeline is responsible for discovering the underlying causal relationships from the processed data and then 
+            learning the parameters of the model. It uses a causal discovery method, such as J-PCMCI+
+            (from <img src="static/images/causalflow-icon-color.png" alt="CausalFlow icon" style="height: 23px; vertical-align: middle;">  
+            <a href="https://github.com/lcastri/causalflow" target="_blank">CausalFlow</a>), 
+            to identify the causal structure from time-series data containing contextual variables and a 
+            Maximum Likelihood Estimation (MLE) to estimate the conditional probability distributions 
+            for each node in the discovered causal graph.
           </p>
-          <br>
           <h2 class="title is-5">Inference Pipeline</h2>
           <p>
-            Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.
+            The inference pipeline enables the robot to make decisions by using the learned causal model to evaluate its actions. 
+            When assigned a task, the robot formulates a query as a causal intervention, such as, 
+            <i>``What if I go to the delivery point now at velocity v''</i>. The pipeline then estimates the expected outcomes, 
+            specifically the battery consumption and people density. These estimates are incorporated into a heuristic that guides the 
+            A* algorithm to find an optimal path and decide whether to execute or abort the task.
           </p>
         </div>
       </div>

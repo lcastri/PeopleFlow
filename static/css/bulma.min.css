@@ -12041,7 +12041,15 @@ print {
     color: rgba(0, 0, 0, .7)
 }
 
-.hero.is-light a:not(.button):not(.dropdown-item):not(.tag):not(.pagination-link.is-current),
+/* .mylink a {
+   color: hsl(204, 86%, 53%) !important;
+}
+
+.mylink a:hover {
+    text-decoration: underline;
+} */
+
+.hero.is-light a:not(.button):not(.dropdown-item):not(.tag):not(.pagination-link.is-current)
 .hero.is-light strong {
     color: inherit
 }
