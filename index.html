@@ -206,7 +206,7 @@
           <p>
             The inference pipeline enables the robot to make decisions by using the learned causal model to evaluate its actions. 
             When assigned a task, the robot formulates a query as a causal intervention, such as, 
-            <i>``What if I go to the delivery point now at velocity v''</i>. The pipeline then estimates the expected outcomes, 
+            <i>"What if I go to the delivery point now at velocity v"</i>. The pipeline then estimates the expected outcomes, 
             specifically the battery consumption and people density. These estimates are incorporated into a heuristic that guides the 
             A* algorithm to find an optimal path and decide whether to execute or abort the task.
           </p>
@@ -274,9 +274,16 @@
             <div class="column is-half">
               <h2 class="title is-5">Causal Inference</h2>
               <p>
-                The data extraction pipeline continuously gathers information about the robot, humans, and contextual factors from the environment. 
-                The collected data is then preprocessed through subsampling to manage volume and discretisation to prepare it for the learning 
-                and inference components. For real-time inference, data is processed and used directly without being stored.          
+                To complete its tasks, the robot first queries our framework by asking "what-if" questions, like
+                <i>"What if I go to the delivery point now at velocity v?"</i>. 
+                This allows it to estimate critical factors like <b>battery consumption (L)</b> and <b>density of people (D)</b> 
+                in different areas of the environment.
+              </p>
+              <h2 class="title is-5">Heuristic</h2>
+              <p>
+               The robot uses a custom heuristic to find the best path. 
+               By considering the estimated battery cost and crowd density for a route, this guide allows the robot to prioritise
+               <b>safety</b> and <b>efficiency</b> over simply minimising travel distance
               </p>
             </div>
             <div class="column is-half">
@@ -285,29 +292,34 @@
               </p>
             </div>
           </div>
-          <h2 class="title is-5">Heuristic</h2>
-          <p>
-            The learning pipeline is responsible for discovering the underlying causal relationships from the processed data and then 
-            learning the parameters of the model. It uses a causal discovery method, such as J-PCMCI+
-            (from <img src="static/images/causalflow-icon-color.png" alt="CausalFlow icon" style="height: 23px; vertical-align: middle;">  
-            <a href="https://github.com/lcastri/causalflow" target="_blank" class="mylink">CausalFlow</a>), 
-            to identify the causal structure from time-series data containing contextual variables and a 
-            Maximum Likelihood Estimation (MLE) to estimate the conditional probability distributions 
-            for each node in the discovered causal graph.
-          </p>
           <h2 class="title is-5">Decision Making</h2>
           <p>
-            The inference pipeline enables the robot to make decisions by using the learned causal model to evaluate its actions. 
-            When assigned a task, the robot formulates a query as a causal intervention, such as, 
-            <i>``What if I go to the delivery point now at velocity v''</i>. The pipeline then estimates the expected outcomes, 
-            specifically the battery consumption and people density. These estimates are incorporated into a heuristic that guides the 
-            A* algorithm to find an optimal path and decide whether to execute or abort the task.
+            Beyond just choosing the best path, the framework makes a crucial go/no-go decision for each task. 
+            Before execution, it calculates the total expected battery cost for the entire proposed path. 
+            This cost is checked against a predefined minimum battery threshold. 
+            If the A* algorithm finds a path that satisfies this battery constraint, 
+            the robot gets the green light to proceed. If no such path exists, the framework issues an abort signal, 
+            preventing a potential failure.
+
           </p>
         </div>
       </div>
     </div>
   </div>
 </section>
+<!-- Teaser video-->
+<section class="hero teaser">
+  <div class="container is-max-desktop">
+    <div class="hero-body">
+      <video poster="" id="tree" autoplay controls muted loop height="100%">
+        <!-- Your video here -->
+        <source src="static/videos/causal-inference-video.mp4"
+        type="video/mp4">
+      </video>
+    </div>
+  </div>
+</section>
+<!-- End teaser video -->
 
 <section class="section hero is-small">
   <div class="container is-max-desktop">
