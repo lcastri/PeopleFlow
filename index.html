@@ -206,7 +206,7 @@
           <p>
             The inference pipeline enables the robot to make decisions by using the learned causal model to evaluate its actions. 
             When assigned a task, the robot formulates a query as a causal intervention, such as, 
-            <i>"What if I go to the delivery point now at velocity v"</i>. The pipeline then estimates the expected outcomes, 
+            <i>"What if I go to the delivery point now at velocity v?"</i>. The pipeline then estimates the expected outcomes, 
             specifically the battery consumption and people density. These estimates are incorporated into a heuristic that guides the 
             A* algorithm to find an optimal path and decide whether to execute or abort the task.
           </p>
@@ -247,12 +247,11 @@
         <div class="columns">
           <div class="column is-half">
             <p>
-              <b>Case study:</b> warehouse-like environment.<br>
-              This simulated space consists of a working area with shelves, a canteen with tables, offices, 
-              toilets, and a corridor connecting them. The robot's tasks and the areas of human congestion change 
-              dynamically based on the time of day, such as workers being in the working area during shifts and 
-              in the canteen during a lunch break.
-              The environment is divided into meaningful regions using a waypoint system to guide agent movement.
+              <b>Case study:</b> warehouse-like environment.<br><br>
+              This simulated space consists of a working area, a canteen, offices, 
+              toilets, and a corridor connecting them. human congestion and robot tasks 
+              change based on the time of day, creating realistic, context-sensitive
+              challenges for the robot's navigation.
             </p>
           </div>
           <div class="column is-half">
@@ -288,19 +287,15 @@
             </div>
             <div class="column is-half">
               <p>
-                <img src="static/images/hypothetical-causal-model.png" alt="Causal Decision-Making Framework" style="width: 100%;">
+                <img src="static/images/hypothetical-causal-model.png" alt="Causal Decision-Making Framework" style="width: 94%;">
               </p>
             </div>
           </div>
           <h2 class="title is-5">Decision Making</h2>
           <p>
-            Beyond just choosing the best path, the framework makes a crucial go/no-go decision for each task. 
-            Before execution, it calculates the total expected battery cost for the entire proposed path. 
-            This cost is checked against a predefined minimum battery threshold. 
-            If the A* algorithm finds a path that satisfies this battery constraint, 
-            the robot gets the green light to proceed. If no such path exists, the framework issues an abort signal, 
-            preventing a potential failure.
-
+            The framework also makes a crucial <b>go/no-go</b> decision. 
+            It checks if a task can be completed without the battery falling below a critical threshold. 
+            If not, the task is aborted to prevent failure.
           </p>
         </div>
       </div>
@@ -328,8 +323,60 @@
         <h2 class="title is-3">Simulation Experiments</h2>
         <div class="content has-text-justified">
           <p>
-            Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.
+            <img src="static/images/exp-scenario.png" alt="Simulation Experiments" style="width: 100%;">
           </p>
+          <div class="columns">
+            <div class="column is-half">
+              <p>
+                The framework's performance was evaluated in a simualed warehouse-like environment modelling a typical
+                warehouse day shift, which was divided into 11 distinct scenarios.
+                Each scenario featured unique worker congestion patterns corresponding to different times of day. 
+                <br><br>
+                The causality-based approach was then benchmarked against a baseline navigation method 
+                that relies on a shortest-path heuristic.
+              </p>
+            </div>
+            <div class="column is-half">
+              <video poster="" id="tree" autoplay controls muted loop height="100%">
+                <source src="static/videos/peopleflow-2025-04-14_17.09.17.mp4" type="video/mp4">
+              </video>
+            </div>
+          </div>
+          <h2 class="title is-5">non-causal vs causal</h2>
+          <img src="static/images/non-causal vs causal.png" alt="non-causal-vs-causal" style="max-width: 100%; height: auto;">
+          <h2 class="title is-5">Efficiency 🚀</h2>
+          <p>
+            The results show a dramatic improvement in task efficiency.<br>
+            By anticipating and avoiding congested areas, our causal approach enabled the robot to successfully complete <b>89%</b> of
+            its tasks, compared to only 55.9% for the baseline. This intelligence also led to a significant reduction in wasted time
+            and battery power. While the baseline approach wasted nearly 40% of its battery on failed tasks, our method used over <b>92%</b>
+            of its battery effectively on tasks that were successfully completed.
+          </p>
+          <div class="columns">
+            <div class="column is-half">
+              <img src="static/images/exp-efficiency-success-failure-1.png" alt="Success" style="max-width: 100%; height: auto;">
+              <img src="static/images/exp-efficiency-task-time-1.png" alt="TaskTime" style="max-width: 100%; height: auto;">
+            </div>
+            <div class="column is-half">
+              <img src="static/images/exp-efficiency-travelled-distance-1.png" alt="Distance" style="max-width: 100%; height: auto;">
+              <img src="static/images/exp-efficiency-battery-usage-1.png" alt="Battery" style="max-width: 100%; height: auto;">
+            </div>
+          </div>
+          <h2 class="title is-5">Safety ⚠️</h2>
+          <p>
+            The framework significantly enhances human safety in the shared human-robot environment.<br>
+            The baseline approach, which often chose the shortest but busiest paths, resulted in 182 collisions with humans. 
+            In contrast, our causality-aware robot was involved in <b>only 27 collisions</b>. Furthermore, our approach ensures 
+            the robot maintains a safer distance from people.
+          </p>
+          <div class="columns">
+            <div class="column is-half">
+              <img src="static/images/exp-safety-dangerous-interaction-1.png" alt="Collision" style="max-width: 100%; height: auto;">
+            </div>
+            <div class="column is-half">
+              <img src="static/images/exp-safety-proxemics.png" alt="Proxemics" style="max-width: 100%; height: auto;">
+            </div>
+          </div>
         </div>
       </div>
     </div>
