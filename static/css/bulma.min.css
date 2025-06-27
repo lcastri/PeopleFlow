@@ -12041,13 +12041,14 @@ print {
     color: rgba(0, 0, 0, .7)
 }
 
-.mylink a {
-   color: hsl(204, 86%, 53%) !important;
+a.mylink {
+  color: #3273dc; /* Bulma's default link color */
+  /* text-decoration: underline; */
+}
+a.mylink:hover {
+  color: #363636;
 }
 
-.mylink a:hover {
-    text-decoration: underline;
-}
 
 .hero.is-light a:not(.button):not(.dropdown-item):not(.tag):not(.pagination-link.is-current)
 .hero.is-light strong {
