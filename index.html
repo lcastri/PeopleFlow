@@ -340,13 +340,16 @@
               </video>
             </div>
           </div>
-          <h2 class="title is-5">Causal Discovery</h2>
           <div class="columns">
             <div class="column is-half">
+              <h2 class="title is-5">Causal Discovery</h2>
               <p>
-                TODO
+                Data was collected from the 11 scenarios simulated in PeopleFlow 
+                and fed into the framework's learning pipeline. This process had two main steps: 
+                first, to reconstruct the underlying causal model, and second, to learn the 
+                conditional probability distributions for each node in the discovered causal graph.
                 <br><br>
-                <b>Note:</b> this causal model was used for both the simulation and real-world experiments.
+                <b>Note:</b> This causal model was used for both the simulation and real-world experiments.
               </p>
             </div>
             <div class="column is-half">
@@ -422,11 +425,65 @@
               <video poster="" id="tree" autoplay controls muted loop height="100%">
                 <source src="static/videos/S1-learning-screen.mp4" type="video/mp4">
               </video>           
-            </div>
+            </div>  
           </div>
-          <h2 class="title is-6">Inference</h2>
           <p>
+            By exploiting the causal model from the simulation experiments 
+            (specifically the W &longrightarrow; D &longleftarrow; S relationship), 
+            data was collected from the 
+            <span style="color: #ec7a1b82; font-weight: bold;">poster session scenario</span>. 
+            This was used to learn the new conditional probability distributions for each node in the causal graph.
+          </p>  
+          <img src="static/images/S1-map.png" alt="S1-map" style="max-width: 100%; height: auto;">
+          <p>
+            The map shows the waypoints in the corridor where the poster session took place. This area had 
+            a higher people density compared to the other waypoints in the environment.
           </p>
+          
+          
+          <h2 class="title is-6">Inference</h2>
+          <div class="has-text-centered">
+            <p>
+              <b>Robot Task:</b> Navigate from the starting <span style="color: #ff00ffff; font-weight: bold;">pink waypoint</span> to the target <span style="color: #07f307; font-weight: bold;">green waypoint</span>.
+            </p>
+            <img src="static/images/S1-task.png" alt="S1-task" style="max-width: 100%; height: auto;">
+          </div>
+          <br>
+          <div class="columns">
+            <div class="column is-half">
+              <div class="has-text-centered">
+                <b>Non-causal approach (baseline)</b>
+                <video poster="" id="tree" autoplay controls muted loop height="100%">
+                  <source src="static/videos/S1-inference-noncausal-screen.mp4" type="video/mp4">
+                </video>           
+                <video poster="" id="tree" autoplay controls muted loop height="100%">
+                  <source src="static/videos/S1-inference-noncausal-blurred.mp4" type="video/mp4">
+                </video>           
+              </div>
+            </div>
+            <div class="column is-half">
+              <div class="has-text-centered">
+                <b>Causal approach (Our)</b>
+                <video poster="" id="tree" autoplay controls muted loop height="100%">
+                  <source src="static/videos/S1-inference-causal-screen.mp4" type="video/mp4">
+                </video>           
+                <video poster="" id="tree" autoplay controls muted loop height="100%">
+                  <source src="static/videos/S1-inference-causal-blurred.mp4" type="video/mp4">
+                </video>                      
+              </div>  
+            </div>  
+          </div>
+          <p>
+            The non-causal approach uses an A* algorithm with a shortest-path heuristic. 
+            This directs the robot straight into the crowded corridor where the poster session is taking place. 
+            As a result, the robot cannot find enough space to navigate and ultimately fails the task.
+            <br><br> 
+            In contrast, our causal approach leverages its knowledge of the relationship between the contextual factor <b>time of day (S) = "poster session"</b>
+            and the resulting <b>people density (D)</b>. It correctly identifies the corridor as a congested area and chooses a longer but clearer path. 
+            This alternative route is ultimately <b>more efficient</b>, as the robot can complete its task, and <b>safer</b> for the people at the poster session.
+          </p>
+          
+          
           <h2 class="title is-5">Scenario 2: Social Event</h2>
           <h2 class="title is-6">Learning</h2>
           <div class="columns">
@@ -439,8 +496,56 @@
               </video>           
             </div>
           </div>
-          <h2 class="title is-6">Inference</h2>
           <p>
+            Similarly, for the <span style="color: #ec1b8282; font-weight: bold;">social event scenario</span>, 
+            data was collected using the same causal model (the W &longrightarrow; D &longleftarrow; S relationship). 
+            The goal was to again update the model's parameters, this time with data from a different real-world interaction.
+          </p>  
+          <img src="static/images/S2-map.png" alt="S2-map" style="max-width: 100%; height: auto;">
+          <p>
+            The corresponding map displays the kitchen waypoint where the event was held. As expected, 
+            this location shows a higher concentration of people than the other areas in the environment.
+          </p>
+          <h2 class="title is-6">Inference</h2>
+          <div class="has-text-centered">
+            <p>
+              <b>Robot Task:</b> Navigate from the starting <span style="color: #ff00ffff; font-weight: bold;">pink waypoint</span> to the target <span style="color: #07f307; font-weight: bold;">green waypoint</span>.
+            </p>
+            <img src="static/images/S2-task.png" alt="S2-task" style="max-width: 100%; height: auto;">
+          </div>
+          <br>
+          <div class="columns">
+            <div class="column is-half">
+              <div class="has-text-centered">
+                <b>Non-causal approach (baseline)</b>
+                <video poster="" id="tree" autoplay controls muted loop height="100%">
+                  <source src="static/videos/S2-inference-noncausal-screen.mp4" type="video/mp4">
+                </video>           
+                <video poster="" id="tree" autoplay controls muted loop height="100%">
+                  <source src="static/videos/S2-inference-noncausal-blurred.mp4" type="video/mp4">
+                </video>           
+              </div>
+            </div>
+            <div class="column is-half">
+              <div class="has-text-centered">
+                <b>Causal approach (Our)</b>
+                <video poster="" id="tree" autoplay controls muted loop height="100%">
+                  <source src="static/videos/S2-inference-causal-screen.mp4" type="video/mp4">
+                </video>           
+                <video poster="" id="tree" autoplay controls muted loop height="100%">
+                  <source src="static/videos/S2-inference-causal-blurred.mp4" type="video/mp4">
+                </video>                      
+              </div>  
+            </div>  
+          </div>
+          <p>
+            Without causal reasoning, the baseline approach again fails. It attempts to take the shortest path directly through the kitchen, 
+            where the crowd from the social event obstructs its route and causes the task to fail.
+            <br><br> 
+            The causal approach, however, correctly predicts that a <b>"social event"</b> time slot will lead to high <b>people density (D)</b> 
+            in the kitchen. By knowing this, it chooses an alternative route that bypasses the congestion. While physically longer, 
+            this path is ultimately <b>safer</b> for the people at the event and <b>more efficient</b>, ensuring the robot 
+            successfully completes its task.
           </p>
         </div>
       </div>
