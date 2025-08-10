@@ -30,11 +30,17 @@ RUN wget https://raw.githubusercontent.com/pal-robotics/tiago_tutorials/noetic-d
     rosinstall src /opt/ros/noetic tiago_public-noetic.rosinstall
 
 # Initialize rosdep and update
-RUN rm -rf /etc/ros/rosdep/sources.list.d/20-default.list && rosdep init && rosdep update
+# RUN rm -rf /etc/ros/rosdep/sources.list.d/20-default.list && rosdep init && rosdep update
 
 # Install dependencies
-RUN DEBIAN_FRONTEND=noninteractive rosdep install -y --from-paths src --ignore-src --rosdistro noetic --skip-keys \
+# RUN DEBIAN_FRONTEND=noninteractive rosdep install -y --from-paths src --ignore-src --rosdistro noetic --skip-keys \
+#     "urdf_test omni_drive_controller orocos_kdl pal_filters libgazebo9-dev pal_usb_utils speed_limit_node camera_calibration_files pal_moveit_plugins pal_startup_msgs pal_local_joint_control pal_pcl_points_throttle_and_filter current_limit_controller hokuyo_node dynamixel_cpp pal_moveit_capabilities pal_pcl dynamic_footprint gravity_compensation_controller pal-orbbec-openni2 pal_loc_measure pal_map_manager ydlidar_ros_driver"
+
+# Initialize rosdep and update
+RUN rm -rf /etc/ros/rosdep/sources.list.d/20-default.list && rm -rf ~/.ros/rosdep/sources.cache && \
+    rosdep init && rosdep update --include-eol-distros && rosdep fix-permissions && DEBIAN_FRONTEND=noninteractive rosdep install -y --from-paths src --ignore-src --rosdistro noetic --skip-keys \
     "urdf_test omni_drive_controller orocos_kdl pal_filters libgazebo9-dev pal_usb_utils speed_limit_node camera_calibration_files pal_moveit_plugins pal_startup_msgs pal_local_joint_control pal_pcl_points_throttle_and_filter current_limit_controller hokuyo_node dynamixel_cpp pal_moveit_capabilities pal_pcl dynamic_footprint gravity_compensation_controller pal-orbbec-openni2 pal_loc_measure pal_map_manager ydlidar_ros_driver"
+
 
 # Fix tiago_controller_configuration package.xml
 COPY HRISim_docker/HRISim/robot/tiago_controller_conf_package.xml /root/tiago_ws/src/tiago_robot/tiago_controller_configuration/package.xml
@@ -115,4 +121,5 @@ RUN mkdir -p ~/.gazebo/models
 COPY HRISim_docker/HRISim/hrisim_gazebo/models /root/.gazebo/models
 
 # Set the entrypoint to run the script
+ENV DISABLE_ROS1_EOL_WARNINGS=1
 ENTRYPOINT ["/usr/local/bin/entrypoint.sh"]
