@@ -4,9 +4,25 @@ robot trajectories influenced by contextual factors such as time, environment la
 
 <div align="center">
 <p float="left">
-    <img src="https://github.com/lcastri/PeopleFlow/blob/dev/media/peopleflow.gif">
+    <img src="https://github.com/lcastri/PeopleFlow/blob/main/media/peopleflow.gif">
 </p>
 </div>
+
+## Citation
+
+If you find this repo useful for your research, please consider citing the following paper:
+
+```bibtex
+@misc{castri2025causalityenhanceddecision,
+      title={Causality-enhanced Decision-Making for Autonomous Mobile Robots in Dynamic Environments}, 
+      author={Luca Castri and Gloria Beraldo and Nicola Bellotto},
+      year={2025},
+      eprint={2504.11901},
+      archivePrefix={arXiv},
+      primaryClass={cs.RO},
+      url={https://arxiv.org/abs/2504.11901}, 
+}
+```
 
 ## Features
 * Customisable world
@@ -16,17 +32,45 @@ robot trajectories influenced by contextual factors such as time, environment la
 * Possibility to add context factors influencing human and TIAGo behaviours.
 
 ## How to use
-### Build and run
-After cloning the repository, use the following commands to build the Docker image and run it:
-```
-cd /path/to/PeopleFlow
-./HRISim_build.sh 
-```
-Once the Docker image is built, you can use the following command to run the container:
-```
-cd /path/to/PeopleFlow
-./HRISim_run.sh 
-```
+### Build and Run with Docker Compose
+
+After cloning the repository, navigate to the directory and use the `docker-compose` scripts to manage the container.
+
+1.  **Build the Image:**
+    First, build the Docker images defined in the `docker-compose.yml` file.
+
+    ```bash
+    cd /path/to/PeopleFlow
+    ./docbuild.sh 
+    ```
+
+2.  **Run the Container:**
+    Once the images are built, start the services in detached mode (in the background).
+
+    ```bash
+    ./docrun.sh 
+    ```
+
+***
+
+### Managing the Container
+
+Two additional scripts are provided to help you interact with and stop the running container:
+
+* **Access the Container Shell:**
+    To open a BASH terminal *inside* the running container (for debugging or running commands):
+
+    ```bash
+    ./docshell.sh
+    ```
+
+* **Stop the Container:**
+    To stop and remove the containers and network created by `docker-compose`:
+
+    ```bash
+    ./docstop.sh
+    ```
+    
 ### Scenario setup and launch
 Once inside the Docker container, run the following command to view the `.tmule` file containing all simulator parameters:
 ```
@@ -38,7 +82,6 @@ Parameters:
 * INIT_BATTERY - initial battery level of the robot. Default 100;
 * STATIC_DURATION - battery duration (hours) when robot is idle. Default 5;
 * DYNAMIC_DURATION - battery duration (hours) when robot is moving. Default 4;
-* OBS_FACTOR - obstacle factor affecting battery discharge. Default 3;
 * CHARGING_TIME - battery charging time (hours). Default 2;
 * ABORT_TIME_THRESHOLD - Task completion deadline (seconds). Default 45;
 * WORLD - name of world and map to load. Default "warehouse"<br>
@@ -53,7 +96,6 @@ If you want to add your own SCENARIO, you can include your .xml file in /pedsim_
 * FORCE_OBSTACLE - social force model parameter ([Helbing et. al](https://arxiv.org/pdf/cond-mat/9805244));
 * SIGMA_OBSTACLE - social force model parameter ([Helbing et. al](https://arxiv.org/pdf/cond-mat/9805244));
 * FORCE_SOCIAL - social force model parameter ([Helbing et. al](https://arxiv.org/pdf/cond-mat/9805244));
-* RECORD - if True, records the topics listed in hrisim_recording/scripts/record.py into a ROS bag;
 
 If you want to modify any of these parameters, you can edit the hrisim_bringup.yaml file by:
 ```
@@ -91,4 +133,5 @@ For more details on how to define plans, actions, and conditions, visit the [Pet
 ## Recent changes
 | Version | Changes |
 | :---: | ----------- |
+| 1.1.0 | docker optimised|
 | 1.0.0 | package released|
