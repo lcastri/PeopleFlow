@@ -1,0 +1,4 @@
+---
+string[] arcs  # List of arcs (keys)
+float32[] PDs  # 2D array of PD values
+float32[] BCs  # 2D array of BC values
