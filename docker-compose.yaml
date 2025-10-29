@@ -1,0 +1,46 @@
+services:
+  main_container:
+    # Build Configuration
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        UID: ${UID:-1000}
+        GID: ${GID:-1000}
+
+    # Container and Image name
+    image: hrisim:latest
+    container_name: HRISim
+
+    # Container Runtime Settings
+    user: ${UID:-1000}:${GID:-1000}
+
+    stdin_open: true  # Keeps the container running, allowing for interactive sessions.
+    tty: true         # Allocates a pseudo-TTY.
+    privileged: true  # Provides extended permissions, often needed for device access.
+
+    # Volume Mounts
+    # Live link between your local 'ros_ws' folder and the '/home/hrisim/ros_ws' folder inside the container.
+    volumes:
+      - ./HRISim_docker/src/HRISim:/home/hrisim/ros_ws/src/HRISim
+      - ./HRISim_docker/src/pedsim_ros:/home/hrisim/ros_ws/src/pedsim_ros
+      - ./shared:/home/hrisim/shared
+      - ./HRISim_docker/src/HRISim/hrisim_gazebo/tiago_maps/:/home/hrisim/.pal/tiago_maps/configurations/
+      - ./HRISim_docker/src/HRISim/hrisim_gazebo/models:/home/hrisim/.gazebo/models
+      - /tmp/.X11-unix:/tmp/.X11-unix:rw # Mount the X11 socket for GUI applications.
+
+    # GUI & GPU Hardware Acceleration
+    environment:
+      - DISPLAY=$DISPLAY          # Forward the display to your host machine.
+      - QT_X11_NO_MITSHM=1        # A common variable to ensure QT applications work correctly.
+    
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: all
+              capabilities: [gpu]
+
+    # --- Networking ---
+    network_mode: "host"

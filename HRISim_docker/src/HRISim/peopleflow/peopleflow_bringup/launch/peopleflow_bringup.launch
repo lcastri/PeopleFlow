@@ -1,0 +1,36 @@
+<launch>
+    <arg name="scenario"                />
+    <arg name="starting_elapsed"        default="8" />
+    <arg name="allow_task"              default="true" />
+    <arg name="max_tasktime"            default="60" />
+    <arg name="robot_mode"              default="1" />
+    <arg name="max_human_speed"         default="1.5" />
+    <arg name="robot_radius"            default="5" />
+    <arg name="is_stuck_threshold"      default="65" />
+    <arg name="force_obstacle"          default="5.0" />
+    <arg name="sigma_obstacle"          default="0.25" />
+    <arg name="force_social"            default="10.0" />
+
+    <include file="$(find peopleflow_manager)/launch/peopleflow_manager.launch">
+        <arg name="scenario"            value="$(arg scenario)" />
+        <arg name="starting_elapsed"    value="$(arg starting_elapsed)" />
+    </include>
+    <include file="$(find peopleflow_pedsim_bridge)/launch/peopleflow_pedsim.launch">
+        <arg name="scenario"            value="$(arg scenario)" />
+        <arg name="allow_task"          value="$(arg allow_task)" />
+        <arg name="max_tasktime"        value="$(arg max_tasktime)" />
+    </include>
+    <include file="$(find pedsim_simulator)/launch/mysimulator.launch">
+        <arg name="scenario"            value="$(arg scenario)" />
+        <arg name="robot_mode"          value="$(arg robot_mode)" />
+        <arg name="max_human_speed"     value="$(arg max_human_speed)" />
+        <arg name="robot_radius"        value="$(arg robot_radius)" />
+        <arg name="is_stuck_threshold"  value="$(arg is_stuck_threshold)" />
+        <arg name="force_obstacle"      value="$(arg force_obstacle)" />
+        <arg name="sigma_obstacle"      value="$(arg sigma_obstacle)" />
+        <arg name="force_social"        value="$(arg force_social)" />
+    </include>
+
+    <node name="peopleflow_counter" pkg="peopleflow_counter" type="PeopleCounter.py" output="screen" />
+
+</launch>

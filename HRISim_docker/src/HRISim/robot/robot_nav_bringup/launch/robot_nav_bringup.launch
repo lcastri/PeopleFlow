@@ -1,0 +1,22 @@
+<launch>
+
+    <arg name="public_sim"        default="true" />
+    <arg name="global_planner"    default="global_planner" />
+    <arg name="local_planner"     default="teb" />
+    <arg name="localization"      default="amcl" />
+    <arg name="map"               />
+
+    <include file="$(find tiago_2dnav_gazebo)/launch/navigation.launch">
+        <arg name="public_sim"          value="$(arg public_sim)" />
+        <arg name="global_planner"      value="$(arg global_planner)" />
+        <arg name="local_planner"       value="$(arg local_planner)" />
+        <arg name="localization"        value="$(arg localization)" />
+        <arg name="map"                 value="$(arg map)" />
+    </include>
+    <include file="$(find robot_clearing_distance)/launch/clearing_distance.launch"></include>
+
+    <node name="stand_up" pkg="robot_recovery" type="standUp.py" output="screen" />
+    <node name="localise_me" pkg="robot_recovery" type="localiseMe.py" output="screen" />
+    <node name="robot_closest_wp" pkg="robot_info" type="robot_closestWP.py" output="screen" />
+    
+</launch>
