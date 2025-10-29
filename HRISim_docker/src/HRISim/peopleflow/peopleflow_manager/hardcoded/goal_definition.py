@@ -76,8 +76,8 @@ def getTaskDuration( destination):
    
    
 if __name__ == "__main__":  
-
-    SCENARIO = "/home/lcastri/git/PeopleFlow/HRISim_docker/src/pedsim_ros/pedsim_simulator/scenarios/warehouse.xml"
+    TS = "H9"
+    SCENARIO = f"/home/lcastri/git/PeopleFlow/HRISim_docker/src/pedsim_ros/pedsim_simulator/scenarios/warehouse_{TS}.xml"
     AGENTS, SCHEDULE = readScenario()
     
     for agent in AGENTS:
@@ -92,6 +92,6 @@ if __name__ == "__main__":
                 destination = selectDestination(tod, AGENTS[agent]['potential_dests'])
                 AGENTS[agent]['tasks'][tod]['destinations'].append(destination)
                 AGENTS[agent]['tasks'][tod]['durations'].append(getTaskDuration(destination))
-                    
-    with open('/home/lcastri/git/PeopleFlow/HRISim_docker/src/HRISim/peopleflow/peopleflow_manager/hardcoded/agent_task_list.pkl', 'wb') as f:
+
+    with open(f'/home/lcastri/git/PeopleFlow/HRISim_docker/src/HRISim/peopleflow/peopleflow_manager/hardcoded/agent_task_list_{TS}.pkl', 'wb') as f:
         pickle.dump(AGENTS, f)
