@@ -13,7 +13,7 @@
         <arg name="localization"        value="$(arg localization)" />
         <arg name="map"                 value="$(arg map)" />
     </include>
-    <include file="$(find robot_clearing_distance)/launch/clearing_distance.launch"></include>
+    <!-- <include file="$(find robot_clearing_distance)/launch/clearing_distance.launch"></include> -->
 
     <node name="stand_up" pkg="robot_recovery" type="standUp.py" output="screen" />
     <node name="localise_me" pkg="robot_recovery" type="localiseMe.py" output="screen" />
