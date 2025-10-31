@@ -22,6 +22,22 @@ if echo "$renderer_string" | grep -q -E "llvmpipe|Mesa Intel"; then
 fi
 echo -e "${GREEN}GPU renderer detected. Proceeding to launch Docker...${NC}"
 
+if [ "$(stat -c '%u' ./shared)" != "$(id -u)" ]; then
+  echo -e "${YELLOW}Permissions issue detected: You do not own './shared'.${NC}"
+  echo -e "${YELLOW}This script will now run 'sudo chown' to fix this.${NC}"
+  echo -e "${YELLOW}Please enter your password if prompted:${NC}"
+  
+  sudo chown $(id -u):$(id -g) ./shared
+
+  if [ $? -ne 0 ]; then
+    echo -e "${RED}ERROR: Failed to change ownership of './shared'.${NC}"
+    echo -e "${RED}Please run 'sudo chown $(id -u):$(id -g) ./shared' manually and try again.${NC}"
+    exit 1
+  fi
+  echo -e "${GREEN}Permissions fixed successfully.${NC}"
+fi
+echo -e "${GREEN}Permissions check passed.${NC}"
+
 echo " "
 echo "Starting the container in the background..."
 docker compose up -d
