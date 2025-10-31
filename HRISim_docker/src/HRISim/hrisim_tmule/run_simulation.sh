@@ -10,13 +10,14 @@ echo -e "${GREEN}Starting simulation batch run...${NC}"
 echo -e "${GREEN}===================================================${NC}"
 
 # Loop from 1 to 10
+# for i in {4..4}
 for i in {1..10}
 do
   export INIT_TIME="H$i"
 
   echo ""
   echo -e "${GREEN}===================================================${NC}"
-  echo -e "${GREEN}Starting simulation for TS=$INIT_TIME${NC}"
+  echo -e "${GREEN}Starting simulation for TS = $INIT_TIME${NC}"
   echo -e "${GREEN}===================================================${NC}"
 
   # Run the tstart command and wait for it to finish.
@@ -30,7 +31,7 @@ do
 
   echo ""
   echo -e "${GREEN}===================================================${NC}"
-  echo -e "${GREEN}Simulation for TS=$INIT_TIME complete${NC}"
+  echo -e "${GREEN}Simulation for TS = $INIT_TIME complete${NC}"
   echo -e "${GREEN}===================================================${NC}"
   
   # Add a small delay to ensure all ROS nodes have shut down before starting the next one.
