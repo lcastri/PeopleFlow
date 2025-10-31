@@ -79,9 +79,11 @@ RUN pip install tmule --user
 RUN mkdir -p /home/hrisim/tiago_ws/src
 WORKDIR /home/hrisim/tiago_ws
 
-# Download tiago_public-noetic.rosinstall and clone required repositories
-RUN wget https://raw.githubusercontent.com/pal-robotics/tiago_tutorials/noetic-devel/tiago_public-noetic.rosinstall && \
-rosinstall src /opt/ros/noetic tiago_public-noetic.rosinstall
+# # Download tiago_public-noetic.rosinstall and clone required repositories
+# RUN wget https://raw.githubusercontent.com/pal-robotics/tiago_tutorials/noetic-devel/tiago_public-noetic.rosinstall && \
+# rosinstall src /opt/ros/noetic tiago_public-noetic.rosinstall
+# Clone the complete, stable source code from your personal GitHub repo
+RUN git clone https://github.com/lcastri/mytiago_src.git /home/hrisim/tiago_ws/src
 
 # Run user-level rosdep commands and install dependencies
 RUN rosdep update --include-eol-distros && \
