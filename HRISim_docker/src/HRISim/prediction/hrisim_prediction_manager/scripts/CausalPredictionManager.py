@@ -16,7 +16,7 @@ import networkx as nx
 import pyAgrum
 import pyAgrum.causal as pyc
 from enum import Enum
-
+import time
 
 class Robot():
     def __init__(self) -> None:
@@ -193,23 +193,16 @@ class PredictionManager:
     
         RV_bin_idx = find_bin(rv, self.RV_info['edges'])
                 
-        # --- BN prediction ---
-        bn = self.CIE['target-3']['bn']
+        # # --- BN prediction ---
         cm = self.CIE['target-3']['cm']
-        ie = pyAgrum.VariableElimination(bn)
-        evidence = {"RVt": RV_bin_idx, "CSt": cs}
-        ie.setEvidence(evidence)
-        ie.makeInference()
-        bn_posterior = ie.posterior("ECt")
-        bn_posterior_values = bn_posterior.toarray()
-        pred_bn = sum(bn_posterior_values[j] * self.EC_info['midpoints'][j] for j in range(len(bn_posterior_values)))
                         
         # --- CausalModel prediction ---
+        evidence = {"RVt": RV_bin_idx, "CSt": cs}
         _, adj, _ = pyc.causalImpact(cm, on="ECt", doing="RVt", knowing={"CSt"}, values=evidence)
         posterior_causal = adj.toarray()
         pred_causal = sum(posterior_causal[j] * self.EC_info['midpoints'][j] for j in range(len(posterior_causal)))
                         
-        return pred_bn, pred_causal
+        return pred_causal
     
     
     def predict_PD(self, tod, wp):
@@ -223,24 +216,17 @@ class PredictionManager:
                
         _, _, midpoints_PD = get_info(dwp, self.CIE[wp]['audit'], 'PD0')
       
-        # --- BN prediction ---
-        ie = pyAgrum.VariableElimination(bn)
-        evidence = {"TOD0": tod_bin, "WP0": wp_bin}
-        ie.setEvidence(evidence)
-        ie.makeInference()
-        bn_posterior = ie.posterior("PD0")
-        bn_posterior_values = bn_posterior.toarray()
-        pred_bn = sum(bn_posterior_values[j] * midpoints_PD[j] for j in range(len(bn_posterior_values)))
-                                
         # --- CausalModel prediction ---
+        evidence = {"TOD0": tod_bin, "WP0": wp_bin}
         _, adj, _ = pyc.causalImpact(cm, on="PD0", doing="TOD0", knowing={"WP0"}, values=evidence)
         posterior_causal = adj.toarray()
         pred_causal = sum(posterior_causal[j] * midpoints_PD[j] for j in range(len(posterior_causal)))
 
-        return pred_bn, pred_causal
+        return pred_causal
     
 
     def handle_get_risk_map(self, req):
+        start_time = time.perf_counter()
         rospy.logwarn("Prediction requested!")
         
         # Convert the observations deque to a pandas DataFrame
@@ -248,24 +234,38 @@ class PredictionManager:
                
         # Init output
         PD_wps = {}
+        PD_infs = {}
         PDs = []
         BCs = []
+        PD_inf_time = []
+        BC_inf_time = []
         
         for wp in WPS_COORD.keys():
             if wp in ['parking', 'charging-station']: continue
             traversal_step = TTWP_relative[wp]
             tod = self.elapsed2TOD(self.elapsed + traversal_step * PREDICTION_STEP)
-            PD_wps[wp] = self.predict_PD(tod, wp)[1]
+            PD_start_time = time.perf_counter()
+            PD_wps[wp] = self.predict_PD(tod, wp)
+            PD_end_time = time.perf_counter()
+            PD_infs[wp] = PD_end_time - PD_start_time
             
         for arc in self.ARCs:
             wp_i, wp_j = arc.split('__')
             if wp_i in ['parking', 'charging-station']: continue            
             if wp_j in ['parking', 'charging-station']: continue            
             traversal_step = self.TTWP[(wp_i, wp_j)]
-            BCs.append(self.predict_BC(rv=ROBOT_MAX_VEL, cs=0)[1]*traversal_step)
+                        
+            BC_start_time = time.perf_counter()
+            BCs.append(self.predict_BC(rv=ROBOT_MAX_VEL, cs=0)*traversal_step)
+            BC_end_time = time.perf_counter()
+            BC_inf_time.append(BC_end_time - BC_start_time)
             PDs.append((PD_wps[wp_i] + PD_wps[wp_j])/2)
+            PD_inf_time.append(PD_infs[wp_i] + PD_infs[wp_j])
             
-        return GetRiskMapResponse(self.ARCs, PDs, BCs)
+        end_time = time.perf_counter()
+        tot_inf_time = end_time - start_time
+            
+        return GetRiskMapResponse(self.ARCs, PDs, BCs, tot_inf_time, PD_inf_time, BC_inf_time)
         
 
 if __name__ == "__main__":

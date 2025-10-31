@@ -251,7 +251,7 @@ if __name__ == "__main__":
     
     p = PNPCmd()
     
-    TLISTPATH = '/root/ros_ws/src/HRISim/hrisim_plans/hardcoded/task_list.json'
+    TLISTPATH = '/home/hrisim/ros_ws/src/HRISim/hrisim_plans/hardcoded/task_list.json'
     with open(TLISTPATH, 'r') as f:
         TASK_LIST = json.load(f)
     

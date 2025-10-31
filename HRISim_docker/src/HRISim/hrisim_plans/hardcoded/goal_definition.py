@@ -4,18 +4,15 @@ import random
 import networkx as nx
 import constants as constants
 
-WORKING_TOP_TARGETS = [constants.WP.TARGET_2.value]
-WORKING_BOTTOM_TARGETS = [constants.WP.TARGET_5.value]
+WORKING_TOP_TARGETS = [constants.WP.TARGET_1.value, constants.WP.TARGET_2.value, constants.WP.TARGET_3.value]
+WORKING_BOTTOM_TARGETS = [constants.WP.TARGET_4.value, constants.WP.TARGET_5.value, constants.WP.TARGET_6.value]
 LUNCH_TARGETS = [constants.WP.ENTRANCE.value, constants.WP.TARGET_7.value]
-# WORKING_TOP_TARGETS = [constants.WP.TARGET_1.value, constants.WP.TARGET_2.value, constants.WP.TARGET_3.value]
-# WORKING_BOTTOM_TARGETS = [constants.WP.TARGET_4.value, constants.WP.TARGET_5.value, constants.WP.TARGET_6.value]
-# LUNCH_TARGETS = [constants.WP.ENTRANCE.value, constants.WP.TARGET_7.value]
 
 TASK_LIST = {tod.value: [] for tod in constants.TOD}
    
 if __name__ == "__main__":  
 
-    GPATH = "/home/lcastri/git/PeopleFlow/HRISim_docker/HRISim/peopleflow/peopleflow_manager/res/warehouse/graph.pkl"
+    GPATH = "/home/lcastri/git/PeopleFlow/HRISim_docker/src/HRISim/peopleflow/peopleflow_manager/res/warehouse/graph.pkl"
     with open(GPATH, 'rb') as f:
         G = pickle.load(f)
         G.remove_node("parking")
@@ -48,5 +45,5 @@ if __name__ == "__main__":
                     whereIam = 'T'
         
     
-    with open('/home/lcastri/git/PeopleFlow/HRISim_docker/HRISim/hrisim_plans/hardcoded/task_list.json', 'w') as f:
+    with open('/home/lcastri/git/PeopleFlow/HRISim_docker/src/HRISim/hrisim_plans/hardcoded/task_list.json', 'w') as f:
         json.dump(TASK_LIST, f)

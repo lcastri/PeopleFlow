@@ -7,7 +7,7 @@ from std_msgs.msg import Header
 from peopleflow_msgs.msg import Time as pT
 import hrisim_util.ros_utils as ros_utils
 import subprocess
-from std_srvs.srv import Empty  # Import the Empty service
+from std_srvs.srv import Empty, EmptyResponse  # Import the Empty service
 
 TIME_INIT = 8
 
@@ -106,6 +106,7 @@ def shutdown_cb(req=None):
         rospy.logwarn(f"Calling shutdown...")
         subprocess.Popen(['bash', '-c', 'tmux send-keys -t HRISim_bringup:0.0 "tstop" C-m'], shell=False)
         rospy.logwarn(f"Shutting down...")
+        return EmptyResponse()
     except Exception as e:
         rospy.logerr(f"Failed to execute tstop: {str(e)}")
     

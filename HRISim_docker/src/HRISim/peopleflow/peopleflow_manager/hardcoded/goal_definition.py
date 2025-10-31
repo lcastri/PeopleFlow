@@ -76,22 +76,23 @@ def getTaskDuration( destination):
    
    
 if __name__ == "__main__":  
-    TS = "H9"
-    SCENARIO = f"/home/lcastri/git/PeopleFlow/HRISim_docker/src/pedsim_ros/pedsim_simulator/scenarios/warehouse_{TS}.xml"
-    AGENTS, SCHEDULE = readScenario()
-    
-    for agent in AGENTS:
-        AGENTS[agent]['tasks'] = {tod: {"destinations":[], "durations":[]} for tod in SCHEDULE}
-        AGENTS[agent]['startTime'] = random.randint(20, SCHEDULE[constants.TOD.H1.value].duration - 30)
-        AGENTS[agent]['exitTime'] = int(sum([SCHEDULE[t].duration for t in SCHEDULE if t in [e.value for e in constants.TOD if e != constants.TOD.H10 and e != constants.TOD.OFF]]) + AGENTS[agent]['startTime'])
-        print(f"Agent {agent}: startTime {AGENTS[agent]['startTime']} exitTime {AGENTS[agent]['exitTime']}")
-                   
-        for tod in SCHEDULE:
-            print(f"TOD {tod}")
-            while len(AGENTS[agent]['tasks'][tod]['destinations']) < 2500:
-                destination = selectDestination(tod, AGENTS[agent]['potential_dests'])
-                AGENTS[agent]['tasks'][tod]['destinations'].append(destination)
-                AGENTS[agent]['tasks'][tod]['durations'].append(getTaskDuration(destination))
+    TS = ["H1", "H2", "H3", "H4", "H5", "H6", "H7", "H8", "H9", "H10", "off"]
+    for jj in TS:
+        SCENARIO = f"/home/hrisim/ros_ws/src/pedsim_ros/pedsim_simulator/scenarios/warehouse_{jj}.xml"
+        AGENTS, SCHEDULE = readScenario()
+        
+        for agent in AGENTS:
+            AGENTS[agent]['tasks'] = {tod: {"destinations":[], "durations":[]} for tod in SCHEDULE}
+            AGENTS[agent]['startTime'] = random.randint(20, SCHEDULE[constants.TOD.H1.value].duration - 30)
+            AGENTS[agent]['exitTime'] = int(sum([SCHEDULE[t].duration for t in SCHEDULE if t in [e.value for e in constants.TOD if e != constants.TOD.H10 and e != constants.TOD.OFF]]) + AGENTS[agent]['startTime'])
+            print(f"Agent {agent}: startTime {AGENTS[agent]['startTime']} exitTime {AGENTS[agent]['exitTime']}")
+                    
+            for tod in SCHEDULE:
+                print(f"TOD {tod}")
+                while len(AGENTS[agent]['tasks'][tod]['destinations']) < 2500:
+                    destination = selectDestination(tod, AGENTS[agent]['potential_dests'])
+                    AGENTS[agent]['tasks'][tod]['destinations'].append(destination)
+                    AGENTS[agent]['tasks'][tod]['durations'].append(getTaskDuration(destination))
 
-    with open(f'/home/lcastri/git/PeopleFlow/HRISim_docker/src/HRISim/peopleflow/peopleflow_manager/hardcoded/agent_task_list_{TS}.pkl', 'wb') as f:
-        pickle.dump(AGENTS, f)
+        with open(f'/home/hrisim/ros_ws/src/HRISim/peopleflow/peopleflow_manager/hardcoded/agent_task_list_{jj}.pkl', 'wb') as f:
+            pickle.dump(AGENTS, f)

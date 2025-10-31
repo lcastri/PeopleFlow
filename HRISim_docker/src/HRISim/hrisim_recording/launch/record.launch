@@ -1,0 +1,9 @@
+<launch>
+
+  <arg name="bagname" default = ""/>
+
+  <node name="hrisim_recording" pkg="hrisim_recording" type="record.py" output="screen">
+    <param name="bagname"   value="$(arg bagname)"/> 
+  </node>
+
+</launch>

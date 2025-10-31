@@ -172,8 +172,9 @@ if __name__ == '__main__':
         graph_path_show("")
 
         G.remove_node(constants.WP.CHARGING_STATION.value)
-        
-    agentsplan_path = '~/ros_ws/src/HRISim/peopleflow/peopleflow_manager/hardcoded/agent_task_list.pkl'
+
+    agentsplan_path = rospy.get_param("~agent_task_list", False)
+    # agentsplan_path = '/home/hrisim/ros_ws/src/HRISim/peopleflow/peopleflow_manager/hardcoded/agent_task_list.pkl'
     with open(agentsplan_path, 'rb') as f:
         AGENTSPLAN = pickle.load(f)
         

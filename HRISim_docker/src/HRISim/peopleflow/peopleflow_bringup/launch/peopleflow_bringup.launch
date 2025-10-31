@@ -1,5 +1,6 @@
 <launch>
     <arg name="scenario"                />
+    <arg name="init_time"               default="" />
     <arg name="starting_elapsed"        default="8" />
     <arg name="allow_task"              default="true" />
     <arg name="max_tasktime"            default="60" />
@@ -11,17 +12,21 @@
     <arg name="sigma_obstacle"          default="0.25" />
     <arg name="force_social"            default="10.0" />
 
+    <arg name="full_scenario_name" if="$(eval arg('init_time') == '')" value="$(arg scenario)" />
+    <arg name="full_scenario_name" unless="$(eval arg('init_time') == '')" value="$(arg scenario)_$(arg init_time)" />
+
     <include file="$(find peopleflow_manager)/launch/peopleflow_manager.launch">
-        <arg name="scenario"            value="$(arg scenario)" />
+        <arg name="scenario"            value="$(arg full_scenario_name)" />
         <arg name="starting_elapsed"    value="$(arg starting_elapsed)" />
     </include>
     <include file="$(find peopleflow_pedsim_bridge)/launch/peopleflow_pedsim.launch">
         <arg name="scenario"            value="$(arg scenario)" />
+        <arg name="init_time"           value="$(arg init_time)" />
         <arg name="allow_task"          value="$(arg allow_task)" />
         <arg name="max_tasktime"        value="$(arg max_tasktime)" />
     </include>
     <include file="$(find pedsim_simulator)/launch/mysimulator.launch">
-        <arg name="scenario"            value="$(arg scenario)" />
+        <arg name="scenario"            value="$(arg full_scenario_name)" />
         <arg name="robot_mode"          value="$(arg robot_mode)" />
         <arg name="max_human_speed"     value="$(arg max_human_speed)" />
         <arg name="robot_radius"        value="$(arg robot_radius)" />

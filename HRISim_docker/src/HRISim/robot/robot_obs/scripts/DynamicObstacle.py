@@ -34,7 +34,7 @@ class DynamicObstacleSpawner:
         self.next_goal = None  # Store the next goal position
 
         # Box SDF model path
-        self.box_model_path = os.path.expanduser("/root/.gazebo/models/mycube/mycube.sdf")
+        self.box_model_path = os.path.expanduser("/home/hrisim/.gazebo/models/mycube/mycube.sdf")
 
         # Keep track of the last spawned box name
         self.last_spawned_box = None

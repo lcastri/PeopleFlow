@@ -1,4 +1,7 @@
 ---
-string[] arcs  # List of arcs (keys)
-float32[] PDs  # 2D array of PD values
-float32[] BCs  # 2D array of BC values
+string[] arcs           # List of arcs (keys)
+float32[] PDs           # 2D array of PD values
+float32[] BCs           # 2D array of BC values
+float64 tot_inf_time    # Time taken for inference in seconds
+float32[] PD_inf_time   # 2D array of PD values
+float32[] BC_inf_time   # 2D array of BC values
