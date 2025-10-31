@@ -9,17 +9,51 @@ A Gazebo-based human-robot interaction simulator that accurately mimics HRI scen
 * Causal analysis
 
 ## How to use
-### Build and run
-After cloning the repository, use the following commands to build the Docker image and run it:
+### Build and Run with Docker Compose
+
+After cloning the repository, navigate to the directory and use the `docker-compose` scripts to manage the container.
+
+1.  **Build the Image:**
+    First, build the Docker images defined in the `docker-compose.yml` file.
+
+    ```bash
+    cd /path/to/PeopleFlow
+    ./docbuild.sh 
+    ```
+
+2.  **Run the Container:**
+    Once the images are built, start the services in detached mode (in the background).
+
+    ```bash
+    ./docrun.sh 
+    ```
+
+***
+
+### Managing the Container
+
+Two additional scripts are provided to help you interact with and stop the running container:
+
+* **Access the Container Shell:**
+    To open a BASH terminal *inside* the running container (for debugging or running commands):
+
+    ```bash
+    ./docshell.sh
+    ```
+
+* **Stop the Container:**
+    To stop and remove the containers and network created by `docker-compose`:
+
+    ```bash
+    ./docstop.sh
+    ```
+
+### Building ROS workspace
+Once inside the container using ./docshell, you can build the ros_ws workspace with the following command:
 ```
-cd /path/to/ROS-Causal_HRISim
-./HRISim_build.sh 
+catkin build
 ```
-Once the Docker image is built, you can use the following command to run the container:
-```
-cd /path/to/ROS-Causal_HRISim
-./HRISim_run.sh 
-```
+    
 ### Scenario setup and launch
 Once inside the Docker container, run the following command to view the tmule file containing all the simulator parameters:
 ```
