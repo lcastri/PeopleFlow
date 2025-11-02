@@ -31,6 +31,7 @@ from gazebo_msgs.srv import SetModelState
 from gazebo_msgs.msg import ModelState
 from geometry_msgs.msg import PoseWithCovarianceStamped
 from nav_msgs.msg import Odometry
+import time 
 
 BATTERY_CRITICAL_LEVEL = 20
 
@@ -392,14 +393,17 @@ def Plan(p):
             evaluations = 0
             # Step 1: Run A* to find the best path based on distance, people density, and battery cost
             try:
+                start_time = time.perf_counter()
                 QUEUE = nx.astar_path(G, ROBOT_CLOSEST_WP, NEXT_GOAL, heuristic=heuristic_wrapper, weight='weight')
+                end_time = time.perf_counter()
+                planning_time = end_time - start_time
                 evaluations = heuristic_wrapper.get_count()
             except nx.NetworkXNoPath:
                 raise ValueError("No valid path found by A*!")
                 
             graph_path_show(','.join(QUEUE))
             TASK_LIST[rospy.get_param('/peopleflow/timeday')].pop(0)
-            task_id = new_task_service(NEXT_GOAL, QUEUE, tot_inf_time, mean_inf_time, evaluations).task_id
+            task_id = new_task_service(NEXT_GOAL, QUEUE, tot_inf_time, mean_inf_time, planning_time, evaluations).task_id
             TASK_ON = True
             firstgoal = QUEUE[0]
         

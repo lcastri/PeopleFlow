@@ -2,6 +2,7 @@ string final_destination  # Final destination for the new task
 string[] path             # Path for the task
 float64 tot_inf_time      # Total time taken for inference in seconds
 float64 mean_inf_time     # Mean time taken for inference in seconds
+float64 planning_time     # Total time taken for planning in seconds
 int32 evaluations         # Number of path evaluations performed
 ---
 int32 task_id             # ID of the newly created task
