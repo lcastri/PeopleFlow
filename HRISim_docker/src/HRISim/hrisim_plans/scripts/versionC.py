@@ -31,8 +31,37 @@ from gazebo_msgs.srv import SetModelState
 from gazebo_msgs.msg import ModelState
 from geometry_msgs.msg import PoseWithCovarianceStamped
 from nav_msgs.msg import Odometry
+import time
 
 BATTERY_CRITICAL_LEVEL = 20
+
+class HeuristicCounter:
+    """
+    A wrapper class for a heuristic function that counts
+    how many times the heuristic is called.
+    """
+    def __init__(self, heuristic_func):
+        self.heuristic = heuristic_func
+        self.counter = 0
+
+    def __call__(self, u, v):
+        """
+        This method makes the class instance callable,
+        just like a function.
+        """
+        # Increment the counter every time A* calls it
+        self.counter += 1
+        
+        # Now, return the value from the real heuristic
+        return self.heuristic(u, v)
+
+    def reset(self):
+        """Resets the counter to zero for a new run."""
+        self.counter = 0
+
+    def get_count(self):
+        """Returns the current count."""
+        return self.counter
 
 def send_goal(p, next_dest, nextnext_dest=None, time_threshold=-1, first=False):
     pos = nx.get_node_attributes(G, 'pos')
@@ -54,14 +83,18 @@ def get_prediction(p):
     ARCs = [(arc.split("__")[0], arc.split("__")[1]) for arc in tmp_ARCs]
     PDs = risk_map_data['PDs']
     BCs = risk_map_data['BCs']
-
+    tot_inf_time = risk_map_data['tot_inf_time']
+    PD_inf_time = risk_map_data['PD_inf_time']
+    BC_inf_time = risk_map_data['BC_inf_time']
+    mean_inf_time = (sum(PD_inf_time)/len(PD_inf_time) + sum(BC_inf_time)/len(BC_inf_time))
+    
     risk_map = {}
     for i, arc in enumerate(ARCs):
         risk_map[arc] = {
             'PD': PDs[i],
             'BC': BCs[i]
         }
-    return risk_map
+    return risk_map, tot_inf_time, mean_inf_time
 
 
 def shortest_heuristic(a, b):
@@ -334,7 +367,10 @@ def Plan(p):
             rospy.logerr(f"New goal defined: {NEXT_GOAL}")
             
             if not no_prediction:
-                RISK_MAP = get_prediction(p)
+                RISK_MAP, tot_inf_time, mean_inf_time = get_prediction(p)
+            else:
+                tot_inf_time = 0.0
+                mean_inf_time = 0.0
             if rospy.get_param('/peopleflow/timeday') == constants.TOD.OFF.value and not no_prediction:
                 no_prediction = True
             
@@ -352,9 +388,16 @@ def Plan(p):
                 max_bc_cost=max_bc_cost, 
             )
 
+            heuristic_wrapper = HeuristicCounter(causal_heuristic_predefined)
+            heuristic_wrapper.reset()
+            evaluations = 0
             # Step 1: Run A* to find the best path based on distance, people density, and battery cost
             try:
-                QUEUE = nx.astar_path(G, ROBOT_CLOSEST_WP, NEXT_GOAL, heuristic=causal_heuristic_predefined, weight='weight')
+                start_time = time.perf_counter()
+                QUEUE = nx.astar_path(G, ROBOT_CLOSEST_WP, NEXT_GOAL, heuristic=heuristic_wrapper, weight='weight')
+                end_time = time.perf_counter()
+                planning_time = end_time - start_time
+                evaluations = heuristic_wrapper.get_count()            
             except nx.NetworkXNoPath:
                 raise ValueError("No valid path found by A*!")
                 
@@ -373,7 +416,7 @@ def Plan(p):
             
             graph_path_show(','.join(QUEUE))
             TASK_LIST[rospy.get_param('/peopleflow/timeday')].pop(0)
-            task_id = new_task_service(NEXT_GOAL, QUEUE).task_id
+            task_id = new_task_service(NEXT_GOAL, QUEUE, tot_inf_time, mean_inf_time, planning_time, evaluations).task_id
             TASK_ON = True
             firstgoal = QUEUE[0]
         
@@ -458,8 +501,6 @@ if __name__ == "__main__":
     rospy.Subscriber("/mobile_base_controller/odom", Odometry, cb_odom)
     initial_pose_pub = rospy.Publisher("/initialpose", PoseWithCovarianceStamped, queue_size=10)
 
-    # STATIC_CONSUMPTION = rospy.get_param("/robot_battery/static_consumption")
-    # K = rospy.get_param("/robot_battery/dynamic_consumption")
     TIME_THRESHOLD = ros_utils.wait_for_param("/hrisim/abort_time_threshold")
 
     parser = argparse.ArgumentParser(description='Initialize robot parameters.')

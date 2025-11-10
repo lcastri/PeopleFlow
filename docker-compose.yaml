@@ -24,10 +24,12 @@ services:
     volumes:
       - ./HRISim_docker/src/HRISim:/home/hrisim/ros_ws/src/HRISim
       - ./HRISim_docker/src/pedsim_ros:/home/hrisim/ros_ws/src/pedsim_ros
+      # - ./shared/GloriaPC:/home/hrisim/ros_ws/src/HRISim/hrisim_postprocess/bags/
+      # - ./shared/sensitivity:/home/hrisim/ros_ws/src/HRISim/hrisim_postprocess/bags/
       - ./shared:/home/hrisim/shared
       - ./HRISim_docker/src/HRISim/hrisim_gazebo/tiago_maps/:/home/hrisim/.pal/tiago_maps/configurations/
       - ./HRISim_docker/src/HRISim/hrisim_gazebo/models:/home/hrisim/.gazebo/models
-      - /tmp/.X11-unix:/tmp/.X11-unix:rw # Mount the X11 socket for GUI applications.
+      - /tmp/.X11-unix:/tmp/.X11-unix:rw
 
     # GUI & GPU Hardware Acceleration
     environment:

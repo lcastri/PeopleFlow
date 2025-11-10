@@ -369,6 +369,9 @@ dist/
 *.gif
 utilities_ws/src/RA-L/hrisim_postprocess/csv/
 utilities_ws/src/RA-L/hrisim_postprocess/results/
+/HRISim_docker/src/HRISim/hrisim_postprocess/bags/*
+/HRISim_docker/src/HRISim/hrisim_postprocess/csv/*
+/HRISim_docker/src/HRISim/hrisim_postprocess/results/*
 # HRISim_docker/src/HRISim/prediction/hrisim_prediction_manager/CIEs/*
 # HRISim_docker/src/HRISim/prediction/hrisim_prediction_manager/DAGs/*
 # HRISim_docker/src/HRISim/peopleflow/peopleflow_manager/hardcoded/*

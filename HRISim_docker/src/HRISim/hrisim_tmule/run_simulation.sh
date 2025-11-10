@@ -10,7 +10,7 @@ echo -e "${GREEN}Starting simulation batch run...${NC}"
 echo -e "${GREEN}===================================================${NC}"
 
 # Loop from 1 to 10
-for i in {1..10}
+for i in {9..9}
 do
   export INIT_TIME="H$i"
 

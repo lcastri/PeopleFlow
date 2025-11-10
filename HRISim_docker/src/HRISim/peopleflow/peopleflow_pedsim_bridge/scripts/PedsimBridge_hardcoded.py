@@ -117,7 +117,7 @@ class PedsimBridge():
                 pass
                 
             else:
-                rospy.logerr("THERE IS A CASE I DID NOT COVER:")
+                rospy.logerr("UNCOVERED CASE:")
                 rospy.logerr(f"TOD {self.timeOfDay}")
                 rospy.logerr(f"elapsedTime {self.elapsedTime}")
                 rospy.logerr(f"Agent {agent.id}")

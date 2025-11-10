@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 2.8.3)
-project(hrisim_risk)
+project(hrisim_postprocess)
 
 ## Compile as C++11, supported in ROS Kinetic and newer
  add_compile_options(-std=c++11)
@@ -12,12 +12,8 @@ project(hrisim_risk)
 ## if COMPONENTS list like find_package(catkin REQUIRED COMPONENTS xyz)
 ## is used, also find other catkin packages
 find_package(catkin REQUIRED COMPONENTS
-  geometry_msgs
-  visualization_msgs
-  pedsim_msgs
   rospy
-  std_msgs
-  message_generation
+  robot_msgs
 )
 
 ## System dependencies are found with CMake's conventions
@@ -27,17 +23,17 @@ find_package(catkin REQUIRED COMPONENTS
 ## Declare ROS messages, services and actions ##
 ################################################
 # Generate messages in the 'msg' folder
-add_message_files(
-  FILES
-  Risk.msg
-)
+# add_message_files(
+#   FILES
+#   Risk.msg
+# )
 
 # Generate added messages and services with any dependencies listed here
-generate_messages(
-  DEPENDENCIES
-  std_msgs
-  geometry_msgs
-)
+# generate_messages(
+#   DEPENDENCIES
+#   std_msgs
+#   geometry_msgs
+# )
 
 
 ################################################
@@ -50,7 +46,7 @@ generate_messages(
 ###################################
 
 catkin_package(
-  CATKIN_DEPENDS rospy std_msgs geometry_msgs message_runtime
+  CATKIN_DEPENDS rospy 
 )
 
 catkin_package(

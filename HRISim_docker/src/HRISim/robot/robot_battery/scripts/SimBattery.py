@@ -77,7 +77,6 @@ class SimBatteryManager():
             self.battery_level = 0
         
     def charge_battery(self):
-        # self.battery_level += np.floor(self.deltaT * (self.charge_rate))
         self.battery_level += self.deltaT * (self.charge_rate)
         if self.battery_level > 100:
             self.battery_level = 100  # Cap at 100%

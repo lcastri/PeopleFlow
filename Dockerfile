@@ -111,6 +111,10 @@ ln -s ~/ros_ws/PetriNetPlans/PNPros/ROS_bridge/pnp_msgs .
 RUN echo "export PNP_HOME=/home/hrisim/ros_ws/src/pnp_ros/" >> ~/.bashrc
 COPY HRISim_docker/src/HRISim/pnp_ros/main.cpp /home/hrisim/ros_ws/PetriNetPlans/PNPros/ROS_bridge/pnp_ros/src/main.cpp
 
+# Install user-specific python packages
+RUN pip install tqdm --user
+RUN pip install --upgrade scipy --user
+
 # ############################################################################## 
 # Shared Folders
 # ##############################################################################
