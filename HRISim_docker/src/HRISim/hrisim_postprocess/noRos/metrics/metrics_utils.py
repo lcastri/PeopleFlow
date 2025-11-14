@@ -238,7 +238,7 @@ def plot_boxplot(data, title, ylabel, bagnames, categories, background = False, 
                 except (ValueError, TypeError):
                     continue
         return flat_list
-    plt.figure(figsize=(12, 6))
+    plt.figure(figsize=(11, 6))
     ax = plt.gca()
 
     all_stats = []
@@ -285,7 +285,7 @@ def plot_boxplot(data, title, ylabel, bagnames, categories, background = False, 
     ax.bxp(all_stats, positions=valid_positions)
 
     # --- Formatting ---
-    plt.title(f"{title}", fontdict={"fontsize": fontsize})
+    plt.title(f"Human-Robot Proxemic Compliance", fontdict={"fontsize": fontsize})
     plt.ylabel(ylabel, fontdict={"fontsize": fontsize})
     plt.grid(axis='y', linestyle='--', alpha=0.6)
     

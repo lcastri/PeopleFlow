@@ -243,6 +243,13 @@ def set_robot_pos(dest):
     except rospy.ServiceException as e:
         rospy.logerr("Service call failed: %s" % e)   
         
+        
+def shortest_heuristic(a, b):
+    pos = nx.get_node_attributes(G, 'pos')
+    (x1, y1) = pos[a]
+    (x2, y2) = pos[b]
+    return ((x1 - x2)**2 + (y1 - y2)**2)**0.5
+        
 def Plan(p):
     while not ros_utils.wait_for_param("/pnp_ros/ready"):
         rospy.sleep(0.1)
@@ -305,36 +312,36 @@ def Plan(p):
             if isinstance(NEXT_GOAL, constants.WP): NEXT_GOAL = NEXT_GOAL.value
             rospy.logerr(f"New goal defined: {NEXT_GOAL}")
             
-            if not no_prediction:
-                RISK_MAP, tot_inf_time, mean_inf_time = ros_utils.get_prediction(p)
-            else:
-                tot_inf_time = 0.0
-                mean_inf_time = 0.0
-            if rospy.get_param('/peopleflow/timeday') == constants.TOD.OFF.value and not no_prediction:
-                no_prediction = True
+            # if not no_prediction:
+            #     RISK_MAP, tot_inf_time, mean_inf_time = ros_utils.get_prediction(p)
+            # else:
+            #     tot_inf_time = 0.0
+            #     mean_inf_time = 0.0
+            # if rospy.get_param('/peopleflow/timeday') == constants.TOD.OFF.value and not no_prediction:
+            #     no_prediction = True
 
             # Update weights
             K_D = rospy.get_param('/hrisim/weights/k_d')
             K_PD = rospy.get_param('/hrisim/weights/k_pd')
             K_BC = rospy.get_param('/hrisim/weights/k_bc')
             rospy.logwarn(f"[Planner] Using weights: K_D={K_D}, K_PD={K_PD}, K_BC={K_BC}")
-            max_d_cost, max_pd_cost, max_bc_cost = compute_max_values(G, RISK_MAP)
+            # max_d_cost, max_pd_cost, max_bc_cost = compute_max_values(G, RISK_MAP)
             # Pass the fetched K-values to the update function
-            G = update_G_weights(G, max_d_cost, max_pd_cost, max_bc_cost, K_D, K_PD, K_BC)
-            ros_utils.load_graph_to_rosparam(G, "/peopleflow/G")
-            graph_weight_update()
+            # G = update_G_weights(G, max_d_cost, max_pd_cost, max_bc_cost, K_D, K_PD, K_BC)
+            # ros_utils.load_graph_to_rosparam(G, "/peopleflow/G")
+            # graph_weight_update()
             
-            causal_heuristic_predefined = functools.partial(
-                causal_heuristic, 
-                max_d_cost=max_d_cost, 
-                max_pd_cost=max_pd_cost, 
-                max_bc_cost=max_bc_cost,
-                k_d=K_D,
-                k_pd=K_PD,
-                k_bc=K_BC
-            )
+            # causal_heuristic_predefined = functools.partial(
+            #     causal_heuristic, 
+            #     max_d_cost=max_d_cost, 
+            #     max_pd_cost=max_pd_cost, 
+            #     max_bc_cost=max_bc_cost,
+            #     k_d=K_D,
+            #     k_pd=K_PD,
+            #     k_bc=K_BC
+            # )
 
-            heuristic_wrapper = ros_utils.HeuristicCounter(causal_heuristic_predefined)
+            heuristic_wrapper = ros_utils.HeuristicCounter(shortest_heuristic)
             heuristic_wrapper.reset()
             evaluations = 0
             # Step 1: Run A* to find the best path based on distance, people density, and battery cost
@@ -348,21 +355,21 @@ def Plan(p):
                 raise ValueError("No valid path found by A*!")
                 
             # Step 2: Check the battery consumption of the chosen path
-            if QUEUE:
-                total_battery_cost = sum(RISK_MAP.get((a, b), {}).get('BC', 0) for a, b in zip(QUEUE, QUEUE[1:]))
+            # if QUEUE:
+            #     total_battery_cost = sum(RISK_MAP.get((a, b), {}).get('BC', 0) for a, b in zip(QUEUE, QUEUE[1:]))
 
-                # Step 3: Enforce the battery constraint AFTER path selection
-                if BATTERY_LEVEL - total_battery_cost < BATTERY_CRITICAL_LEVEL:
-                    rospy.logwarn("Path violates battery safety constraint! Going to charger")
-                    QUEUE = []
-                    GO_TO_CHARGER = True
-                    continue
-                else:
-                    rospy.logwarn(f"Path found: {QUEUE}")
+            #     # Step 3: Enforce the battery constraint AFTER path selection
+            #     if BATTERY_LEVEL - total_battery_cost < BATTERY_CRITICAL_LEVEL:
+            #         rospy.logwarn("Path violates battery safety constraint! Going to charger")
+            #         QUEUE = []
+            #         GO_TO_CHARGER = True
+            #         continue
+            #     else:
+            #         rospy.logwarn(f"Path found: {QUEUE}")
             
             graph_path_show(','.join(QUEUE))
             TASK_LIST[rospy.get_param('/peopleflow/timeday')].pop(0)
-            task_id = new_task_service(NEXT_GOAL, QUEUE, tot_inf_time, mean_inf_time, planning_time, evaluations).task_id
+            task_id = new_task_service(NEXT_GOAL, QUEUE, 0, 0, planning_time, evaluations).task_id
             TASK_ON = True
             firstgoal = QUEUE[0]
         

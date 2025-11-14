@@ -10,8 +10,8 @@ from tqdm import tqdm
 
 
 INDIR = '/home/hrisim/ros_ws/src/HRISim/hrisim_postprocess/csv/experiments/'
-# BAGNAME= ['base', 'versionA', 'versionB', 'causal']
-BAGNAME= ['versionA']
+BAGNAME= ['base', 'versionA', 'versionB', 'causal']
+# BAGNAME= ['versionA']
 SCENARIO = 'warehouse'
 WPS_COORD = readScenario(SCENARIO)
 
@@ -37,8 +37,7 @@ for bag in BAGNAME:
     METRICS = {tod.value: None for tod in TOD}
     
     for tod in TOD:
-        if tod == TOD.OFF: continue
-    # for tod in [TOD.H1, TOD.H2, TOD.H3]:
+        # if tod == TOD.OFF: continue
         with open(os.path.join(INDIR, bag, f'tasks-{tod.value}.json')) as pkl_file:
             TASKS = json.load(pkl_file)
         TASK_IDs = list(range(TASKS['n_tasks']))

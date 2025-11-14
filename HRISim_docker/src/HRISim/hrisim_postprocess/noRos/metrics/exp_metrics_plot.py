@@ -8,9 +8,9 @@ from utils import *
 INDIR = '/home/hrisim/ros_ws/src/HRISim/hrisim_postprocess/csv/experiments'
 
 BAGNAMES = ['base', 'versionA', 'versionB', 'causal']
-CATEGORIES = {'base': 'Baseline', 'versionA': 
-              'Causal Routing', 'versionB': 
-              'Refusal-Only', 
+CATEGORIES = {'base': 'Baseline', 
+              'versionA': 'Causal Routing', 
+              'versionB': 'Refusal-Only', 
               'causal': 'Full Causal'}
 OUTDIR = os.path.join('/home/hrisim/ros_ws/src/HRISim/hrisim_postprocess/results', 'comparison', '__'.join(BAGNAMES), 'overall')
 os.makedirs(OUTDIR, exist_ok=True)
@@ -52,6 +52,7 @@ for bagname in BAGNAMES:
                 pval_proxemics[bagname]["Distances"].extend(
                     value for value in itertools.chain(*metrics_tod[task]['agent_distances'].values()) if value < 7.6
                 )
+                
     
     # EFFICIENCY 
     #! Success & Failures
@@ -140,7 +141,7 @@ for bagname in BAGNAMES:
     collision_metrics[bagname] = METRICS['overall_human_collision']
 
 
-fontsize = 17  # Define fontsize
+fontsize = 19  # Define fontsize
 plot_stacked_bar(success_failure_metrics, "Success-Failure", "Count", CATEGORIES, outdir=OUTDIR, step=300, fontsize=fontsize)
 plot_stacked_bar(working_time_metrics, "Task Time", "h", CATEGORIES, outdir=OUTDIR, step=5, fontsize=fontsize)
 plot_stacked_bar(travelled_distance_metrics, "Travelled Distance", "km", CATEGORIES, outdir=OUTDIR, step=5, fontsize=fontsize)
@@ -166,7 +167,7 @@ plt.tight_layout()
 for bar, value in zip(bars, collision_metrics.values()):
     plt.text(bar.get_x() + bar.get_width() / 2, bar.get_height() / 2,
              f"{value:.2f}", ha='center', va='center', fontsize=fontsize)
-plt.savefig(f"{OUTDIR}/Dangerous_Interaction.pdf", dpi=300, bbox_inches="tight")
+plt.savefig(f"{OUTDIR}/exp-safety-dangerous-interaction.pdf", dpi=300, bbox_inches="tight")
 plt.close()
 
-plot_boxplot(pval_proxemics, "Distances", "m", BAGNAMES, CATEGORIES, background=True, outdir=OUTDIR, fontsize=17)
+plot_boxplot(pval_proxemics, "Distances", "m", BAGNAMES, CATEGORIES, background=True, outdir=OUTDIR, fontsize=fontsize)
