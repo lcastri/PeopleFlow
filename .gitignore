@@ -365,5 +365,6 @@ dist/
 /shared/*
 /utilities_ws
 /media
+/HRISim_docker
 
 *.vscode
